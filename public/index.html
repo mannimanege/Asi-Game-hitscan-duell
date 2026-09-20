@@ -6,73 +6,112 @@
   <title>Hitscan Duell 1v1</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
-    body, html { width: 100%; height: 100%; overflow: hidden; background: #60a5fa; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #fff; touch-action: none; }
+    body, html { width: 100%; height: 100%; overflow: hidden; background: #1e293b; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #fff; touch-action: none; }
     
     .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; }
     .hidden { display: none !important; }
 
-    .panel { background: rgba(18, 21, 30, 0.96); border: 1px solid #334155; padding: 18px; border-radius: 8px; width: 92%; max-width: 440px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); max-height: 90vh; overflow-y: auto; }
-    h1 { font-size: 18px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; color: #f59e0b; }
-    h2 { font-size: 12px; margin: 12px 0 6px 0; text-transform: uppercase; color: #94a3b8; border-bottom: 1px solid #334155; padding-bottom: 3px; }
-    input[type="text"] { width: 100%; padding: 10px; background: #0f172a; border: 1px solid #475569; border-radius: 4px; color: #fff; font-size: 14px; outline: none; margin-bottom: 8px; }
+    .panel { background: rgba(15, 23, 42, 0.95); border: 2px solid #334155; padding: 20px; border-radius: 12px; width: 92%; max-width: 440px; box-shadow: 0 15px 35px rgba(0,0,0,0.8); max-height: 90vh; overflow-y: auto; backdrop-filter: blur(8px); }
+    h1 { font-size: 20px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: #f59e0b; text-align: center; }
+    h2 { font-size: 11px; margin: 12px 0 6px 0; text-transform: uppercase; color: #94a3b8; border-bottom: 1px solid #334155; padding-bottom: 4px; letter-spacing: 1px; }
+    input[type="text"] { width: 100%; padding: 12px; background: #0b0f19; border: 1.5px solid #475569; border-radius: 6px; color: #fff; font-size: 15px; outline: none; margin-bottom: 8px; }
     input[type="text"]:focus { border-color: #f59e0b; }
-    button { width: 100%; padding: 10px; background: #f59e0b; border: none; border-radius: 4px; color: #000; font-weight: 700; cursor: pointer; text-transform: uppercase; font-size: 12px; }
+    button { width: 100%; padding: 11px; background: #f59e0b; border: none; border-radius: 6px; color: #000; font-weight: 800; cursor: pointer; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; }
     button:hover { background: #d97706; }
     button.secondary { background: #334155; color: #fff; margin-top: 6px; }
     button.bot-btn { background: #2563eb; color: #fff; margin-top: 10px; }
     button.bot-btn:hover { background: #1d4ed8; }
 
-    .char-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-bottom: 8px; }
-    .char-btn { background: #1e293b; border: 2px solid #334155; color: #cbd5e1; padding: 6px 2px; border-radius: 4px; font-size: 10px; font-weight: 700; cursor: pointer; text-transform: none; text-align: center; }
+    .char-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-bottom: 8px; }
+    .char-btn { background: #1e293b; border: 2px solid #334155; color: #cbd5e1; padding: 8px 2px; border-radius: 6px; font-size: 10px; font-weight: 800; cursor: pointer; text-transform: none; text-align: center; }
     .char-btn.active { border-color: #f59e0b; background: #451a03; color: #fbbf24; }
 
-    ul { list-style: none; max-height: 85px; overflow-y: auto; margin-bottom: 6px; }
-    li { display: flex; justify-content: space-between; align-items: center; padding: 5px 8px; background: #0f172a; margin-bottom: 4px; border-radius: 4px; font-size: 11px; }
-    li button { width: auto; padding: 3px 8px; font-size: 10px; }
+    ul { list-style: none; max-height: 80px; overflow-y: auto; margin-bottom: 6px; }
+    li { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; background: #0b0f19; margin-bottom: 4px; border-radius: 6px; font-size: 11px; }
+    li button { width: auto; padding: 4px 8px; font-size: 10px; }
 
-    /* HUD */
+    /* HUD Layout: Drei getrennte Spalten verhindern jedes Überlappen */
     #hud { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
-    #crosshair { position: absolute; top: 50%; left: 50%; width: 8px; height: 8px; transform: translate(-50%, -50%); border: 2px solid #000; border-radius: 50%; background: #22c55e; }
     
-    /* Prominente Zeitanzeige */
-    #stats-bar { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 14px; font-size: 15px; font-weight: 800; background: rgba(15, 23, 42, 0.9); padding: 6px 16px; border-radius: 6px; border: 1px solid #334155; white-space: nowrap; box-shadow: 0 4px 15px rgba(0,0,0,0.6); }
-    .timer-badge { display: flex; flex-direction: column; align-items: center; background: #0b0f19; border: 1px solid #f59e0b; padding: 2px 10px; border-radius: 4px; }
-    .timer-label { font-size: 9px; color: #94a3b8; letter-spacing: 0.5px; }
-    .timer-value { font-size: 20px; color: #f59e0b; font-family: monospace; }
-    .timer-value.danger { color: #ef4444; animation: blink 0.5s infinite alternate; }
-    @keyframes blink { from { opacity: 1; } to { opacity: 0.4; } }
+    .hud-top-bar {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      right: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
 
-    .hud-score { color: #4ade80; }
-    .hud-opp-score { color: #ef4444; }
-    #hitmarker { position: absolute; top: 50%; left: 50%; width: 22px; height: 22px; transform: translate(-50%, -50%); border: 3px solid #22c55e; border-radius: 50%; opacity: 0; transition: opacity 0.08s; pointer-events: none; }
-
-    /* Runder Countdown vor Spielstart */
-    #countdown-overlay { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); font-size: 78px; font-weight: 900; color: #f59e0b; text-shadow: 0 4px 20px rgba(0,0,0,0.9), 0 0 30px #f59e0b; pointer-events: none; z-index: 15; letter-spacing: 2px; }
-
-    #minimap-container { position: absolute; top: 12px; left: 12px; width: 96px; height: 96px; background: rgba(15, 23, 42, 0.85); border: 2px solid #475569; border-radius: 50%; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+    /* Links: Minimap */
+    #minimap-container { width: 78px; height: 78px; background: rgba(11, 15, 25, 0.85); border: 2px solid rgba(255,255,255,0.25); border-radius: 50%; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.6); flex-shrink: 0; }
     #minimap { width: 100%; height: 100%; }
 
-    #lobby-monitor { position: absolute; top: 12px; right: 12px; background: rgba(15, 23, 42, 0.85); border: 1px solid #334155; border-radius: 6px; padding: 6px 10px; font-size: 11px; max-width: 180px; pointer-events: auto; }
+    /* Mitte: Score-Banner im Stil von Foto 2 */
+    .scoreboard {
+      display: flex;
+      align-items: center;
+      background: rgba(11, 15, 25, 0.9);
+      border: 1.5px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+      flex-shrink: 0;
+    }
+    .score-box { padding: 4px 12px; font-size: 14px; font-weight: 900; }
+    .score-box.blue { background: rgba(37, 99, 235, 0.85); color: #fff; }
+    .score-box.red { background: rgba(220, 38, 38, 0.85); color: #fff; }
+    .timer-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 3px 12px;
+      background: #020617;
+      min-width: 60px;
+    }
+    .timer-sub { font-size: 8px; font-weight: 700; color: #94a3b8; letter-spacing: 1px; }
+    .timer-sec { font-size: 18px; font-weight: 900; color: #f59e0b; font-family: monospace; }
+    .timer-sec.danger { color: #ef4444; animation: blink 0.5s infinite alternate; }
+    @keyframes blink { from { opacity: 1; } to { opacity: 0.3; } }
+
+    /* Rechts: Lobby Widget */
+    #lobby-monitor {
+      background: rgba(11, 15, 25, 0.85);
+      border: 1.5px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      padding: 5px 8px;
+      font-size: 10px;
+      min-width: 105px;
+      max-width: 140px;
+      pointer-events: auto;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      flex-shrink: 0;
+    }
     #lobby-monitor strong { color: #f59e0b; }
-    .monitor-player { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; gap: 6px; }
-    .monitor-player button { padding: 2px 6px; font-size: 9px; width: auto; }
+    .monitor-player { display: flex; justify-content: space-between; align-items: center; margin-top: 3px; gap: 4px; }
+    .monitor-player button { padding: 2px 5px; font-size: 8px; width: auto; }
 
-    #audio-toggle { position: absolute; bottom: 12px; left: 12px; background: rgba(15, 23, 42, 0.85); border: 1px solid #475569; color: #fff; padding: 6px 10px; border-radius: 4px; font-size: 10px; font-weight: 700; cursor: pointer; pointer-events: auto; }
+    /* Fadenkreuz & Hitmarker */
+    #crosshair { position: absolute; top: 50%; left: 50%; width: 6px; height: 6px; transform: translate(-50%, -50%); border: 2px solid #000; border-radius: 50%; background: #22c55e; }
+    #hitmarker { position: absolute; top: 50%; left: 50%; width: 24px; height: 24px; transform: translate(-50%, -50%); border: 3px solid #22c55e; border-radius: 50%; opacity: 0; transition: opacity 0.08s; pointer-events: none; }
 
-    /* Touch Steuerung */
+    #countdown-overlay { position: absolute; top: 38%; left: 50%; transform: translate(-50%, -50%); font-size: 72px; font-weight: 900; color: #f59e0b; text-shadow: 0 4px 20px rgba(0,0,0,0.9), 0 0 30px #f59e0b; pointer-events: none; z-index: 15; letter-spacing: 2px; }
+    #audio-toggle { position: absolute; bottom: 12px; left: 12px; background: rgba(11, 15, 25, 0.8); border: 1px solid rgba(255,255,255,0.25); color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; cursor: pointer; pointer-events: auto; }
+
+    /* Touch Controls: Stylized Glassmorphism */
     #touch-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 6; pointer-events: none; }
-    #joystick-base { position: absolute; left: 24px; bottom: 24px; width: 110px; height: 110px; background: rgba(0,0,0,0.35); border: 2px solid rgba(255,255,255,0.4); border-radius: 50%; pointer-events: auto; }
-    #joystick-knob { position: absolute; top: 50%; left: 50%; width: 44px; height: 44px; background: #f59e0b; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; }
+    #joystick-base { position: absolute; left: 20px; bottom: 20px; width: 110px; height: 110px; background: rgba(15, 23, 42, 0.4); border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; pointer-events: auto; backdrop-filter: blur(2px); }
+    #joystick-knob { position: absolute; top: 50%; left: 50%; width: 44px; height: 44px; background: #f59e0b; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; box-shadow: 0 2px 10px rgba(0,0,0,0.6); }
     
     .touch-right-cluster {
       position: absolute;
-      right: 18px;
-      bottom: 18px;
+      right: 16px;
+      bottom: 16px;
       display: grid;
       grid-template-areas:
         ".     jump"
         "dash  fire";
-      gap: 12px;
+      gap: 10px;
       align-items: center;
       justify-items: center;
       pointer-events: auto;
@@ -82,15 +121,16 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      font-weight: 800;
+      font-weight: 900;
       color: #fff;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
       pointer-events: auto;
+      backdrop-filter: blur(4px);
     }
     .touch-action-btn:active { transform: scale(0.92); }
-    .jump-btn { grid-area: jump; width: 54px; height: 54px; background: #2563eb; border: 2px solid #93c5fd; font-size: 10px; }
-    .dash-btn { grid-area: dash; width: 54px; height: 54px; background: #475569; border: 2px solid #cbd5e1; font-size: 10px; }
-    .fire-btn { grid-area: fire; width: 76px; height: 76px; background: #dc2626; border: 3px solid #fff; font-size: 13px; font-weight: 900; }
+    .jump-btn { grid-area: jump; width: 56px; height: 56px; background: rgba(37, 99, 235, 0.75); border: 2px solid #93c5fd; font-size: 10px; }
+    .dash-btn { grid-area: dash; width: 56px; height: 56px; background: rgba(51, 65, 85, 0.75); border: 2px solid #cbd5e1; font-size: 10px; }
+    .fire-btn { grid-area: fire; width: 76px; height: 76px; background: rgba(220, 38, 38, 0.85); border: 3px solid #fff; font-size: 13px; }
   </style>
 </head>
 <body>
@@ -99,7 +139,7 @@
   <div id="screen-login" class="screen">
     <div class="panel">
       <h1>Hitscan Duell 1v1</h1>
-      <input type="text" id="username-input" placeholder="Spielername eingeben..." maxlength="14">
+      <input type="text" id="username-input" placeholder="Spielername..." maxlength="14">
       <button id="btn-login">Lobby Betreten</button>
     </div>
   </div>
@@ -108,9 +148,9 @@
   <div id="screen-lobby" class="screen hidden">
     <div class="panel">
       <h1>Lobby</h1>
-      <div>Angemeldet: <strong id="my-name-display" style="color: #f59e0b;"></strong></div>
+      <div style="text-align:center; margin-bottom: 6px;">Spieler: <strong id="my-name-display" style="color: #f59e0b;"></strong></div>
 
-      <h2>Charakter wählen</h2>
+      <h2>Kämpfer wählen</h2>
       <div class="char-grid">
         <button class="char-btn active" data-char="marley">Marley</button>
         <button class="char-btn" data-char="bread">Brot</button>
@@ -124,16 +164,16 @@
       <h2>Lobby-Spieler</h2>
       <ul id="player-list"></ul>
 
-      <h2>Multiplayer Bestenliste</h2>
+      <h2>1v1 Bestenliste</h2>
       <ul id="leaderboard-list"></ul>
 
-      <h2>Bot-Training Rekorde</h2>
+      <h2>Bot Rekorde</h2>
       <ul id="bot-leaderboard-list"></ul>
     </div>
   </div>
 
   <!-- Screen 3: Herausforderung -->
-  <div id="screen-challenge" class="screen hidden" style="background: rgba(0,0,0,0.8); z-index: 20;">
+  <div id="screen-challenge" class="screen hidden" style="background: rgba(0,0,0,0.85); z-index: 20;">
     <div class="panel" style="text-align: center;">
       <h1>Herausforderung!</h1>
       <p id="challenge-text" style="margin-bottom: 14px; font-size: 14px;"></p>
@@ -143,7 +183,7 @@
   </div>
 
   <!-- Screen 4: Game Over -->
-  <div id="screen-gameover" class="screen hidden" style="background: rgba(0,0,0,0.85); z-index: 20;">
+  <div id="screen-gameover" class="screen hidden" style="background: rgba(0,0,0,0.88); z-index: 20;">
     <div class="panel" style="text-align: center;">
       <h1 id="gameover-title">Runde Beendet</h1>
       <p id="gameover-details" style="margin-bottom: 18px; font-size: 14px;"></p>
@@ -151,37 +191,38 @@
     </div>
   </div>
 
-  <!-- In-Game HUD -->
+  <!-- In-Game HUD (Kein Überlappen) -->
   <div id="hud" class="hidden">
-    <div id="minimap-container">
-      <canvas id="minimap" width="96" height="96"></canvas>
-    </div>
-
-    <div id="stats-bar">
-      <div>Du: <span id="hud-my-score" class="hud-score">0</span></div>
-      
-      <div class="timer-badge">
-        <span class="timer-label">RUNDE</span>
-        <span id="hud-timer" class="timer-value">60</span>
+    <div class="hud-top-bar">
+      <!-- Links -->
+      <div id="minimap-container">
+        <canvas id="minimap" width="78" height="78"></canvas>
       </div>
 
-      <div>Gegner: <span id="hud-opp-score" class="hud-opp-score">0</span></div>
+      <!-- Mitte -->
+      <div class="scoreboard">
+        <div class="score-box blue">Du <span id="hud-my-score">0</span></div>
+        <div class="timer-center">
+          <span class="timer-sub">ZEIT</span>
+          <span id="hud-timer" class="timer-sec">60</span>
+        </div>
+        <div class="score-box red"><span id="hud-opp-score">0</span> Gegner</div>
+      </div>
+
+      <!-- Rechts -->
+      <div id="lobby-monitor" class="hidden">
+        <div><strong>LOBBY:</strong></div>
+        <div id="lobby-monitor-content">Keiner da</div>
+      </div>
     </div>
 
     <div id="countdown-overlay" class="hidden">3</div>
-
-    <div id="lobby-monitor" class="hidden">
-      <div><strong>Lobby-Status:</strong></div>
-      <div id="lobby-monitor-content">Keine Spieler da</div>
-    </div>
-
     <button id="audio-toggle">Musik: AN</button>
-
     <div id="crosshair"></div>
     <div id="hitmarker"></div>
   </div>
 
-  <!-- Touch Steuerung -->
+  <!-- Touch Controls -->
   <div id="touch-layer" class="hidden">
     <div id="joystick-base"><div id="joystick-knob"></div></div>
     
@@ -221,7 +262,7 @@
       const gain = audioCtx.createGain();
       osc.type = 'sine';
       osc.frequency.setValueAtTime(isHigh ? 880 : 440, audioCtx.currentTime);
-      gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (isHigh ? 0.35 : 0.18));
       osc.connect(gain);
       gain.connect(audioCtx.destination);
@@ -236,7 +277,7 @@
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(320, audioCtx.currentTime);
       osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.08);
-      gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
       osc.connect(gain);
       gain.connect(audioCtx.destination);
@@ -251,7 +292,7 @@
       osc.type = 'sawtooth';
       osc.frequency.setValueAtTime(140, audioCtx.currentTime);
       osc.frequency.exponentialRampToValueAtTime(500, audioCtx.currentTime + 0.12);
-      gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
       osc.connect(gain);
       gain.connect(audioCtx.destination);
@@ -264,7 +305,7 @@
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.type = 'square';
-      osc.frequency.setValueAtTime(80, audioCtx.currentTime);
+      osc.frequency.setValueAtTime(90, audioCtx.currentTime);
       osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.06);
       gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.06);
@@ -280,13 +321,13 @@
       const gain = audioCtx.createGain();
       osc.type = 'sine';
       osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(420, audioCtx.currentTime + 0.15);
+      osc.frequency.exponentialRampToValueAtTime(420, audioCtx.currentTime + 0.14);
       gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.14);
       osc.connect(gain);
       gain.connect(audioCtx.destination);
       osc.start();
-      osc.stop(audioCtx.currentTime + 0.16);
+      osc.stop(audioCtx.currentTime + 0.15);
     }
 
     function playDashSound() {
@@ -298,7 +339,7 @@
       const noise = audioCtx.createBufferSource();
       noise.buffer = buf;
       const gain = audioCtx.createGain();
-      gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
       noise.connect(gain);
       gain.connect(audioCtx.destination);
@@ -316,7 +357,7 @@
         const g = audioCtx.createGain();
         osc.type = 'sawtooth';
         osc.frequency.setValueAtTime(bassNotes[beatStep % bassNotes.length], t);
-        g.gain.setValueAtTime(0.06, t);
+        g.gain.setValueAtTime(0.05, t);
         g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
         osc.connect(g);
         g.connect(audioCtx.destination);
@@ -342,7 +383,7 @@
     let selectedChar = 'marley';
 
     let inGame = false;
-    let canAct = false; // Wird erst nach 3, 2, 1 START freigeschaltet
+    let canAct = false;
     let isBotMode = false;
     let botTimerInterval = null;
     let botTimeLeft = 60;
@@ -369,8 +410,8 @@
     let isDashing = false;
     let dashTimer = 0;
     const DASH_DURATION = 0.12;
-    const DASH_SPEED = 36.0; // Angenehmer, kontrollierter Ausweichschub
-    const BASE_MOVE_SPEED = 18.0; // Spürbar entschärftes, griffiges Lauftempo
+    const DASH_SPEED = 36.0;
+    const BASE_MOVE_SPEED = 18.0;
 
     let shootCooldown = 0;
     const FIRE_INTERVAL = 0.28;
@@ -393,7 +434,7 @@
     const screenGameOver = document.getElementById('screen-gameover');
     const hud = document.getElementById('hud');
     const countdownEl = document.getElementById('countdown-overlay');
-    const timerValueEl = document.getElementById('hud-timer');
+    const timerSecEl = document.getElementById('hud-timer');
     const touchLayer = document.getElementById('touch-layer');
     const joystickBase = document.getElementById('joystick-base');
     const joystickKnob = document.getElementById('joystick-knob');
@@ -405,7 +446,6 @@
 
     const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
-    // Countdown-Sequenz
     function startRoundCountdown(callback) {
       canAct = false;
       countdownEl.classList.remove('hidden');
@@ -431,11 +471,11 @@
     }
 
     function updateRoundTimerUI(seconds) {
-      timerValueEl.innerText = seconds;
+      timerSecEl.innerText = seconds;
       if (seconds <= 10) {
-        timerValueEl.classList.add('danger');
+        timerSecEl.classList.add('danger');
       } else {
-        timerValueEl.classList.remove('danger');
+        timerSecEl.classList.remove('danger');
       }
     }
 
@@ -488,7 +528,7 @@
     function updateLobbyMonitor() {
       const waiting = currentLobbyPlayers.filter(p => p.id !== socket.id && p.status === 'lobby');
       if (waiting.length === 0) {
-        lobbyMonitorContent.innerHTML = '<span style="color:#64748b">Keiner in Lobby</span>';
+        lobbyMonitorContent.innerHTML = '<span style="color:#64748b">Keiner da</span>';
       } else {
         lobbyMonitorContent.innerHTML = '';
         waiting.forEach(w => {
@@ -567,37 +607,41 @@
     };
 
     // ==========================================
-    // 3. TEXTUREN
+    // 3. LOW-POLY TEXTUREN & MATERIALIEN
     // ==========================================
-    function createCrateTexture() {
+    function createBarnWallTexture() {
       const c = document.createElement('canvas');
       c.width = 256; c.height = 256;
       const ctx = c.getContext('2d');
-      ctx.fillStyle = '#b45309';
+      // Rotes Scheunenholz wie auf Foto 2
+      ctx.fillStyle = '#991b1b';
       ctx.fillRect(0, 0, 256, 256);
-      ctx.fillStyle = '#92400e';
-      for (let i = 0; i < 4; i++) ctx.fillRect(0, i * 64, 256, 4);
-      ctx.fillStyle = '#78350f';
-      ctx.fillRect(0, 0, 256, 20); ctx.fillRect(0, 236, 256, 20);
-      ctx.fillRect(0, 0, 20, 256); ctx.fillRect(236, 0, 20, 256);
-      ctx.lineWidth = 16;
-      ctx.strokeStyle = '#78350f';
+      ctx.fillStyle = '#7f1d1d';
+      for (let i = 0; i < 8; i++) ctx.fillRect(0, i * 32, 256, 3);
+      // Weiße Balkenverstrebungen
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, 256, 12);
+      ctx.fillRect(0, 244, 256, 12);
+      ctx.fillRect(0, 0, 12, 256);
+      ctx.fillRect(244, 0, 12, 256);
+      ctx.lineWidth = 14;
+      ctx.strokeStyle = '#ffffff';
       ctx.beginPath();
-      ctx.moveTo(10, 10); ctx.lineTo(246, 246);
-      ctx.moveTo(246, 10); ctx.lineTo(10, 246);
+      ctx.moveTo(8, 8); ctx.lineTo(248, 248);
       ctx.stroke();
       return new THREE.CanvasTexture(c);
     }
 
-    function createSandstoneTexture() {
+    function createDirtGroundTexture() {
       const c = document.createElement('canvas');
       c.width = 256; c.height = 256;
       const ctx = c.getContext('2d');
-      ctx.fillStyle = '#d6cbaf';
+      // Warmer Erdboden wie auf Foto 2
+      ctx.fillStyle = '#785438';
       ctx.fillRect(0, 0, 256, 256);
-      for (let i = 0; i < 6000; i++) {
-        ctx.fillStyle = Math.random() < 0.5 ? '#c4b595' : '#e4dcc7';
-        ctx.fillRect(Math.random() * 256, Math.random() * 256, 2, 2);
+      for (let i = 0; i < 4000; i++) {
+        ctx.fillStyle = Math.random() < 0.5 ? '#614126' : '#8d6445';
+        ctx.fillRect(Math.random() * 256, Math.random() * 256, 3, 3);
       }
       const tex = new THREE.CanvasTexture(c);
       tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
@@ -605,31 +649,20 @@
       return tex;
     }
 
-    function createWallPlasterTexture() {
-      const c = document.createElement('canvas');
-      c.width = 256; c.height = 256;
-      const ctx = c.getContext('2d');
-      ctx.fillStyle = '#f1ebe1';
-      ctx.fillRect(0, 0, 256, 256);
-      ctx.fillStyle = '#b96c55';
-      ctx.fillRect(0, 200, 256, 56);
-      ctx.fillStyle = '#9c4d37';
-      for (let y = 200; y < 256; y += 14) {
-        ctx.fillRect(0, y, 256, 2);
-        for (let x = (y % 28 === 0 ? 0 : 16); x < 256; x += 32) ctx.fillRect(x, y, 2, 14);
-      }
-      return new THREE.CanvasTexture(c);
-    }
-
-    function createBarrelTexture(colorHex) {
+    function createHayTexture() {
       const c = document.createElement('canvas');
       c.width = 128; c.height = 128;
       const ctx = c.getContext('2d');
-      ctx.fillStyle = colorHex;
+      ctx.fillStyle = '#eab308';
       ctx.fillRect(0, 0, 128, 128);
-      ctx.fillStyle = '#1e293b';
-      ctx.fillRect(0, 24, 128, 12);
-      ctx.fillRect(0, 92, 128, 12);
+      ctx.fillStyle = '#ca8a04';
+      for (let i = 0; i < 500; i++) {
+        ctx.fillRect(Math.random() * 128, Math.random() * 128, 6, 2);
+      }
+      // Schnüre
+      ctx.fillStyle = '#713f12';
+      ctx.fillRect(0, 36, 128, 6);
+      ctx.fillRect(0, 86, 128, 6);
       return new THREE.CanvasTexture(c);
     }
 
@@ -666,7 +699,7 @@
     }
 
     // ==========================================
-    // 4. SZENE & DETAILREICHE MAP
+    // 4. THREE.JS SZENE MIT PRO-BELEUCHTUNG
     // ==========================================
     function init3D() {
       scene = new THREE.Scene();
@@ -675,59 +708,66 @@
 
       camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
       renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+      // Professionelles Color Grading (Tone Mapping)
+      renderer.outputEncoding = THREE.sRGBEncoding;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.08;
+
       renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       document.getElementById('game-container').appendChild(renderer.domElement);
 
-      const hemiLight = new THREE.HemisphereLight(0xffffff, 0x85929e, 0.85);
+      // Lichtgestaltung wie auf Foto 2: Warmes Sonnenlicht + Erdboden-Reflexion
+      const hemiLight = new THREE.HemisphereLight(0xbfdbfe, 0x785438, 0.85);
       hemiLight.position.set(0, 50, 0);
       scene.add(hemiLight);
 
-      const sunLight = new THREE.DirectionalLight(0xfffbeb, 1.1);
-      sunLight.position.set(30, 45, 20);
+      const sunLight = new THREE.DirectionalLight(0xfffaed, 1.25);
+      sunLight.position.set(25, 45, 18);
       sunLight.castShadow = true;
+      sunLight.shadow.mapSize.width = 1024;
+      sunLight.shadow.mapSize.height = 1024;
+      sunLight.shadow.camera.near = 0.5;
+      sunLight.shadow.camera.far = 80;
+      sunLight.shadow.camera.left = -22;
+      sunLight.shadow.camera.right = 22;
+      sunLight.shadow.camera.top = 22;
+      sunLight.shadow.camera.bottom = -22;
       scene.add(sunLight);
 
-      const sunMesh = new THREE.Mesh(new THREE.SphereGeometry(3.5, 16, 16), new THREE.MeshBasicMaterial({ color: 0xfef08a }));
-      sunMesh.position.set(40, 55, 30);
-      scene.add(sunMesh);
-
       // Boden
-      const floorMat = new THREE.MeshStandardMaterial({ map: createSandstoneTexture(), roughness: 0.8 });
+      const floorMat = new THREE.MeshStandardMaterial({ map: createDirtGroundTexture(), roughness: 0.85 });
       const floor = new THREE.Mesh(new THREE.PlaneGeometry(36, 36), floorMat);
       floor.rotation.x = -Math.PI / 2;
       floor.receiveShadow = true;
       scene.add(floor);
 
-      // Wände
-      const wallMat = new THREE.MeshStandardMaterial({ map: createWallPlasterTexture(), roughness: 0.7 });
-      const makeWall = (w, h, d, x, y, z, color) => {
-        const group = new THREE.Group();
-        const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat);
-        group.add(mesh);
-        const strip = new THREE.Mesh(new THREE.BoxGeometry(w > d ? w : 1.05, 0.5, d > w ? d : 1.05), new THREE.MeshBasicMaterial({ color }));
-        strip.position.y = 1.2;
-        group.add(strip);
-        group.position.set(x, y, z);
-        scene.add(group);
-
+      // Scheunenwände nach Vorlage von Foto 2
+      const barnMat = new THREE.MeshStandardMaterial({ map: createBarnWallTexture(), roughness: 0.65 });
+      const makeWall = (w, h, d, x, y, z) => {
+        const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), barnMat);
+        mesh.position.set(x, y, z);
+        mesh.receiveShadow = true;
+        scene.add(mesh);
         obstacleMeshes.push(mesh);
         obstacleColliders.push({ minX: x - w / 2, maxX: x + w / 2, minZ: z - d / 2, maxZ: z + d / 2 });
       };
 
-      makeWall(36, 5, 1, 0, 2.5, -18, 0x2563eb); // Nord
-      makeWall(36, 5, 1, 0, 2.5, 18, 0xea580c);  // Süd
-      makeWall(1, 5, 36, -18, 2.5, 0, 0x16a34a); // West
-      makeWall(1, 5, 36, 18, 2.5, 0, 0x9333ea);  // Ost
+      makeWall(36, 5.5, 1, 0, 2.75, -18);
+      makeWall(36, 5.5, 1, 0, 2.75, 18);
+      makeWall(1, 5.5, 36, -18, 2.75, 0);
+      makeWall(1, 5.5, 36, 18, 2.75, 0);
 
-      // Überkopf-Leitungen / Drahtseile
-      createOverheadCable(-17, 4.6, -17, 17, 4.6, 17);
-      createOverheadCable(-17, 4.6, 17, 17, 4.6, -17);
-
-      spawnCSMapLayout();
+      // Low-Poly Props & Hindernisse
+      spawnLowPolyArena();
       spawnSkyDetails();
-      setupCigaretteWeapon();
+
+      // First-Person Arme & Zigarette
+      setupFirstPersonArms();
       setupOpponentActor();
       leafTexture = createMarijuanaLeafTexture();
 
@@ -736,109 +776,140 @@
       setupTouchControls();
     }
 
-    function createOverheadCable(x1, y1, z1, x2, y2, z2) {
-      const points = [
-        new THREE.Vector3(x1, y1, z1),
-        new THREE.Vector3((x1 + x2) / 2, (y1 + y2) / 2 - 0.7, (z1 + z2) / 2),
-        new THREE.Vector3(x2, y2, z2)
-      ];
-      const curve = new THREE.QuadraticBezierCurve3(points[0], points[1], points[2]);
-      const cableGeo = new THREE.TubeGeometry(curve, 16, 0.02, 6, false);
-      const cableMat = new THREE.MeshBasicMaterial({ color: 0x1e293b });
-      scene.add(new THREE.Mesh(cableGeo, cableMat));
-    }
+    function addHayBale(x, y, z, rotY = 0) {
+      const mat = new THREE.MeshStandardMaterial({ map: createHayTexture(), roughness: 0.8 });
+      const bale = new THREE.Mesh(new THREE.BoxGeometry(2.0, 1.2, 1.2), mat);
+      bale.position.set(x, y + 0.6, z);
+      bale.rotation.y = rotY;
+      bale.castShadow = true;
+      bale.receiveShadow = true;
+      scene.add(bale);
 
-    function addCrate(x, y, z, size = 1.8) {
-      const mat = new THREE.MeshStandardMaterial({ map: createCrateTexture(), roughness: 0.6 });
-      const box = new THREE.Mesh(new THREE.BoxGeometry(size, size, size), mat);
-      box.position.set(x, y + size / 2, z);
-      box.castShadow = true;
-      box.receiveShadow = true;
-      scene.add(box);
-
-      obstacleMeshes.push(box);
+      obstacleMeshes.push(bale);
       if (y < 1.0) {
-        obstacleColliders.push({ minX: x - size / 2, maxX: x + size / 2, minZ: z - size / 2, maxZ: z + size / 2 });
+        obstacleColliders.push({ minX: x - 1.0, maxX: x + 1.0, minZ: z - 0.7, maxZ: z + 0.7 });
       }
     }
 
-    function addConcreteWall(x, z, w, d) {
-      const mat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.8 });
-      const block = new THREE.Mesh(new THREE.BoxGeometry(w, 2.2, d), mat);
-      block.position.set(x, 1.1, z);
-      scene.add(block);
+    function addSilo(x, z) {
+      const siloMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.6, roughness: 0.35 });
+      const group = new THREE.Group();
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.6, 6.0, 16), siloMat);
+      body.position.y = 3.0;
+      body.castShadow = true;
+      group.add(body);
+      const dome = new THREE.Mesh(new THREE.SphereGeometry(1.6, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), siloMat);
+      dome.position.y = 6.0;
+      group.add(dome);
+      group.position.set(x, 0, z);
+      scene.add(group);
 
-      obstacleMeshes.push(block);
-      obstacleColliders.push({ minX: x - w / 2, maxX: x + w / 2, minZ: z - d / 2, maxZ: z + d / 2 });
+      obstacleMeshes.push(body);
+      obstacleColliders.push({ minX: x - 1.6, maxX: x + 1.6, minZ: z - 1.6, maxZ: z + 1.6 });
     }
 
-    function addOilBarrel(x, z, colorHex = '#dc2626') {
-      const barrelGroup = new THREE.Group();
-      const barrelMat = new THREE.MeshStandardMaterial({ map: createBarrelTexture(colorHex), metalness: 0.4, roughness: 0.5 });
-      const mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 1.3, 14), barrelMat);
-      mesh.position.y = 0.65;
-      barrelGroup.add(mesh);
-      barrelGroup.position.set(x, 0, z);
-      scene.add(barrelGroup);
+    function addTractor(x, z, rotY = 0) {
+      const group = new THREE.Group();
+      const blueMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.4 });
+      const blackMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8 });
 
-      obstacleMeshes.push(mesh);
-      obstacleColliders.push({ minX: x - 0.48, maxX: x + 0.48, minZ: z - 0.48, maxZ: z + 0.48 });
+      // Motorhaube
+      const hood = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.1, 2.2), blueMat);
+      hood.position.set(0, 1.1, 0.4);
+      hood.castShadow = true;
+      group.add(hood);
+
+      // Fahrerkabine
+      const cab = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.4, 1.4), blueMat);
+      cab.position.set(0, 1.6, -1.0);
+      cab.castShadow = true;
+      group.add(cab);
+
+      // Große Hinterräder
+      const rearWheelGeo = new THREE.CylinderGeometry(0.85, 0.85, 0.45, 14);
+      const rw1 = new THREE.Mesh(rearWheelGeo, blackMat);
+      rw1.rotation.z = Math.PI / 2;
+      rw1.position.set(0.9, 0.85, -1.0);
+      rw1.castShadow = true;
+      const rw2 = rw1.clone();
+      rw2.position.x = -0.9;
+      group.add(rw1); group.add(rw2);
+
+      // Vorderräder
+      const frontWheelGeo = new THREE.CylinderGeometry(0.5, 0.5, 0.35, 14);
+      const fw1 = new THREE.Mesh(frontWheelGeo, blackMat);
+      fw1.rotation.z = Math.PI / 2;
+      fw1.position.set(0.8, 0.5, 1.1);
+      fw1.castShadow = true;
+      const fw2 = fw1.clone();
+      fw2.position.x = -0.8;
+      group.add(fw1); group.add(fw2);
+
+      group.position.set(x, 0, z);
+      group.rotation.y = rotY;
+      scene.add(group);
+
+      obstacleMeshes.push(hood);
+      obstacleColliders.push({ minX: x - 1.3, maxX: x + 1.3, minZ: z - 1.8, maxZ: z + 1.8 });
     }
 
-    function addSandbags(x, z, rotY = 0) {
-      const bagGroup = new THREE.Group();
-      const bagMat = new THREE.MeshStandardMaterial({ color: 0xa18262, roughness: 0.9 });
-      for (let y = 0; y < 2; y++) {
-        for (let i = -1; i <= 1; i++) {
-          const bag = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.35, 0.45), bagMat);
-          bag.position.set(i * 0.75, y * 0.35 + 0.18, 0);
-          bagGroup.add(bag);
-        }
+    function addWoodenFence(x, z, len, isHorizontal = true) {
+      const fenceMat = new THREE.MeshStandardMaterial({ color: 0xa16207, roughness: 0.8 });
+      const group = new THREE.Group();
+      const numPosts = Math.floor(len / 1.8) + 1;
+      for (let i = 0; i < numPosts; i++) {
+        const post = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.2, 0.18), fenceMat);
+        post.position.set(isHorizontal ? i * 1.8 : 0, 0.6, isHorizontal ? 0 : i * 1.8);
+        post.castShadow = true;
+        group.add(post);
       }
-      bagGroup.position.set(x, 0, z);
-      bagGroup.rotation.y = rotY;
-      scene.add(bagGroup);
+      const rail1 = new THREE.Mesh(new THREE.BoxGeometry(isHorizontal ? len : 0.08, 0.1, isHorizontal ? 0.08 : len), fenceMat);
+      rail1.position.set(isHorizontal ? len / 2 : 0, 0.85, isHorizontal ? 0 : len / 2);
+      const rail2 = rail1.clone();
+      rail2.position.y = 0.45;
+      group.add(rail1); group.add(rail2);
+      group.position.set(x, 0, z);
+      scene.add(group);
 
-      const hitBox = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.7, 0.5), new THREE.MeshBasicMaterial({ visible: false }));
-      hitBox.position.set(x, 0.35, z);
-      hitBox.rotation.y = rotY;
-      scene.add(hitBox);
-      obstacleMeshes.push(hitBox);
-
-      obstacleColliders.push({ minX: x - 1.2, maxX: x + 1.2, minZ: z - 0.35, maxZ: z + 0.35 });
+      obstacleMeshes.push(rail1);
+      obstacleColliders.push({
+        minX: isHorizontal ? x : x - 0.2,
+        maxX: isHorizontal ? x + len : x + 0.2,
+        minZ: isHorizontal ? z - 0.2 : z,
+        maxZ: isHorizontal ? z + 0.2 : z + len
+      });
     }
 
-    function spawnCSMapLayout() {
-      // Kistenstapel
-      addCrate(-4, 0, -8, 2.0);
-      addCrate(-4, 2.0, -8, 1.6);
-      addCrate(7, 0, -6, 1.8);
-      addCrate(7, 0, -4.2, 1.8);
-      addCrate(7, 1.8, -5.1, 1.6);
-      addCrate(-8, 0, 8, 1.8);
-      addCrate(4, 0, 9, 2.0);
+    function spawnLowPolyArena() {
+      // Heuballen-Stapel wie auf Foto 2
+      addHayBale(-4, 0, -8, 0.2);
+      addHayBale(-4, 1.2, -8, -0.1);
+      addHayBale(7, 0, -6, 0);
+      addHayBale(7, 0, -4.2, 0.3);
+      addHayBale(7, 1.2, -5.1, 0.15);
+      addHayBale(-8, 0, 8, 0.4);
 
-      // Betonbarrikaden
-      addConcreteWall(0, -3, 6, 1.2);
-      addConcreteWall(-6, 2, 1.2, 5);
+      // Traktor
+      addTractor(4.5, 8.5, -Math.PI / 4);
 
-      // Ölfässer
-      addOilBarrel(-1.8, -7, '#b91c1c');
-      addOilBarrel(-1.0, -7.5, '#2563eb');
-      addOilBarrel(8.5, 3.5, '#15803d');
+      // Silo
+      addSilo(-12, -12);
 
-      // Sandsäcke
-      addSandbags(0, 4.5, 0);
-      addSandbags(-11, -3, Math.PI / 4);
+      // Zäune
+      addWoodenFence(-15, 2, 7, true);
+      addWoodenFence(6, -14, 8, false);
 
+      // Original Food-Props
       spawnFoodProps();
     }
 
     function spawnFoodProps() {
+      // Bierflasche
       const bottleGroup = new THREE.Group();
       const bottleMat = new THREE.MeshStandardMaterial({ color: 0x451a03, roughness: 0.2 });
       const b1 = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 3.2, 16), bottleMat);
       b1.position.y = 1.6;
+      b1.castShadow = true;
       bottleGroup.add(b1);
       const b2 = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.7, 1.2, 16), bottleMat);
       b2.position.y = 3.6;
@@ -846,12 +917,13 @@
       const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.2, 16), new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.8 }));
       cap.position.y = 4.3;
       bottleGroup.add(cap);
-      bottleGroup.position.set(-10, 0, -10);
+      bottleGroup.position.set(-10, 0, -5);
       scene.add(bottleGroup);
 
       obstacleMeshes.push(b1);
-      obstacleColliders.push({ minX: -10.8, maxX: -9.2, minZ: -10.8, maxZ: -9.2 });
+      obstacleColliders.push({ minX: -10.8, maxX: -9.2, minZ: -5.8, maxZ: -4.2 });
 
+      // Martini Glas
       const martiniGroup = new THREE.Group();
       const stemMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.6 });
       const base = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.1, 16), stemMat);
@@ -863,16 +935,19 @@
       const cone = new THREE.Mesh(new THREE.ConeGeometry(1.8, 1.6, 16, 1, true), new THREE.MeshStandardMaterial({ color: 0x271306, transparent: true, opacity: 0.9 }));
       cone.position.y = 3.1;
       cone.rotation.x = Math.PI;
+      cone.castShadow = true;
       martiniGroup.add(cone);
-      martiniGroup.position.set(11, 0, 7);
+      martiniGroup.position.set(11, 0, 4);
       scene.add(martiniGroup);
 
       obstacleMeshes.push(cone);
-      obstacleColliders.push({ minX: 9.8, maxX: 12.2, minZ: 5.8, maxZ: 8.2 });
+      obstacleColliders.push({ minX: 9.8, maxX: 12.2, minZ: 2.8, maxZ: 5.2 });
 
+      // Pommes
       const friesGroup = new THREE.Group();
-      const bag = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.4, 1.4), new THREE.MeshStandardMaterial({ color: 0xdc2626 }));
+      const bag = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.4, 1.4), new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.4 }));
       bag.position.y = 1.2;
+      bag.castShadow = true;
       friesGroup.add(bag);
       const fryMat = new THREE.MeshStandardMaterial({ color: 0xfde047 });
       for (let i = 0; i < 7; i++) {
@@ -898,20 +973,22 @@
     }
 
     function spawnSkyDetails() {
-      const cloudMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1.0, transparent: true, opacity: 0.92 });
-      for (let c = 0; c < 6; c++) {
+      // Fluffige Low-Poly-Wolken
+      const cloudMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9, transparent: true, opacity: 0.95 });
+      for (let c = 0; c < 7; c++) {
         const cluster = new THREE.Group();
         for (let p = 0; p < 5; p++) {
-          const s = new THREE.Mesh(new THREE.SphereGeometry(2 + Math.random() * 2, 8, 8), cloudMat);
+          const s = new THREE.Mesh(new THREE.SphereGeometry(2 + Math.random() * 2, 7, 7), cloudMat);
           s.position.set((Math.random() - 0.5) * 5, (Math.random() - 0.5) * 1.2, (Math.random() - 0.5) * 4);
           cluster.add(s);
         }
         cluster.position.set((Math.random() - 0.5) * 80, 26 + Math.random() * 8, (Math.random() - 0.5) * 80);
         scene.add(cluster);
-        clouds.push({ mesh: cluster, speed: 0.8 + Math.random() * 0.8 });
+        clouds.push({ mesh: cluster, speed: 0.6 + Math.random() * 0.6 });
       }
 
-      const birdMat = new THREE.MeshBasicMaterial({ color: 0x1e293b, side: THREE.DoubleSide });
+      // Vögel
+      const birdMat = new THREE.MeshBasicMaterial({ color: 0x0f172a, side: THREE.DoubleSide });
       for (let b = 0; b < 5; b++) {
         const bird = new THREE.Group();
         const l = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.35), birdMat);
@@ -948,16 +1025,16 @@
     }
 
     // ==========================================
-    // 5. MINIMAP
+    // 5. MINIMAP RENDERER
     // ==========================================
     function renderMinimap() {
-      minimapCtx.clearRect(0, 0, 96, 96);
+      minimapCtx.clearRect(0, 0, 78, 78);
       const half = arenaBounds / 2;
-      const toMap = (v) => ((v + half) / arenaBounds) * 96;
+      const toMap = (v) => ((v + half) / arenaBounds) * 78;
 
       minimapCtx.strokeStyle = '#475569';
-      minimapCtx.lineWidth = 2;
-      minimapCtx.strokeRect(2, 2, 92, 92);
+      minimapCtx.lineWidth = 1.5;
+      minimapCtx.strokeRect(2, 2, 74, 74);
 
       minimapCtx.fillStyle = '#64748b';
       obstacleColliders.forEach(c => {
@@ -971,7 +1048,7 @@
       if (opponentRoot && opponentRoot.position.y > -50) {
         minimapCtx.fillStyle = '#ef4444';
         minimapCtx.beginPath();
-        minimapCtx.arc(toMap(opponentRoot.position.x), toMap(opponentRoot.position.z), 3.5, 0, Math.PI * 2);
+        minimapCtx.arc(toMap(opponentRoot.position.x), toMap(opponentRoot.position.z), 3, 0, Math.PI * 2);
         minimapCtx.fill();
       }
 
@@ -979,47 +1056,69 @@
       const py = toMap(camera.position.z);
       const rot = camera.rotation.y;
 
-      minimapCtx.fillStyle = 'rgba(34, 197, 94, 0.3)';
+      minimapCtx.fillStyle = 'rgba(34, 197, 94, 0.35)';
       minimapCtx.beginPath();
       minimapCtx.moveTo(px, py);
-      minimapCtx.arc(px, py, 14, -rot - Math.PI / 2 - 0.5, -rot - Math.PI / 2 + 0.5);
+      minimapCtx.arc(px, py, 12, -rot - Math.PI / 2 - 0.5, -rot - Math.PI / 2 + 0.5);
       minimapCtx.closePath();
       minimapCtx.fill();
 
       minimapCtx.fillStyle = '#22c55e';
       minimapCtx.beginPath();
-      minimapCtx.arc(px, py, 4, 0, Math.PI * 2);
+      minimapCtx.arc(px, py, 3.5, 0, Math.PI * 2);
       minimapCtx.fill();
     }
 
     // ==========================================
-    // 6. WAFFE & DETAILREICHE CHARAKTERE
+    // 6. FIRST-PERSON ARME & ZIGARETTE
     // ==========================================
+    let viewmodelGroup;
     let cigWeapon;
     const smokePuffs = [];
+    let walkBobTimer = 0;
 
-    function setupCigaretteWeapon() {
+    function setupFirstPersonArms() {
+      viewmodelGroup = new THREE.Group();
+
+      const skinMat = new THREE.MeshStandardMaterial({ color: 0xd49b73, roughness: 0.6 });
+      const sleeveMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.7 }); // Camo/Green Sleeve
+
+      // Rechter Arm
+      const rArm = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.08, 0.65, 8), sleeveMat);
+      rArm.rotation.set(-0.8, 0.2, -0.4);
+      rArm.position.set(0.24, -0.28, -0.32);
+      viewmodelGroup.add(rArm);
+
+      // Rechte Hand
+      const rHand = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.08, 0.14), skinMat);
+      rHand.position.set(0.25, -0.18, -0.45);
+      rHand.rotation.set(-0.3, 0.1, 0);
+      viewmodelGroup.add(rHand);
+
+      // Zigarette in der Hand
       cigWeapon = new THREE.Group();
-      const paper = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.45, 12), new THREE.MeshStandardMaterial({ color: 0xf8fafc }));
+      const paper = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.42, 10), new THREE.MeshStandardMaterial({ color: 0xf8fafc }));
       paper.rotation.x = Math.PI / 2;
       cigWeapon.add(paper);
 
-      const filter = new THREE.Mesh(new THREE.CylinderGeometry(0.0245, 0.0245, 0.16, 12), new THREE.MeshStandardMaterial({ color: 0xd97706 }));
+      const filter = new THREE.Mesh(new THREE.CylinderGeometry(0.0205, 0.0205, 0.15, 10), new THREE.MeshStandardMaterial({ color: 0xd97706 }));
       filter.rotation.x = Math.PI / 2;
-      filter.position.z = 0.26;
+      filter.position.z = 0.24;
       cigWeapon.add(filter);
 
-      const ash = new THREE.Mesh(new THREE.CylinderGeometry(0.023, 0.024, 0.04, 12), new THREE.MeshStandardMaterial({ color: 0x52525b }));
+      const ash = new THREE.Mesh(new THREE.CylinderGeometry(0.019, 0.02, 0.04, 10), new THREE.MeshStandardMaterial({ color: 0x52525b }));
       ash.rotation.x = Math.PI / 2;
-      ash.position.z = -0.24;
+      ash.position.z = -0.23;
       cigWeapon.add(ash);
 
-      const glowTip = new THREE.Mesh(new THREE.SphereGeometry(0.022, 8, 8), new THREE.MeshBasicMaterial({ color: 0xff3b00 }));
-      glowTip.position.z = -0.26;
+      const glowTip = new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 8), new THREE.MeshBasicMaterial({ color: 0xff3b00 }));
+      glowTip.position.z = -0.25;
       cigWeapon.add(glowTip);
 
-      cigWeapon.position.set(0.28, -0.2, -0.42);
-      camera.add(cigWeapon);
+      cigWeapon.position.set(0.22, -0.15, -0.52);
+      viewmodelGroup.add(cigWeapon);
+
+      camera.add(viewmodelGroup);
       scene.add(camera);
 
       for (let i = 0; i < 8; i++) {
@@ -1033,7 +1132,7 @@
     function updateCigaretteSmoke(delta) {
       if (!cigWeapon) return;
       const tipPos = new THREE.Vector3();
-      cigWeapon.localToWorld(tipPos.set(0, 0, -0.26));
+      cigWeapon.localToWorld(tipPos.set(0, 0, -0.25));
       smokePuffs.forEach(sp => {
         if (!sp.mesh.visible && Math.random() < 0.25) {
           sp.mesh.position.copy(tipPos);
@@ -1075,23 +1174,19 @@
       Object.keys(opponentVisuals).forEach(k => { opponentVisuals[k].visible = (k === charKey); });
     }
 
-    // 1. Bob Marley (Sonnenbrille, Perlen, Goldkette, Dreadlocks)
     function buildMarleyModel() {
       const g = new THREE.Group();
       const b = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.42, 1.1, 12), new THREE.MeshStandardMaterial({ color: 0x14532d }));
-      b.position.y = 0.65; g.add(b);
+      b.position.y = 0.65; b.castShadow = true; g.add(b);
 
       const chain = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.03, 8, 16), new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.9 }));
-      chain.position.set(0, 1.1, 0.12);
-      chain.rotation.x = Math.PI / 3;
-      g.add(chain);
+      chain.position.set(0, 1.1, 0.12); chain.rotation.x = Math.PI / 3; g.add(chain);
 
       const h = new THREE.Mesh(new THREE.SphereGeometry(0.32, 12, 12), new THREE.MeshStandardMaterial({ color: 0x78350f }));
-      h.position.y = 1.45; g.add(h);
+      h.position.y = 1.45; h.castShadow = true; g.add(h);
 
       const shades = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.1, 0.12), new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.1 }));
-      shades.position.set(0, 1.48, 0.28);
-      g.add(shades);
+      shades.position.set(0, 1.48, 0.28); g.add(shades);
 
       const r = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.1, 14), new THREE.MeshStandardMaterial({ color: 0xef4444 }));
       r.position.y = 1.62; g.add(r);
@@ -1100,89 +1195,47 @@
       const gr = new THREE.Mesh(new THREE.SphereGeometry(0.36, 12, 8), new THREE.MeshStandardMaterial({ color: 0x16a34a }));
       gr.position.y = 1.82; g.add(gr);
 
-      // Detaillierte Dreads mit Perlen
       for (let i = 0; i < 11; i++) {
         const dread = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.025, 0.75, 6), new THREE.MeshStandardMaterial({ color: 0x111111 }));
         const ang = (i / 11) * Math.PI * 1.4 - Math.PI * 0.7;
         dread.position.set(Math.sin(ang) * 0.35, 1.3, Math.cos(ang) * 0.3 - 0.08);
         dread.rotation.z = Math.sin(ang) * 0.25;
         g.add(dread);
-
-        if (i % 2 === 0) {
-          const bead = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.06, 6), new THREE.MeshStandardMaterial({ color: i % 4 === 0 ? 0xfacc15 : 0xef4444 }));
-          bead.position.set(Math.sin(ang) * 0.35, 1.1, Math.cos(ang) * 0.3 - 0.08);
-          g.add(bead);
-        }
       }
       return g;
     }
 
-    // 2. Brot (Butter, Röstspuren, Gesicht, Kochmütze)
     function buildBreadModel() {
       const g = new THREE.Group();
       const crust = new THREE.Mesh(new THREE.BoxGeometry(0.75, 1.1, 0.6), new THREE.MeshStandardMaterial({ color: 0x854d0e, roughness: 0.6 }));
-      crust.position.y = 0.75; g.add(crust);
+      crust.position.y = 0.75; crust.castShadow = true; g.add(crust);
 
       const top = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.75, 12), new THREE.MeshStandardMaterial({ color: 0x92400e, roughness: 0.5 }));
       top.rotation.z = Math.PI / 2; top.position.y = 1.3; g.add(top);
 
-      // Butter-Stück auf dem Laib
       const butter = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.08, 0.25), new THREE.MeshStandardMaterial({ color: 0xfef08a, roughness: 0.2 }));
-      butter.position.set(0, 1.62, 0);
-      g.add(butter);
+      butter.position.set(0, 1.62, 0); g.add(butter);
 
-      // Kochmütze
-      const hatBase = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.1, 12), new THREE.MeshStandardMaterial({ color: 0xf8fafc }));
-      hatBase.position.set(0.15, 1.65, 0);
-      g.add(hatBase);
-      const hatTop = new THREE.Mesh(new THREE.SphereGeometry(0.26, 10, 10), new THREE.MeshStandardMaterial({ color: 0xffffff }));
-      hatTop.position.set(0.15, 1.78, 0);
-      g.add(hatTop);
-
-      // Augen & Mund
       const eyeMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
       const e1 = new THREE.Mesh(new THREE.SphereGeometry(0.04, 6, 6), eyeMat);
       e1.position.set(-0.16, 0.9, 0.31);
-      const e2 = e1.clone();
-      e2.position.x = 0.16;
+      const e2 = e1.clone(); e2.position.x = 0.16;
       g.add(e1); g.add(e2);
-
-      const smile = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.02, 4, 8, Math.PI), eyeMat);
-      smile.position.set(0, 0.76, 0.31);
-      smile.rotation.z = Math.PI;
-      g.add(smile);
       return g;
     }
 
-    // 3. Pferd (Zaumzeug, Blesse, Ohren, Mähne, Schweif)
     function buildHorseModel() {
       const g = new THREE.Group();
       const fur = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.7 });
       const b = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.42, 1.2, 12), fur);
-      b.position.y = 0.7; g.add(b);
-
-      const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.1, 0.7, 8), new THREE.MeshStandardMaterial({ color: 0x1c1917 }));
-      tail.position.set(0, 0.5, -0.42);
-      tail.rotation.x = -0.3;
-      g.add(tail);
+      b.position.y = 0.7; b.castShadow = true; g.add(b);
 
       const h = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.45, 0.5), fur);
-      h.position.set(0, 1.45, 0.2); h.rotation.x = 0.35; g.add(h);
+      h.position.set(0, 1.45, 0.2); h.rotation.x = 0.35; h.castShadow = true; g.add(h);
 
-      // Weiße Blesse
       const blaze = new THREE.Mesh(new THREE.PlaneGeometry(0.08, 0.4), new THREE.MeshStandardMaterial({ color: 0xf8fafc }));
-      blaze.position.set(0, 1.48, 0.46);
-      blaze.rotation.x = 0.35;
-      g.add(blaze);
+      blaze.position.set(0, 1.48, 0.46); blaze.rotation.x = 0.35; g.add(blaze);
 
-      // Zaumzeug (Bridle)
-      const bridleMat = new THREE.MeshStandardMaterial({ color: 0x292524 });
-      const strap = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.05, 0.52), bridleMat);
-      strap.position.set(0, 1.42, 0.2);
-      strap.rotation.x = 0.35;
-      g.add(strap);
-
-      // Ohren
       const earMat = new THREE.MeshStandardMaterial({ color: 0x78350f });
       const ear1 = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.22, 6), earMat);
       ear1.position.set(-0.14, 1.76, 0.1);
@@ -1191,66 +1244,30 @@
       return g;
     }
 
-    // 4. Delfin (Zweifarbig, Fliegerbrille, Blasloch-Effekt, Fluken)
     function buildDolphinModel() {
       const g = new THREE.Group();
       const bMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.2 });
-      const whiteMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.3 });
-
       const body = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.34, 1.25, 14), bMat);
-      body.position.y = 0.75; g.add(body);
-
-      const belly = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.26, 1.2, 14), whiteMat);
-      belly.position.set(0, 0.75, 0.12);
-      belly.scale.set(0.9, 1, 0.4);
-      g.add(belly);
+      body.position.y = 0.75; body.castShadow = true; g.add(body);
 
       const head = new THREE.Mesh(new THREE.SphereGeometry(0.36, 14, 14), bMat);
       head.position.y = 1.4; g.add(head);
 
       const rostrum = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.4, 10), bMat);
-      rostrum.rotation.x = Math.PI / 2; rostrum.position.set(0, 1.35, 0.42);
-      g.add(rostrum);
+      rostrum.rotation.x = Math.PI / 2; rostrum.position.set(0, 1.35, 0.42); g.add(rostrum);
 
-      // Fliegerbrille
       const glasses = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.12, 0.15), new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.8 }));
-      glasses.position.set(0, 1.45, 0.3);
-      g.add(glasses);
-
-      // Horizontale Schwanzflosse (Fluke)
-      const fluke = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.05, 0.22), bMat);
-      fluke.position.set(0, 0.15, -0.2);
-      g.add(fluke);
-
-      const fin = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.38, 0.4), bMat);
-      fin.position.set(0, 1.0, -0.38); g.add(fin);
+      glasses.position.set(0, 1.45, 0.3); g.add(glasses);
       return g;
     }
 
-    // 5. 3-Bein-Grill (Deckelthermometer, Grillzange, Ascheteller)
     function buildGrillModel() {
       const g = new THREE.Group();
       const bowl = new THREE.Mesh(new THREE.SphereGeometry(0.48, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x991b1b, roughness: 0.3 }));
-      bowl.rotation.x = Math.PI; bowl.position.y = 1.05; g.add(bowl);
+      bowl.rotation.x = Math.PI; bowl.position.y = 1.05; bowl.castShadow = true; g.add(bowl);
 
       const lid = new THREE.Mesh(new THREE.SphereGeometry(0.46, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x991b1b, roughness: 0.3 }));
       lid.position.y = 1.15; g.add(lid);
-
-      // Thermometer
-      const thermo = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.03, 10), new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.9 }));
-      thermo.position.set(0, 1.55, 0.25);
-      thermo.rotation.x = 0.5;
-      g.add(thermo);
-
-      // Grillzange seitlich
-      const tongs = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.5, 0.08), new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.9 }));
-      tongs.position.set(0.52, 0.9, 0);
-      g.add(tongs);
-
-      // Ascheschale unten
-      const ashPlate = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.28, 0.06, 12), new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.8 }));
-      ashPlate.position.y = 0.45;
-      g.add(ashPlate);
 
       const mMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.8 });
       for (let i = 0; i < 3; i++) {
@@ -1448,7 +1465,7 @@
     }
 
     // ==========================================
-    // 8. HITSCAN
+    // 8. HITSCAN & WEAPON SWAY
     // ==========================================
     const raycaster = new THREE.Raycaster();
 
@@ -1458,8 +1475,16 @@
       shootCooldown = FIRE_INTERVAL;
 
       playShootSound();
-      cigWeapon.position.z += 0.05;
-      setTimeout(() => { cigWeapon.position.z -= 0.05; }, 50);
+
+      // Rückstoß der Arme
+      if (viewmodelGroup) {
+        viewmodelGroup.position.z += 0.06;
+        viewmodelGroup.rotation.x += 0.04;
+        setTimeout(() => {
+          viewmodelGroup.position.z -= 0.06;
+          viewmodelGroup.rotation.x -= 0.04;
+        }, 50);
+      }
 
       raycaster.setFromCamera({ x: 0, y: 0 }, camera);
       const hits = raycaster.intersectObjects([...obstacleMeshes, opponentHitbox], true);
@@ -1552,7 +1577,6 @@
       respawnBot();
       if (!isTouchDevice) document.body.requestPointerLock();
 
-      // Countdown starten, dann Timer-Takt
       startRoundCountdown(() => {
         botTimerInterval = setInterval(() => {
           botTimeLeft--;
@@ -1742,7 +1766,7 @@
     init3D();
 
     // ==========================================
-    // 11. MAIN LOOP & BEWEGUNG
+    // 11. MAIN LOOP & WEAPON BOBBING
     // ==========================================
     function animate() {
       requestAnimationFrame(animate);
@@ -1760,13 +1784,11 @@
           btnTouchDash.style.opacity = dashCooldown <= 0 ? '1' : '0.4';
         }
 
-        // Vertikale Gravitation & Sprung
         if (!isGrounded || velocityY !== 0) {
           velocityY -= GRAVITY * delta;
           camera.position.y += velocityY * delta;
         }
 
-        // Fester Boden-Clamp
         if (camera.position.y <= 1.6) {
           camera.position.y = 1.6;
           velocityY = 0;
@@ -1775,7 +1797,8 @@
           isGrounded = false;
         }
 
-        // Bewegung nur nach Countdown-Ende
+        let isMoving = false;
+
         if (canAct) {
           const yaw = camera.rotation.y;
           const fX = -Math.sin(yaw);
@@ -1798,7 +1821,10 @@
             0,
             fZ * inputZ + rZ * inputX
           );
-          if (moveDir.lengthSq() > 0.0001) moveDir.normalize();
+          if (moveDir.lengthSq() > 0.0001) {
+            moveDir.normalize();
+            isMoving = true;
+          }
 
           velocity.x -= velocity.x * 12.0 * delta;
           velocity.z -= velocity.z * 12.0 * delta;
@@ -1830,6 +1856,18 @@
           }
         } else {
           velocity.set(0, 0, 0);
+        }
+
+        // Weapon Bobbing (Natürliche Bewegung beim Laufen)
+        if (viewmodelGroup) {
+          if (isMoving && isGrounded) {
+            walkBobTimer += delta * 12;
+            viewmodelGroup.position.y = Math.sin(walkBobTimer) * 0.012;
+            viewmodelGroup.position.x = Math.cos(walkBobTimer * 0.5) * 0.01;
+          } else {
+            viewmodelGroup.position.y = THREE.MathUtils.lerp(viewmodelGroup.position.y, 0, delta * 8);
+            viewmodelGroup.position.x = THREE.MathUtils.lerp(viewmodelGroup.position.x, 0, delta * 8);
+          }
         }
 
         if (isBotMode) {
