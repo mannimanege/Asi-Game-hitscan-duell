@@ -91,7 +91,6 @@
     #crosshair { position: absolute; top: 50%; left: 50%; width: 6px; height: 6px; transform: translate(-50%, -50%); border: 2px solid #000; border-radius: 50%; background: #22c55e; }
     #hitmarker { position: absolute; top: 50%; left: 50%; width: 24px; height: 24px; transform: translate(-50%, -50%); border: 3px solid #22c55e; border-radius: 50%; opacity: 0; transition: opacity 0.08s; pointer-events: none; }
 
-    /* ASI-MODE INTRO */
     #asimode-overlay {
       position: absolute;
       top: 35%;
@@ -318,6 +317,7 @@
     function playCorkPopSound() {
       if (!audioCtx) return;
       const t = audioCtx.currentTime;
+
       const osc = audioCtx.createOscillator();
       const popGain = audioCtx.createGain();
       osc.type = 'sine';
@@ -462,7 +462,7 @@
     let coffinGroup = null;
     let coffinLid = null;
     let coffinBodyMesh = null;
-    let coffinCharVisuals = {}; // Speichert die im Sarg liegenden Charakter-Varianten
+    let coffinCharVisuals = {};
     let airborneJoint = null;
     let hellFireLight = null;
 
@@ -769,7 +769,6 @@
       return new THREE.CanvasTexture(c);
     }
 
-    // Wegweiser-Textur mit genügend linkem Innenabstand
     function createSignpostArrowTexture(text) {
       const c = document.createElement('canvas');
       c.width = 384; c.height = 64;
@@ -784,7 +783,7 @@
       ctx.font = 'bold 25px sans-serif';
       ctx.textBaseline = 'middle';
       ctx.textAlign = 'left';
-      ctx.fillText(text, 28, 32); // Großzügiger Einzug
+      ctx.fillText(text, 28, 32);
       ctx.textAlign = 'right';
       ctx.fillText('➤', 362, 32);
       return new THREE.CanvasTexture(c);
@@ -1151,7 +1150,6 @@
       obstacleColliders.push({ minX: x - 0.5, maxX: x + 0.5, minZ: z - 0.5, maxZ: z + 0.5 });
     }
 
-    // Wegweiser: Schilder mit translateX(0.96) versetzt, damit kein Buchstabe im Pfosten steckt
     function spawnDirectionalSignpost() {
       const postGroup = new THREE.Group();
       const woodMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.85 });
@@ -1177,7 +1175,7 @@
         );
         signMesh.position.set(0, s.y, 0);
         signMesh.rotation.y = s.rot;
-        signMesh.translateX(0.96); // Beginn außerhalb des Pfostenradius
+        signMesh.translateX(0.96);
         signMesh.castShadow = true;
         postGroup.add(signMesh);
       });
@@ -1413,12 +1411,11 @@
       });
     }
 
-    // Hilfsfunktion: Wandelt ein aufrechtes Charaktermodell in eine liegende Version für den Sarg um
     function createLyingCharModel(charBuilder) {
       const g = new THREE.Group();
       const model = charBuilder();
-      model.rotation.x = -Math.PI / 2; // Liegt flach auf dem Rücken
-      model.position.set(0, 0.32, 0.82); // Kopf liegt genau auf dem pinken Kissen bei Z = -0.75
+      model.rotation.x = -Math.PI / 2;
+      model.position.set(0, 0.32, 0.82);
       g.add(model);
       return g;
     }
@@ -1427,8 +1424,8 @@
       coffinGroup = new THREE.Group();
 
       const woodMat = new THREE.MeshStandardMaterial({ color: 0x3b1808, roughness: 0.4 });
-      const pinkVelvetMat = new THREE.MeshStandardMaterial({ color: 0xff1493, roughness: 0.55 }); // Knalliges Shocking-Pink
-      const pinkPillowMat = new THREE.MeshStandardMaterial({ color: 0xf472b6, roughness: 0.4 }); // Weiches Seiden-Pink
+      const pinkVelvetMat = new THREE.MeshStandardMaterial({ color: 0xff1493, roughness: 0.55 });
+      const pinkPillowMat = new THREE.MeshStandardMaterial({ color: 0xf472b6, roughness: 0.4 });
       const goldMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.95, roughness: 0.2 });
 
       coffinBodyMesh = new THREE.Group();
@@ -1436,17 +1433,14 @@
       bottom.position.y = 0.24;
       coffinBodyMesh.add(bottom);
 
-      // Pinke Innenauskleidung
       const interior = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.40, 2.18), pinkVelvetMat);
       interior.position.y = 0.3;
       coffinBodyMesh.add(interior);
 
-      // Pinkes Seidenkissen für den Kopf
       const pillow = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.12, 0.42), pinkPillowMat);
       pillow.position.set(0, 0.36, -0.76);
       coffinBodyMesh.add(pillow);
 
-      // Goldene Tragegriffe
       for (let z of [-0.6, 0, 0.6]) {
         for (let x of [-0.51, 0.51]) {
           const handle = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.26), goldMat);
@@ -1456,7 +1450,6 @@
       }
       coffinGroup.add(coffinBodyMesh);
 
-      // Klappbarer Deckel
       coffinLid = new THREE.Group();
       coffinLid.position.set(-0.49, 0.48, 0);
 
@@ -1471,7 +1464,6 @@
       coffinLid.add(cross1); coffinLid.add(cross2);
       coffinGroup.add(coffinLid);
 
-      // 5 Liegende Charaktermodelle im Sarg
       coffinCharVisuals['marley'] = createLyingCharModel(buildMarleyModel);
       coffinCharVisuals['bread'] = createLyingCharModel(buildBreadModel);
       coffinCharVisuals['horse'] = createLyingCharModel(buildHorseModel);
@@ -1480,7 +1472,6 @@
 
       Object.values(coffinCharVisuals).forEach(m => coffinGroup.add(m));
 
-      // Fliegender dicker Joint
       airborneJoint = new THREE.Group();
       const jPaper = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.03, 0.6, 10), new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.8 }));
       jPaper.rotation.x = Math.PI / 2;
@@ -1510,16 +1501,14 @@
       coffinGroup.rotation.y = camera.rotation.y;
       coffinGroup.visible = true;
 
-      // Genau deinen gewählten Charakter im Sarg sichtbar schalten
       Object.keys(coffinCharVisuals).forEach(k => {
         coffinCharVisuals[k].visible = (k === selectedChar);
       });
 
-      // Deckel weit offen
       coffinLid.rotation.z = -Math.PI * 0.45;
 
-      // Joint startet hoch in der Luft
-      airborneJoint.position.set(camera.position.x, 5.0, camera.position.z - 2.5);
+      const jointSpawn = coffinGroup.localToWorld(new THREE.Vector3(0, 4.5, 2.2));
+      airborneJoint.position.copy(jointSpawn);
       airborneJoint.visible = true;
 
       hellFireLight.position.set(camera.position.x, 0.5, camera.position.z);
@@ -1533,20 +1522,50 @@
     function updateDeathSequence(delta) {
       deathTimer += delta;
 
-      const camTarget = new THREE.Vector3(
-        coffinGroup.position.x + Math.sin(coffinGroup.rotation.y) * 4.2,
-        4.8,
-        coffinGroup.position.z + Math.cos(coffinGroup.rotation.y) * 4.2
-      );
-      camera.position.lerp(camTarget, delta * 2.5);
-      camera.lookAt(coffinGroup.position.x, 0.4, coffinGroup.position.z);
+      // Anti-Clipping-Kamera: Vektor IMMER zur Arena-Mitte (0,0) ausrichten
+      const coffinPos = coffinGroup.position;
+      const toCenter = new THREE.Vector2(-coffinPos.x, -coffinPos.z);
+      const distToCenter = toCenter.length();
+      if (distToCenter > 0.001) {
+        toCenter.normalize();
+      } else {
+        toCenter.set(0, 1);
+      }
 
-      // Phase 1: Joint fliegt in den Mund des liegenden Charakters
+      // Kamera steht 3.2m versetzt in Richtung Map-Zentrum und schaut nach außen auf den Sarg
+      let targetCamX = coffinPos.x + toCenter.x * 3.2;
+      let targetCamZ = coffinPos.z + toCenter.y * 3.2;
+      let targetCamY = 4.4;
+
+      // Hard Clamp: Garantiert mindestens 3m Abstand zur 18m-Außenwand
+      targetCamX = Math.max(-15.0, Math.min(15.0, targetCamX));
+      targetCamZ = Math.max(-15.0, Math.min(15.0, targetCamZ));
+
+      const camTarget = new THREE.Vector3(targetCamX, targetCamY, targetCamZ);
+      const coffinFocus = new THREE.Vector3(coffinPos.x, 0.4, coffinPos.z);
+
+      // Sichtlinien-Check gegen Hindernisse (Raycast)
+      const losDir = new THREE.Vector3().subVectors(camTarget, coffinFocus);
+      const losDist = losDir.length();
+      losDir.normalize();
+
+      const losRay = new THREE.Raycaster(coffinFocus, losDir, 0.2, losDist);
+      const occluders = losRay.intersectObjects(obstacleMeshes, true);
+
+      // Falls ein Objekt die Sicht versperrt: Sofortige steile Draufsicht
+      if (occluders.length > 0 && occluders[0].distance < losDist - 0.2) {
+        camTarget.set(coffinPos.x + toCenter.x * 0.5, 5.2, coffinPos.z + toCenter.y * 0.5);
+      }
+
+      camera.position.lerp(camTarget, delta * 3.0);
+      camera.lookAt(coffinFocus.x, coffinFocus.y, coffinFocus.z);
+
+      // Phase 1: Joint fliegt akkurat in den Mund des Charakters
       if (deathTimer < 1.6) {
         lidHasSlammed = false;
         const progress = deathTimer / 1.6;
-        const targetMouth = new THREE.Vector3(coffinGroup.position.x, 0.42, coffinGroup.position.z - 0.72);
-        const startAir = new THREE.Vector3(coffinGroup.position.x, 4.5, coffinGroup.position.z + 2.0);
+        const targetMouth = coffinGroup.localToWorld(new THREE.Vector3(0, 0.42, -0.72));
+        const startAir = coffinGroup.localToWorld(new THREE.Vector3(0, 4.5, 2.2));
 
         airborneJoint.position.lerpVectors(startAir, targetMouth, progress);
         airborneJoint.position.y += Math.sin(progress * Math.PI) * 1.8;
@@ -1560,7 +1579,7 @@
           particles.push({ sprite: puff, vel: new THREE.Vector3(0, 0.8, 0), rotVel: 0, life: 0.5, maxLife: 0.6 });
         }
       } 
-      // Phase 2: Deckel knallt zu
+      // Phase 2: Deckel schlägt mit Wucht zu
       else if (deathTimer >= 1.6 && deathTimer < 2.3) {
         airborneJoint.visible = false;
         const lidProgress = (deathTimer - 1.6) / 0.7;
@@ -1797,7 +1816,6 @@
       const totalDist = flightDir.length();
       flightDir.normalize();
 
-      // Um weitere 5 m/s beschleunigt: 34.0 m/s
       const speed = 34.0;
       const corkVelocity = flightDir.clone().multiplyScalar(speed + 20.0).add(new THREE.Vector3(
         (Math.random() - 0.5) * 4,
