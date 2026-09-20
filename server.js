@@ -134,12 +134,16 @@ io.on('connection', (socket) => {
     games[gameId] = gameData;
     io.emit('lobby-update', getLobbyList());
 
+    const p1Spawn = { x: 0, y: 1.6, z: 14, rotY: Math.PI };
+    const p2Spawn = { x: 0, y: 1.6, z: -14, rotY: 0 };
+
     io.to(p1.id).emit('match-start', {
       gameId,
       role: 'p1',
       opponentName: p2.name,
       opponentId: p2.id,
-      spawn: { x: 0, y: 1.6, z: 14, rotY: Math.PI }
+      spawn: p1Spawn,
+      oppSpawn: p2Spawn
     });
 
     io.to(p2.id).emit('match-start', {
@@ -147,7 +151,8 @@ io.on('connection', (socket) => {
       role: 'p2',
       opponentName: p1.name,
       opponentId: p1.id,
-      spawn: { x: 0, y: 1.6, z: -14, rotY: 0 }
+      spawn: p2Spawn,
+      oppSpawn: p1Spawn
     });
 
     gameData.interval = setInterval(() => {
@@ -161,7 +166,6 @@ io.on('connection', (socket) => {
     }, 1000);
   });
 
-  // WebRTC Signaling Relay
   socket.on('voice-signal', (data) => {
     const player = players[socket.id];
     if (!player || !player.gameId) return;
@@ -182,7 +186,6 @@ io.on('connection', (socket) => {
     io.to(opponentId).emit('opponent-moved', data);
   });
 
-  // Treffer-Verarbeitung mit Kill-Lock und synchronem Runden-Resume
   socket.on('hit-target', (targetId) => {
     const player = players[socket.id];
     if (!player || !player.gameId) return;
@@ -194,15 +197,12 @@ io.on('connection', (socket) => {
     game.scores[socket.id] += 1;
     if (leaderboard[player.name]) leaderboard[player.name].kills += 1;
 
-    // Punktestand synchronisieren
     io.to(game.p1).emit('score-update', { myScore: game.scores[game.p1], oppScore: game.scores[game.p2] });
     io.to(game.p2).emit('score-update', { myScore: game.scores[game.p2], oppScore: game.scores[game.p1] });
 
-    // Todes- und Atompilz-Event an beide Clients
     io.to(game.p1).emit('player-killed', { killerId: socket.id, victimId: targetId });
     io.to(game.p2).emit('player-killed', { killerId: socket.id, victimId: targetId });
 
-    // Exakt nach Ablauf der 4.2s Todessequenz beide Spieler zeitgleich neu starten
     setTimeout(() => {
       if (!games[game.id]) return;
 
