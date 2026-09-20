@@ -11,35 +11,40 @@
     .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; }
     .hidden { display: none !important; }
 
-    .panel { background: rgba(22, 25, 35, 0.95); border: 1px solid #2d3348; padding: 24px; border-radius: 8px; width: 90%; max-width: 440px; box-shadow: 0 10px 30px rgba(0,0,0,0.7); }
-    h1 { font-size: 20px; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px; color: #f5a623; }
-    h2 { font-size: 14px; margin: 16px 0 8px 0; text-transform: uppercase; color: #8a93a8; border-bottom: 1px solid #2d3348; padding-bottom: 4px; }
-    input[type="text"] { width: 100%; padding: 12px; background: #12141c; border: 1px solid #3b425b; border-radius: 4px; color: #fff; font-size: 15px; outline: none; margin-bottom: 12px; }
+    .panel { background: rgba(22, 25, 35, 0.95); border: 1px solid #2d3348; padding: 20px; border-radius: 8px; width: 90%; max-width: 440px; box-shadow: 0 10px 30px rgba(0,0,0,0.7); max-height: 90vh; overflow-y: auto; }
+    h1 { font-size: 20px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; color: #f5a623; }
+    h2 { font-size: 13px; margin: 14px 0 6px 0; text-transform: uppercase; color: #8a93a8; border-bottom: 1px solid #2d3348; padding-bottom: 4px; }
+    input[type="text"] { width: 100%; padding: 10px; background: #12141c; border: 1px solid #3b425b; border-radius: 4px; color: #fff; font-size: 15px; outline: none; margin-bottom: 10px; }
     input[type="text"]:focus { border-color: #f5a623; }
-    button { width: 100%; padding: 12px; background: #f5a623; border: none; border-radius: 4px; color: #000; font-weight: 700; cursor: pointer; text-transform: uppercase; }
+    button { width: 100%; padding: 10px; background: #f5a623; border: none; border-radius: 4px; color: #000; font-weight: 700; cursor: pointer; text-transform: uppercase; }
     button:hover { background: #e09418; }
     button.secondary { background: #2d3348; color: #fff; margin-top: 8px; }
-    button.bot-btn { background: #2563eb; color: #fff; margin-top: 14px; }
+    button.bot-btn { background: #2563eb; color: #fff; margin-top: 10px; }
     button.bot-btn:hover { background: #1d4ed8; }
 
-    ul { list-style: none; max-height: 120px; overflow-y: auto; margin-bottom: 8px; }
-    li { display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #12141c; margin-bottom: 4px; border-radius: 4px; font-size: 13px; }
-    li button { width: auto; padding: 6px 12px; font-size: 11px; }
+    /* Charakterauswahl */
+    .char-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; }
+    .char-btn { background: #181b26; border: 2px solid #333b52; color: #cbd5e1; padding: 8px 4px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; text-transform: none; text-align: center; }
+    .char-btn.active { border-color: #f5a623; background: #2e2617; color: #f5a623; }
 
-    /* In-Game HUD */
+    ul { list-style: none; max-height: 100px; overflow-y: auto; margin-bottom: 6px; }
+    li { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; background: #12141c; margin-bottom: 4px; border-radius: 4px; font-size: 12px; }
+    li button { width: auto; padding: 4px 10px; font-size: 11px; }
+
+    /* HUD */
     #hud { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
     #crosshair { position: absolute; top: 50%; left: 50%; width: 10px; height: 10px; transform: translate(-50%, -50%); border: 2px solid #000; border-radius: 50%; background: rgba(255,255,255,0.8); }
-    #stats-bar { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); display: flex; gap: 20px; font-size: 18px; font-weight: 800; background: rgba(18, 20, 29, 0.85); padding: 8px 18px; border-radius: 6px; border: 1px solid #444; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    #stats-bar { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); display: flex; gap: 20px; font-size: 18px; font-weight: 800; background: rgba(18, 20, 29, 0.85); padding: 8px 18px; border-radius: 6px; border: 1px solid #444; white-space: nowrap; }
     .hud-timer { color: #f5a623; }
     .hud-score { color: #4ade80; }
     .hud-opp-score { color: #ef4444; }
-    #hitmarker { position: absolute; top: 50%; left: 50%; width: 24px; height: 24px; transform: translate(-50%, -50%); border: 3px solid #ff0055; border-radius: 50%; opacity: 0; transition: opacity 0.08s; pointer-events: none; }
+    #hitmarker { position: absolute; top: 50%; left: 50%; width: 24px; height: 24px; transform: translate(-50%, -50%); border: 3px solid #22c55e; border-radius: 50%; opacity: 0; transition: opacity 0.08s; pointer-events: none; }
 
-    /* Touch Controls */
+    /* Mobile Touch */
     #touch-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 6; pointer-events: none; }
-    #joystick-base { position: absolute; left: 25px; bottom: 25px; width: 110px; height: 110px; background: rgba(0,0,0,0.25); border: 2px solid rgba(255,255,255,0.6); border-radius: 50%; pointer-events: auto; backdrop-filter: blur(2px); }
-    #joystick-knob { position: absolute; top: 50%; left: 50%; width: 44px; height: 44px; background: #f5a623; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; box-shadow: 0 2px 8px rgba(0,0,0,0.4); }
-    #btn-touch-fire { position: absolute; right: 25px; bottom: 35px; width: 80px; height: 80px; border-radius: 50%; background: #ef4444; border: 3px solid #fff; color: #fff; font-size: 14px; font-weight: 900; pointer-events: auto; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+    #joystick-base { position: absolute; left: 25px; bottom: 25px; width: 110px; height: 110px; background: rgba(0,0,0,0.25); border: 2px solid rgba(255,255,255,0.6); border-radius: 50%; pointer-events: auto; }
+    #joystick-knob { position: absolute; top: 50%; left: 50%; width: 44px; height: 44px; background: #f5a623; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; }
+    #btn-touch-fire { position: absolute; right: 25px; bottom: 35px; width: 80px; height: 80px; border-radius: 50%; background: #ef4444; border: 3px solid #fff; color: #fff; font-size: 13px; font-weight: 900; pointer-events: auto; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
     #btn-touch-fire:active { background: #b91c1c; transform: scale(0.95); }
   </style>
 </head>
@@ -59,6 +64,15 @@
     <div class="panel">
       <h1>Lobby</h1>
       <div>Angemeldet als: <strong id="my-name-display" style="color: #f5a623;"></strong></div>
+
+      <h2>Wähle deinen Charakter</h2>
+      <div class="char-grid">
+        <button class="char-btn active" data-char="marley">Bob Marley</button>
+        <button class="char-btn" data-char="bread">Brot</button>
+        <button class="char-btn" data-char="horse">Pferd</button>
+        <button class="char-btn" data-char="dolphin">Delfin</button>
+        <button class="char-btn" data-char="grill">3-Bein-Grill</button>
+      </div>
 
       <button id="btn-start-bot" class="bot-btn">Gegen Bot spielen (Warmup)</button>
 
@@ -80,7 +94,7 @@
     </div>
   </div>
 
-  <!-- Screen 4: Rundenende -->
+  <!-- Screen 4: Game Over -->
   <div id="screen-gameover" class="screen hidden" style="background: rgba(0,0,0,0.85); z-index: 20;">
     <div class="panel" style="text-align: center;">
       <h1 id="gameover-title">Runde Beendet</h1>
@@ -102,9 +116,7 @@
 
   <!-- Touch Controls -->
   <div id="touch-layer" class="hidden">
-    <div id="joystick-base">
-      <div id="joystick-knob"></div>
-    </div>
+    <div id="joystick-base"><div id="joystick-knob"></div></div>
     <div id="btn-touch-fire">FEUER</div>
   </div>
 
@@ -118,6 +130,7 @@
     let myName = '';
     let myId = '';
     let pendingChallengerId = null;
+    let selectedChar = 'marley';
 
     let inGame = false;
     let isBotMode = false;
@@ -127,12 +140,19 @@
     let botScoreEnemy = 0;
 
     let opponentId = null;
-    let opponentMesh = null;
+    let opponentRoot = null;
+    let opponentHitbox = null;
+    let opponentVisuals = {};
+    let currentOpponentChar = 'marley';
+
     let camera, scene, renderer;
     let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
     const velocity = new THREE.Vector3();
     const direction = new THREE.Vector3();
     const clock = new THREE.Clock();
+
+    const particles = [];
+    let leafTexture = null;
 
     const screenLogin = document.getElementById('screen-login');
     const screenLobby = document.getElementById('screen-lobby');
@@ -146,7 +166,16 @@
 
     const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
-    // Lobby
+    // Charakterauswahl
+    document.querySelectorAll('.char-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.char-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedChar = btn.getAttribute('data-char');
+      });
+    });
+
+    // Login & Lobby
     document.getElementById('btn-login').addEventListener('click', () => {
       const input = document.getElementById('username-input').value.trim();
       if (!input) return;
@@ -192,7 +221,7 @@
 
     socket.on('challenge-received', (data) => {
       pendingChallengerId = data.challengerId;
-      document.getElementById('challenge-text').innerText = `${data.challengerName} fordert dich zum 1v1 Duell heraus!`;
+      document.getElementById('challenge-text').innerText = `${data.challengerName} fordert dich zum Duell heraus!`;
       screenChallenge.classList.remove('hidden');
     });
 
@@ -218,10 +247,56 @@
       if (document.pointerLockElement) document.exitPointerLock();
     };
 
-    // Three.js Szene initialisieren
+    // Textur für Marihuanablätter prozedural zeichnen
+    function createMarijuanaLeafTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 128;
+      canvas.height = 128;
+      const ctx = canvas.getContext('2d');
+
+      ctx.clearRect(0, 0, 128, 128);
+      ctx.fillStyle = '#16a34a';
+
+      ctx.save();
+      ctx.translate(64, 112);
+
+      // Fünf gezackte Blattfinger
+      const leaves = [
+        { rot: -0.65, length: 50, width: 7 },
+        { rot: -0.32, length: 78, width: 8.5 },
+        { rot: 0,     length: 98, width: 9.5 },
+        { rot: 0.32,  length: 78, width: 8.5 },
+        { rot: 0.65,  length: 50, width: 7 }
+      ];
+
+      leaves.forEach(l => {
+        ctx.save();
+        ctx.rotate(l.rot);
+        ctx.beginPath();
+        ctx.ellipse(0, -l.length / 2, l.width, l.length / 2, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
+
+      // Blattstiel
+      ctx.strokeStyle = '#15803d';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(0, 14);
+      ctx.stroke();
+
+      ctx.restore();
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.needsUpdate = true;
+      return tex;
+    }
+
+    // Three.js Hauptszene
     function init3D() {
       scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x87ceeb); // Strahlend blauer Himmel
+      scene.background = new THREE.Color(0x87ceeb);
       scene.fog = new THREE.Fog(0x87ceeb, 45, 90);
 
       camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -231,7 +306,6 @@
       renderer.shadowMap.enabled = true;
       document.getElementById('game-container').appendChild(renderer.domElement);
 
-      // Lichtgestaltung: Weiches Himmelslicht verhindert tiefschwarze Schatten
       const hemiLight = new THREE.HemisphereLight(0xffffff, 0x94a3b8, 0.75);
       hemiLight.position.set(0, 50, 0);
       scene.add(hemiLight);
@@ -241,7 +315,7 @@
       sunLight.castShadow = true;
       scene.add(sunLight);
 
-      // Arena-Boden: Helle Sandstein-Optik mit klarem Gitter für Bewegungskontrolle
+      // Arena Boden
       const floorGeo = new THREE.PlaneGeometry(36, 36);
       const floorMat = new THREE.MeshStandardMaterial({ color: 0xd6cbb8, roughness: 0.7 });
       const floor = new THREE.Mesh(floorGeo, floorMat);
@@ -253,164 +327,415 @@
       grid.position.y = 0.01;
       scene.add(grid);
 
-      // Wände mit Himmelsrichtungs-Farbcodierung für sofortige Orientierung
+      // Wände
       const wallMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.5 });
-      
-      const makeWall = (w, h, d, x, y, z, accentColor) => {
+      const makeWall = (w, h, d, x, y, z, color) => {
         const group = new THREE.Group();
-        const wall = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat);
-        group.add(wall);
-
-        // Farbiger Akzentstreifen
-        const accentMat = new THREE.MeshBasicMaterial({ color: accentColor });
-        const stripW = w > d ? w : d;
-        const strip = new THREE.Mesh(new THREE.BoxGeometry(w > d ? w : 1.05, 0.6, d > w ? d : 1.05), accentMat);
+        group.add(new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat));
+        const strip = new THREE.Mesh(new THREE.BoxGeometry(w > d ? w : 1.05, 0.6, d > w ? d : 1.05), new THREE.MeshBasicMaterial({ color }));
         strip.position.y = 1.0;
         group.add(strip);
-
         group.position.set(x, y, z);
         scene.add(group);
       };
 
-      makeWall(36, 4.5, 1, 0, 2.25, -18, 0x2563eb); // Nordwand: Blau
-      makeWall(36, 4.5, 1, 0, 2.25, 18, 0xea580c);  // Südwand: Orange
-      makeWall(1, 4.5, 36, -18, 2.25, 0, 0x16a34a); // Westwand: Grün
-      makeWall(1, 4.5, 36, 18, 2.25, 0, 0x9333ea);  // Ostwand: Violett
+      makeWall(36, 4.5, 1, 0, 2.25, -18, 0x2563eb);
+      makeWall(36, 4.5, 1, 0, 2.25, 18, 0xea580c);
+      makeWall(1, 4.5, 36, -18, 2.25, 0, 0x16a34a);
+      makeWall(1, 4.5, 36, 18, 2.25, 0, 0x9333ea);
 
       spawnMapProps();
-      setupWurstWeapon();
-      setupOpponentMesh();
+      setupCigaretteWeapon();
+      setupOpponentActor();
+
+      leafTexture = createMarijuanaLeafTexture();
 
       window.addEventListener('resize', onWindowResize);
       setupControls();
       setupTouchControls();
     }
 
-    // Hindernisse
     function spawnMapProps() {
-      // 1. Bierflasche
+      // Bierflasche
       const bottleGroup = new THREE.Group();
       const bottleMat = new THREE.MeshStandardMaterial({ color: 0x451a03, roughness: 0.2 });
-      const capMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.8, roughness: 0.2 });
-      
-      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 3.2, 16), bottleMat);
-      body.position.y = 1.6;
-      bottleGroup.add(body);
-
-      const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.7, 1.2, 16), bottleMat);
-      neck.position.y = 3.6;
-      bottleGroup.add(neck);
-
-      const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.2, 16), capMat);
+      const b1 = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 3.2, 16), bottleMat);
+      b1.position.y = 1.6;
+      bottleGroup.add(b1);
+      const b2 = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.7, 1.2, 16), bottleMat);
+      b2.position.y = 3.6;
+      bottleGroup.add(b2);
+      const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.2, 16), new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.8 }));
       cap.position.y = 4.3;
       bottleGroup.add(cap);
-
       bottleGroup.position.set(-6, 0, -4);
       scene.add(bottleGroup);
 
-      // 2. Espresso Martini Glas
+      // Martini Glas
       const martiniGroup = new THREE.Group();
-      const glassMat = new THREE.MeshStandardMaterial({ color: 0x271306, roughness: 0.1, transparent: true, opacity: 0.9 });
-      const metalMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.6, roughness: 0.3 });
-
-      const base = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.1, 16), metalMat);
+      const stemMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.6 });
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.1, 16), stemMat);
       base.position.y = 0.05;
       martiniGroup.add(base);
-
-      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 2.5, 12), metalMat);
+      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 2.5, 12), stemMat);
       stem.position.y = 1.3;
       martiniGroup.add(stem);
-
-      const cone = new THREE.Mesh(new THREE.ConeGeometry(1.8, 1.6, 16, 1, true), glassMat);
+      const cone = new THREE.Mesh(new THREE.ConeGeometry(1.8, 1.6, 16, 1, true), new THREE.MeshStandardMaterial({ color: 0x271306, transparent: true, opacity: 0.9 }));
       cone.position.y = 3.1;
       cone.rotation.x = Math.PI;
       martiniGroup.add(cone);
-
-      const bean = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 8), new THREE.MeshStandardMaterial({ color: 0x110804 }));
-      bean.scale.set(1.5, 0.8, 1);
-      bean.position.set(0, 3.7, 0);
-      martiniGroup.add(bean);
-
       martiniGroup.position.set(6, 0, 4);
       scene.add(martiniGroup);
 
-      // 3. Pommes-Tüte
+      // Pommes-Tüte
       const friesGroup = new THREE.Group();
-      const boxMat = new THREE.MeshStandardMaterial({ color: 0xdc2626 });
-      const fryMat = new THREE.MeshStandardMaterial({ color: 0xfde047, roughness: 0.4 });
-
-      const bag = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.4, 1.4), boxMat);
+      const bag = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.4, 1.4), new THREE.MeshStandardMaterial({ color: 0xdc2626 }));
       bag.position.y = 1.2;
       friesGroup.add(bag);
-
+      const fryMat = new THREE.MeshStandardMaterial({ color: 0xfde047 });
       for (let i = 0; i < 7; i++) {
         const fry = new THREE.Mesh(new THREE.BoxGeometry(0.22, 1.8, 0.22), fryMat);
         fry.position.set((Math.random() - 0.5) * 1.4, 2.2, (Math.random() - 0.5) * 0.8);
-        fry.rotation.set((Math.random() - 0.5) * 0.3, (Math.random() - 0.5) * 0.3, (Math.random() - 0.5) * 0.3);
         friesGroup.add(fry);
       }
       friesGroup.position.set(0, 0, 0);
       scene.add(friesGroup);
     }
 
-    // Waffe
-    let wurstGun;
-    function setupWurstWeapon() {
-      wurstGun = new THREE.Group();
-      const wurstMat = new THREE.MeshStandardMaterial({ color: 0x9a3412, roughness: 0.35 });
-      const senfMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.1 });
+    // Waffe: Rauchende Zigarette
+    let cigWeapon;
+    let smokePuffs = [];
+    function setupCigaretteWeapon() {
+      cigWeapon = new THREE.Group();
 
-      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.065, 0.7, 12), wurstMat);
-      body.rotation.x = Math.PI / 2;
-      wurstGun.add(body);
+      // Weißes Papier
+      const paperMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.6 });
+      const paper = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.45, 12), paperMat);
+      paper.rotation.x = Math.PI / 2;
+      cigWeapon.add(paper);
 
-      const cap1 = new THREE.Mesh(new THREE.SphereGeometry(0.065, 8, 8), wurstMat);
-      cap1.position.z = 0.35;
-      wurstGun.add(cap1);
+      // Filter
+      const filterMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.8 });
+      const filter = new THREE.Mesh(new THREE.CylinderGeometry(0.0245, 0.0245, 0.16, 12), filterMat);
+      filter.rotation.x = Math.PI / 2;
+      filter.position.z = 0.26;
+      cigWeapon.add(filter);
 
-      const cap2 = new THREE.Mesh(new THREE.SphereGeometry(0.065, 8, 8), wurstMat);
-      cap2.position.z = -0.35;
-      wurstGun.add(cap2);
+      // Asche und brennende Glut
+      const ashMat = new THREE.MeshStandardMaterial({ color: 0x52525b, roughness: 0.9 });
+      const ash = new THREE.Mesh(new THREE.CylinderGeometry(0.023, 0.024, 0.04, 12), ashMat);
+      ash.rotation.x = Math.PI / 2;
+      ash.position.z = -0.24;
+      cigWeapon.add(ash);
 
-      const senf = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.02, 0.5), senfMat);
-      senf.position.set(0, 0.07, 0);
-      wurstGun.add(senf);
+      const glowMat = new THREE.MeshBasicMaterial({ color: 0xff3b00 });
+      const glowTip = new THREE.Mesh(new THREE.SphereGeometry(0.022, 8, 8), glowMat);
+      glowTip.position.z = -0.26;
+      cigWeapon.add(glowTip);
 
-      wurstGun.position.set(0.3, -0.25, -0.5);
-      camera.add(wurstGun);
+      cigWeapon.position.set(0.28, -0.2, -0.42);
+      camera.add(cigWeapon);
       scene.add(camera);
+
+      // Initialer Rauchpartikel-Pool für die Waffe
+      for (let i = 0; i < 8; i++) {
+        const p = new THREE.Mesh(
+          new THREE.SphereGeometry(0.018, 6, 6),
+          new THREE.MeshBasicMaterial({ color: 0xe2e8f0, transparent: true, opacity: 0.5 })
+        );
+        p.visible = false;
+        scene.add(p);
+        smokePuffs.push({ mesh: p, life: 0 });
+      }
     }
 
-    // Gegner: Hoher Kontrast durch Neon-Crimson mit Eigenleuchten und Visier
-    function setupOpponentMesh() {
-      opponentMesh = new THREE.Group();
-      
-      const oppMat = new THREE.MeshStandardMaterial({ 
-        color: 0xff0055, 
-        emissive: 0x990022, 
-        emissiveIntensity: 0.6,
-        roughness: 0.3 
+    function updateCigaretteSmoke(delta) {
+      if (!cigWeapon) return;
+
+      const tipWorldPos = new THREE.Vector3();
+      cigWeapon.localToWorld(tipWorldPos.set(0, 0, -0.26));
+
+      smokePuffs.forEach(sp => {
+        if (!sp.mesh.visible && Math.random() < 0.25) {
+          sp.mesh.position.copy(tipWorldPos);
+          sp.mesh.visible = true;
+          sp.life = 1.0;
+          sp.mesh.scale.set(1, 1, 1);
+        } else if (sp.mesh.visible) {
+          sp.life -= delta * 1.8;
+          sp.mesh.position.y += delta * 0.35;
+          sp.mesh.position.x += (Math.random() - 0.5) * delta * 0.1;
+          const scale = 1.0 + (1.0 - sp.life) * 2.5;
+          sp.mesh.scale.set(scale, scale, scale);
+          sp.mesh.material.opacity = sp.life * 0.45;
+
+          if (sp.life <= 0) {
+            sp.mesh.visible = false;
+          }
+        }
       });
-
-      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 1.4, 14), oppMat);
-      body.position.y = 0.7;
-      opponentMesh.add(body);
-
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.38, 14, 14), oppMat);
-      head.position.y = 1.6;
-      opponentMesh.add(head);
-
-      // Neongelbes Leuchtvisier für sofortiges Erfassen der Blickrichtung
-      const visorMat = new THREE.MeshBasicMaterial({ color: 0x00ffea });
-      const visor = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.12, 0.3), visorMat);
-      visor.position.set(0, 1.65, 0.28);
-      opponentMesh.add(visor);
-
-      opponentMesh.position.set(0, -100, 0);
-      scene.add(opponentMesh);
     }
 
-    // Steuerung PC
+    // Aufbau der 5 Charaktermodelle
+    function setupOpponentActor() {
+      opponentRoot = new THREE.Group();
+
+      // Unsichtbare Hitbox: Identischer Zylinder für 100% faire Wettbewerbsbedingungen
+      const hitGeo = new THREE.CylinderGeometry(0.48, 0.48, 1.8, 12);
+      const hitMat = new THREE.MeshBasicMaterial({ visible: false, wireframe: true });
+      opponentHitbox = new THREE.Mesh(hitGeo, hitMat);
+      opponentHitbox.position.y = 0.9;
+      opponentRoot.add(opponentHitbox);
+
+      // Visuelle Modelle
+      opponentVisuals['marley'] = buildMarleyModel();
+      opponentVisuals['bread'] = buildBreadModel();
+      opponentVisuals['horse'] = buildHorseModel();
+      opponentVisuals['dolphin'] = buildDolphinModel();
+      opponentVisuals['grill'] = buildGrillModel();
+
+      Object.values(opponentVisuals).forEach(m => opponentRoot.add(m));
+      switchOpponentVisual('marley');
+
+      opponentRoot.position.set(0, -100, 0);
+      scene.add(opponentRoot);
+    }
+
+    function switchOpponentVisual(charKey) {
+      currentOpponentChar = charKey;
+      Object.keys(opponentVisuals).forEach(k => {
+        opponentVisuals[k].visible = (k === charKey);
+      });
+    }
+
+    // 1. Bob Marley Modell
+    function buildMarleyModel() {
+      const g = new THREE.Group();
+      const coatMat = new THREE.MeshStandardMaterial({ color: 0x14532d });
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.42, 1.1, 12), coatMat);
+      body.position.y = 0.65;
+      g.add(body);
+
+      const skinMat = new THREE.MeshStandardMaterial({ color: 0x78350f });
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.32, 12, 12), skinMat);
+      head.position.y = 1.45;
+      g.add(head);
+
+      // Rasta Mütze (Rot, Gelb, Grün)
+      const redBand = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.1, 14), new THREE.MeshStandardMaterial({ color: 0xef4444 }));
+      redBand.position.y = 1.62;
+      g.add(redBand);
+      const yellowBand = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.36, 0.12, 14), new THREE.MeshStandardMaterial({ color: 0xfacc15 }));
+      yellowBand.position.y = 1.72;
+      g.add(yellowBand);
+      const greenTop = new THREE.Mesh(new THREE.SphereGeometry(0.36, 12, 8), new THREE.MeshStandardMaterial({ color: 0x16a34a }));
+      greenTop.position.y = 1.82;
+      g.add(greenTop);
+
+      // Dreadlocks
+      const dreadMat = new THREE.MeshStandardMaterial({ color: 0x171717, roughness: 0.9 });
+      for (let i = 0; i < 9; i++) {
+        const dread = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.03, 0.7, 6), dreadMat);
+        const ang = (i / 9) * Math.PI * 1.3 - Math.PI * 0.65;
+        dread.position.set(Math.sin(ang) * 0.34, 1.32, Math.cos(ang) * 0.28 - 0.1);
+        dread.rotation.z = Math.sin(ang) * 0.2;
+        g.add(dread);
+      }
+      return g;
+    }
+
+    // 2. Brot Modell
+    function buildBreadModel() {
+      const g = new THREE.Group();
+      const crustMat = new THREE.MeshStandardMaterial({ color: 0x92400e, roughness: 0.6 });
+      const insideMat = new THREE.MeshStandardMaterial({ color: 0xfde68a, roughness: 0.8 });
+
+      const block = new THREE.Mesh(new THREE.BoxGeometry(0.75, 1.1, 0.6), crustMat);
+      block.position.y = 0.75;
+      g.add(block);
+
+      const topLoaf = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.75, 12), crustMat);
+      topLoaf.rotation.z = Math.PI / 2;
+      topLoaf.position.y = 1.3;
+      g.add(topLoaf);
+
+      // Scheibenfläche vorn
+      const face = new THREE.Mesh(new THREE.PlaneGeometry(0.65, 0.95), insideMat);
+      face.position.set(0, 0.75, 0.305);
+      g.add(face);
+
+      // Augen
+      const eyeMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+      const e1 = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), eyeMat);
+      e1.position.set(-0.16, 0.85, 0.31);
+      const e2 = e1.clone();
+      e2.position.x = 0.16;
+      g.add(e1);
+      g.add(e2);
+      return g;
+    }
+
+    // 3. Pferd Modell
+    function buildHorseModel() {
+      const g = new THREE.Group();
+      const furMat = new THREE.MeshStandardMaterial({ color: 0x854d0e, roughness: 0.7 });
+      const maneMat = new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.9 });
+
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.42, 1.2, 12), furMat);
+      body.position.y = 0.7;
+      g.add(body);
+
+      // Pferdekopf mit langer Schnauze
+      const head = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.45, 0.5), furMat);
+      head.position.set(0, 1.45, 0.2);
+      head.rotation.x = 0.35;
+      g.add(head);
+
+      const muzzle = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.28, 0.4), new THREE.MeshStandardMaterial({ color: 0x3f2e18 }));
+      muzzle.position.set(0, 1.35, 0.46);
+      g.add(muzzle);
+
+      // Ohren
+      const earGeo = new THREE.ConeGeometry(0.08, 0.22, 6);
+      const ear1 = new THREE.Mesh(earGeo, furMat);
+      ear1.position.set(-0.14, 1.76, 0.1);
+      const ear2 = ear1.clone();
+      ear2.position.x = 0.14;
+      g.add(ear1);
+      g.add(ear2);
+
+      // Mähne
+      const mane = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.65, 0.22), maneMat);
+      mane.position.set(0, 1.4, -0.05);
+      g.add(mane);
+      return g;
+    }
+
+    // 4. Delfin Modell
+    function buildDolphinModel() {
+      const g = new THREE.Group();
+      const dorsalMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.2 });
+      const bellyMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.3 });
+
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.34, 1.25, 14), dorsalMat);
+      body.position.y = 0.75;
+      g.add(body);
+
+      const belly = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.28, 1.15, 14), bellyMat);
+      belly.position.set(0, 0.75, 0.1);
+      belly.scale.set(0.9, 1, 0.5);
+      g.add(belly);
+
+      // Kopf & Rostrum
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.36, 14, 14), dorsalMat);
+      head.position.y = 1.4;
+      g.add(head);
+
+      const rostrum = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.4, 10), dorsalMat);
+      rostrum.rotation.x = Math.PI / 2;
+      rostrum.position.set(0, 1.35, 0.42);
+      g.add(rostrum);
+
+      // Rückenflosse
+      const dorsalFin = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.38, 0.4), dorsalMat);
+      dorsalFin.position.set(0, 1.0, -0.38);
+      dorsalFin.rotation.x = -0.4;
+      g.add(dorsalFin);
+
+      // Brustflossen
+      const finMat = new THREE.MeshStandardMaterial({ color: 0x0284c7 });
+      const f1 = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.08, 0.2), finMat);
+      f1.position.set(0.38, 0.8, 0.1);
+      f1.rotation.z = -0.4;
+      const f2 = f1.clone();
+      f2.position.x = -0.38;
+      f2.rotation.z = 0.4;
+      g.add(f1);
+      g.add(f2);
+      return g;
+    }
+
+    // 5. 3-Bein-Grill Modell
+    function buildGrillModel() {
+      const g = new THREE.Group();
+      const metalMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.85, roughness: 0.2 });
+      const bowlMat = new THREE.MeshStandardMaterial({ color: 0x991b1b, roughness: 0.4 });
+
+      // Grillkugel unten
+      const bowl = new THREE.Mesh(new THREE.SphereGeometry(0.48, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), bowlMat);
+      bowl.rotation.x = Math.PI;
+      bowl.position.y = 1.05;
+      g.add(bowl);
+
+      // Kugeldeckel
+      const lid = new THREE.Mesh(new THREE.SphereGeometry(0.46, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), bowlMat);
+      lid.position.y = 1.15;
+      g.add(lid);
+
+      // Deckelgriff
+      const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.25, 8), metalMat);
+      handle.rotation.z = Math.PI / 2;
+      handle.position.y = 1.65;
+      g.add(handle);
+
+      // 3 Beine
+      for (let i = 0; i < 3; i++) {
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.15, 8), metalMat);
+        const ang = (i / 3) * Math.PI * 2;
+        leg.position.set(Math.sin(ang) * 0.26, 0.52, Math.cos(ang) * 0.26);
+        leg.rotation.x = Math.cos(ang) * 0.25;
+        leg.rotation.z = -Math.sin(ang) * 0.25;
+        g.add(leg);
+      }
+      return g;
+    }
+
+    // Treffer-Animation: Marihuanablätter-Explosion
+    function spawnLeafExplosion(point) {
+      const leafCount = 28;
+      const mat = new THREE.SpriteMaterial({ map: leafTexture, transparent: true, opacity: 1 });
+
+      for (let i = 0; i < leafCount; i++) {
+        const sprite = new THREE.Sprite(mat.clone());
+        sprite.scale.set(0.45, 0.45, 0.45);
+        sprite.position.copy(point);
+
+        const velocity = new THREE.Vector3(
+          (Math.random() - 0.5) * 8.5,
+          Math.random() * 5.5 + 2.5,
+          (Math.random() - 0.5) * 8.5
+        );
+
+        scene.add(sprite);
+        particles.push({
+          sprite,
+          vel: velocity,
+          rotVel: (Math.random() - 0.5) * 8,
+          life: 1.0,
+          maxLife: 1.2 + Math.random() * 0.6
+        });
+      }
+    }
+
+    function updateParticles(delta) {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.life -= delta / p.maxLife;
+
+        // Gravitation und Bewegung
+        p.vel.y -= 9.81 * delta;
+        p.sprite.position.addScaledVector(p.vel, delta);
+        p.sprite.material.rotation += p.rotVel * delta;
+        p.sprite.material.opacity = Math.max(0, p.life);
+
+        if (p.life <= 0) {
+          scene.remove(p.sprite);
+          particles.splice(i, 1);
+        }
+      }
+    }
+
+    // Desktop Steuerung
     function setupControls() {
       window.addEventListener('keydown', (e) => {
         if (!inGame) return;
@@ -428,7 +753,7 @@
         if (e.code === 'KeyD') moveRight = false;
       });
 
-      document.body.addEventListener('click', (e) => {
+      document.body.addEventListener('click', () => {
         if (isTouchDevice) return;
         if (inGame && document.pointerLockElement !== document.body) {
           document.body.requestPointerLock();
@@ -446,7 +771,7 @@
       });
     }
 
-    // Steuerung Touch
+    // Touch Steuerung
     let touchMoveVector = { x: 0, z: 0 };
     let joyTouchId = null;
     let lookTouchId = null;
@@ -520,7 +845,6 @@
       const rect = joystickBase.getBoundingClientRect();
       const centerX = rect.left + rect.width / 2;
       const centerY = rect.top + rect.height / 2;
-
       let dx = touch.clientX - centerX;
       let dy = touch.clientY - centerY;
       const dist = Math.sqrt(dx * dx + dy * dy);
@@ -530,30 +854,34 @@
         dx = (dx / dist) * maxRadius;
         dy = (dy / dist) * maxRadius;
       }
-
       joystickKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
       touchMoveVector.x = dx / maxRadius;
       touchMoveVector.z = dy / maxRadius;
     }
 
-    // Schusslogik
+    // Schusslogik (Hitscan gegen Hitbox)
     const raycaster = new THREE.Raycaster();
     function fireHitscan() {
-      wurstGun.position.z += 0.08;
-      setTimeout(() => { wurstGun.position.z -= 0.08; }, 60);
+      // Rückstoß der Zigarette
+      cigWeapon.position.z += 0.05;
+      setTimeout(() => { cigWeapon.position.z -= 0.05; }, 50);
 
       raycaster.setFromCamera({ x: 0, y: 0 }, camera);
-      const hits = raycaster.intersectObjects(opponentMesh.children, true);
+      const hits = raycaster.intersectObject(opponentHitbox, false);
 
       const startPos = new THREE.Vector3();
-      wurstGun.getWorldPosition(startPos);
+      cigWeapon.getWorldPosition(startPos);
       const endPos = new THREE.Vector3();
 
       if (hits.length > 0) {
         endPos.copy(hits[0].point);
+
         const marker = document.getElementById('hitmarker');
         marker.style.opacity = '1';
         setTimeout(() => { marker.style.opacity = '0'; }, 90);
+
+        // Blätter-Animation starten
+        spawnLeafExplosion(hits[0].point);
 
         if (isBotMode) {
           botScorePlayer++;
@@ -566,9 +894,9 @@
         raycaster.ray.at(50, endPos);
       }
 
-      renderTracer(startPos, endPos, 0xf59e0b); // Kräftiger Tracer
+      renderTracer(startPos, endPos, 0xff4400);
       if (!isBotMode) {
-        socket.emit('shot-fired', { start: startPos, end: endPos });
+        socket.emit('shot-fired', { start: startPos, end: endPos, hitPoint: hits.length > 0 ? hits[0].point : null });
       }
     }
 
@@ -581,7 +909,8 @@
     }
 
     // Bot Logik
-    const botState = { targetPos: new THREE.Vector3(0, 0.7, 0), shootCooldown: 2.5 };
+    const botState = { targetPos: new THREE.Vector3(0, 0, 0), shootCooldown: 2.2 };
+    const botChars = ['marley', 'bread', 'horse', 'dolphin', 'grill'];
 
     document.getElementById('btn-start-bot').addEventListener('click', () => {
       startBotMatch();
@@ -593,6 +922,10 @@
       botScorePlayer = 0;
       botScoreEnemy = 0;
       botTimeLeft = 60;
+
+      // Zufälliger Bot-Charakter
+      const randomChar = botChars[Math.floor(Math.random() * botChars.length)];
+      switchOpponentVisual(randomChar);
 
       screenLobby.classList.add('hidden');
       screenGameOver.classList.add('hidden');
@@ -607,7 +940,6 @@
       document.getElementById('hud-timer').innerText = '60';
 
       respawnBot();
-
       if (!isTouchDevice) document.body.requestPointerLock();
 
       botTimerInterval = setInterval(() => {
@@ -618,9 +950,7 @@
     }
 
     function respawnBot() {
-      const rx = (Math.random() - 0.5) * 24;
-      const rz = (Math.random() - 0.5) * 12 - 4;
-      opponentMesh.position.set(rx, 0, rz);
+      opponentRoot.position.set((Math.random() - 0.5) * 24, 0, (Math.random() - 0.5) * 12 - 4);
       pickNewBotTarget();
     }
 
@@ -629,7 +959,7 @@
     }
 
     function updateBotAI(delta) {
-      const dir = new THREE.Vector3().subVectors(botState.targetPos, opponentMesh.position);
+      const dir = new THREE.Vector3().subVectors(botState.targetPos, opponentRoot.position);
       dir.y = 0;
       const dist = dir.length();
 
@@ -637,25 +967,25 @@
         pickNewBotTarget();
       } else {
         dir.normalize();
-        opponentMesh.position.addScaledVector(dir, 5.5 * delta);
-        opponentMesh.lookAt(camera.position.x, 0, camera.position.z);
+        opponentRoot.position.addScaledVector(dir, 5.5 * delta);
+        opponentRoot.lookAt(camera.position.x, 0, camera.position.z);
       }
 
       botState.shootCooldown -= delta;
       if (botState.shootCooldown <= 0) {
-        botState.shootCooldown = 2.2 + Math.random() * 1.5;
-        
-        const botGunPos = opponentMesh.position.clone().add(new THREE.Vector3(0, 1.2, 0));
-        const shootTarget = camera.position.clone().add(new THREE.Vector3(
+        botState.shootCooldown = 2.0 + Math.random() * 1.5;
+        const botGunPos = opponentRoot.position.clone().add(new THREE.Vector3(0, 1.2, 0));
+        const target = camera.position.clone().add(new THREE.Vector3(
           (Math.random() - 0.5) * 1.8,
           (Math.random() - 0.5) * 1.2,
           (Math.random() - 0.5) * 1.8
         ));
-        renderTracer(botGunPos, shootTarget, 0xd946ef);
+        renderTracer(botGunPos, target, 0xff4400);
 
-        if (shootTarget.distanceTo(camera.position) < 1.0) {
+        if (target.distanceTo(camera.position) < 1.0) {
           botScoreEnemy++;
           document.getElementById('hud-opp-score').innerText = botScoreEnemy;
+          spawnLeafExplosion(camera.position);
           camera.position.set((Math.random() - 0.5) * 16, 1.6, 14);
         }
       }
@@ -665,7 +995,7 @@
       clearInterval(botTimerInterval);
       isBotMode = false;
       inGame = false;
-      opponentMesh.position.set(0, -100, 0);
+      opponentRoot.position.set(0, -100, 0);
       touchLayer.classList.add('hidden');
       hud.classList.add('hidden');
     }
@@ -677,13 +1007,16 @@
       document.getElementById('gameover-details').innerText = `Ergebnis gegen Bot: ${botScorePlayer} zu ${botScoreEnemy}`;
     }
 
-    // Multiplayer Events
+    // Multiplayer Socket Events
     socket.on('opponent-shot', (tracer) => {
       renderTracer(
         new THREE.Vector3(tracer.start.x, tracer.start.y, tracer.start.z),
         new THREE.Vector3(tracer.end.x, tracer.end.y, tracer.end.z),
-        0xd946ef
+        0xff4400
       );
+      if (tracer.hitPoint) {
+        spawnLeafExplosion(new THREE.Vector3(tracer.hitPoint.x, tracer.hitPoint.y, tracer.hitPoint.z));
+      }
     });
 
     socket.on('match-start', (data) => {
@@ -720,14 +1053,18 @@
     });
 
     socket.on('respawn', (pos) => {
+      spawnLeafExplosion(camera.position);
       camera.position.set(pos.x, pos.y, pos.z);
       camera.rotation.set(0, pos.rotY, 0);
     });
 
     socket.on('opponent-moved', (data) => {
-      if (!isBotMode && opponentMesh) {
-        opponentMesh.position.set(data.x, data.y - 0.9, data.z);
-        opponentMesh.rotation.y = data.rotY;
+      if (!isBotMode && opponentRoot) {
+        opponentRoot.position.set(data.x, data.y - 0.9, data.z);
+        opponentRoot.rotation.y = data.rotY;
+        if (data.char && data.char !== currentOpponentChar) {
+          switchOpponentVisual(data.char);
+        }
       }
     });
 
@@ -741,7 +1078,7 @@
       document.getElementById('gameover-title').innerText = res.winner === myName ? 'SIEG!' : (res.winner === 'Unentschieden' ? 'UNENTSCHIEDEN' : 'NIEDERLAGE');
       document.getElementById('gameover-details').innerText = `Endstand: ${res.p1Name} (${res.p1Score}) vs ${res.p2Name} (${res.p2Score})`;
       
-      opponentMesh.position.set(0, -100, 0);
+      opponentRoot.position.set(0, -100, 0);
     });
 
     function onWindowResize() {
@@ -752,9 +1089,13 @@
 
     init3D();
 
+    // Render Loop
     function animate() {
       requestAnimationFrame(animate);
       const delta = clock.getDelta();
+
+      updateCigaretteSmoke(delta);
+      updateParticles(delta);
 
       if (inGame) {
         velocity.x -= velocity.x * 10.0 * delta;
@@ -787,7 +1128,8 @@
             x: camera.position.x,
             y: camera.position.y,
             z: camera.position.z,
-            rotY: camera.rotation.y
+            rotY: camera.rotation.y,
+            char: selectedChar
           });
         }
       }
@@ -799,4 +1141,3 @@
   </script>
 </body>
 </html>
-
