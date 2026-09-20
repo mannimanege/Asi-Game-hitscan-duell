@@ -19,6 +19,8 @@ const leaderboard = {};
 // Telegram-Konfiguration
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+// Render setzt RENDER_EXTERNAL_URL automatisch (z. B. https://hitscan-duell-2.onrender.com)
+const GAME_URL = process.env.RENDER_EXTERNAL_URL || process.env.GAME_URL || '';
 let lastNotificationTime = 0;
 
 async function sendTelegramLobbyAlert(playerName) {
@@ -29,11 +31,27 @@ async function sendTelegramLobbyAlert(playerName) {
   if (now - lastNotificationTime < 60000) return;
   lastNotificationTime = now;
 
-  const text = encodeURIComponent(`*${playerName}* wartet in der Lobby!`);
-  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${text}&parse_mode=Markdown`;
+  const payload = {
+    chat_id: TELEGRAM_CHAT_ID,
+    text: `*${playerName}* wartet in der Lobby!`,
+    parse_mode: 'Markdown'
+  };
+
+  // Wenn eine URL vorhanden ist, wird ein nativer Inline-Button angehängt
+  if (GAME_URL) {
+    payload.reply_markup = {
+      inline_keyboard: [
+        [{ text: '🎮 Jetzt beitreten & duellieren', url: GAME_URL }]
+      ]
+    };
+  }
 
   try {
-    await fetch(url);
+    await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
   } catch (err) {
     console.error('Telegram-Benachrichtigung fehlgeschlagen:', err);
   }
@@ -71,7 +89,6 @@ io.on('connection', (socket) => {
     io.emit('lobby-update', getLobbyList());
     socket.emit('leaderboard-update', getLeaderboardList());
 
-    // Telegram-Gruppe informieren
     sendTelegramLobbyAlert(cleanName);
   });
 
