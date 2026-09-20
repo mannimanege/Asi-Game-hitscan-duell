@@ -91,8 +91,30 @@
     #crosshair { position: absolute; top: 50%; left: 50%; width: 6px; height: 6px; transform: translate(-50%, -50%); border: 2px solid #000; border-radius: 50%; background: #22c55e; }
     #hitmarker { position: absolute; top: 50%; left: 50%; width: 24px; height: 24px; transform: translate(-50%, -50%); border: 3px solid #22c55e; border-radius: 50%; opacity: 0; transition: opacity 0.08s; pointer-events: none; }
 
+    /* ASI-MODE INTRO */
+    #asimode-overlay {
+      position: absolute;
+      top: 35%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.6);
+      font-size: 64px;
+      font-weight: 950;
+      color: #facc15;
+      text-shadow: 0 0 25px #f59e0b, 0 0 50px #dc2626, 0 6px 12px rgba(0,0,0,0.9);
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      pointer-events: none;
+      z-index: 25;
+      opacity: 0;
+      transition: all 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    #asimode-overlay.active {
+      transform: translate(-50%, -50%) scale(1.15);
+      opacity: 1;
+    }
+
     #countdown-overlay { position: absolute; top: 38%; left: 50%; transform: translate(-50%, -50%); font-size: 72px; font-weight: 900; color: #f59e0b; text-shadow: 0 4px 20px rgba(0,0,0,0.9), 0 0 30px #f59e0b; pointer-events: none; z-index: 15; letter-spacing: 2px; }
-    #death-overlay { position: absolute; top: 25%; left: 50%; transform: translate(-50%, -50%); font-size: 32px; font-weight: 900; color: #ef4444; text-shadow: 0 4px 15px rgba(0,0,0,0.9); pointer-events: none; z-index: 15; letter-spacing: 1.5px; text-transform: uppercase; }
+    #death-overlay { position: absolute; top: 22%; left: 50%; transform: translate(-50%, -50%); font-size: 32px; font-weight: 950; color: #ef4444; text-shadow: 0 4px 20px #dc2626, 0 2px 10px rgba(0,0,0,0.9); pointer-events: none; z-index: 15; letter-spacing: 3px; text-transform: uppercase; text-align: center; }
 
     #audio-toggle { position: absolute; bottom: 12px; left: 12px; background: rgba(11, 15, 25, 0.8); border: 1px solid rgba(255,255,255,0.25); color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; cursor: pointer; pointer-events: auto; }
 
@@ -206,8 +228,9 @@
       </div>
     </div>
 
+    <div id="asimode-overlay">ASI-MODE</div>
     <div id="countdown-overlay" class="hidden">3</div>
-    <div id="death-overlay" class="hidden">WEGGEBEAMT</div>
+    <div id="death-overlay" class="hidden">AB IN DIE HOELLE</div>
     <button id="audio-toggle">Musik: AN</button>
     <div id="crosshair"></div>
     <div id="hitmarker"></div>
@@ -246,6 +269,39 @@
       }
     }
 
+    function playSubBassDrop() {
+      if (!audioCtx) return;
+      const t = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(140, t);
+      osc.frequency.exponentialRampToValueAtTime(32, t + 0.8);
+      gain.gain.setValueAtTime(0.7, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.9);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(t);
+      osc.stop(t + 0.95);
+    }
+
+    function playSargSlamSound() {
+      if (!audioCtx) return;
+      const t = audioCtx.currentTime;
+      // Wuchtiger Schlag
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(120, t);
+      osc.frequency.exponentialRampToValueAtTime(25, t + 0.18);
+      gain.gain.setValueAtTime(0.75, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(t);
+      osc.stop(t + 0.24);
+    }
+
     function playCountdownTone(isHigh = false) {
       if (!audioCtx) return;
       const osc = audioCtx.createOscillator();
@@ -267,7 +323,7 @@
       const osc = audioCtx.createOscillator();
       const popGain = audioCtx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(520, t);
+      osc.frequency.setValueAtTime(540, t);
       osc.frequency.exponentialRampToValueAtTime(90, t + 0.05);
       popGain.gain.setValueAtTime(0.65, t);
       popGain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
@@ -346,7 +402,7 @@
       const d = buf.getChannelData(0);
       for (let i = 0; i < bSize; i++) data[i] = Math.random() * 2 - 1;
       const noise = audioCtx.createBufferSource();
-      noise.buffer = buf;
+      noise.buffer = buffer;
       const gain = audioCtx.createGain();
       gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
@@ -399,13 +455,18 @@
     let botScorePlayer = 0;
     let botScoreEnemy = 0;
 
-    // Todes-Sequenz State
+    // Spektakuläre Todes-Animation (Sarg, fliegender Joint, Fegefeuer)
     let isDying = false;
     let deathTimer = 0;
-    const DEATH_DURATION = 3.0;
+    const DEATH_DURATION = 4.2;
     let deathCamStart = new THREE.Vector3();
-    let deathCorpseGroup = null;
     let pendingRespawnPos = null;
+
+    let coffinGroup = null;
+    let coffinLid = null;
+    let coffinBodyMesh = null;
+    let airborneJoint = null;
+    let hellFireLight = null;
 
     let opponentId = null;
     let opponentRoot = null;
@@ -451,6 +512,7 @@
     const screenChallenge = document.getElementById('screen-challenge');
     const screenGameOver = document.getElementById('screen-gameover');
     const hud = document.getElementById('hud');
+    const asimodeOverlay = document.getElementById('asimode-overlay');
     const countdownEl = document.getElementById('countdown-overlay');
     const deathOverlayEl = document.getElementById('death-overlay');
     const timerSecEl = document.getElementById('hud-timer');
@@ -465,8 +527,25 @@
 
     const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
-    function startRoundCountdown(callback) {
+    // ASI-MODE INTRO gefolgt von Countdown
+    function startAsiModeIntro(callback) {
       canAct = false;
+      asimodeOverlay.classList.remove('hidden');
+      setTimeout(() => {
+        asimodeOverlay.classList.add('active');
+        playSubBassDrop();
+      }, 50);
+
+      setTimeout(() => {
+        asimodeOverlay.classList.remove('active');
+        setTimeout(() => {
+          asimodeOverlay.classList.add('hidden');
+          startRoundCountdown(callback);
+        }, 250);
+      }, 1400);
+    }
+
+    function startRoundCountdown(callback) {
       countdownEl.classList.remove('hidden');
       let count = 3;
       countdownEl.innerText = count;
@@ -649,7 +728,6 @@
       const c = document.createElement('canvas');
       c.width = 320; c.height = 420;
       const ctx = c.getContext('2d');
-      // Schwarze Schiefertafel mit Holzrahmen
       ctx.fillStyle = '#451a03';
       ctx.fillRect(0, 0, 320, 420);
       ctx.fillStyle = '#18181b';
@@ -694,7 +772,7 @@
       return new THREE.CanvasTexture(c);
     }
 
-    function createSignpostArrowTexture(text, isPointingRight = true) {
+    function createSignpostArrowTexture(text) {
       const c = document.createElement('canvas');
       c.width = 256; c.height = 64;
       const ctx = c.getContext('2d');
@@ -707,16 +785,10 @@
       ctx.fillStyle = '#78350f';
       ctx.font = 'bold 22px sans-serif';
       ctx.textBaseline = 'middle';
-      if (isPointingRight) {
-        ctx.textAlign = 'left';
-        ctx.fillText(text, 14, 32);
-        ctx.textAlign = 'right';
-        ctx.fillText('➤', 242, 32);
-      } else {
-        ctx.textAlign = 'left';
-        ctx.fillText('◀', 14, 32);
-        ctx.fillText(text, 44, 32);
-      }
+      ctx.textAlign = 'left';
+      ctx.fillText(text, 14, 32);
+      ctx.textAlign = 'right';
+      ctx.fillText('➤', 242, 32);
       return new THREE.CanvasTexture(c);
     }
 
@@ -757,20 +829,6 @@
       return tex;
     }
 
-    function createHayTexture() {
-      const c = document.createElement('canvas');
-      c.width = 128; c.height = 128;
-      const ctx = c.getContext('2d');
-      ctx.fillStyle = '#eab308';
-      ctx.fillRect(0, 0, 128, 128);
-      ctx.fillStyle = '#ca8a04';
-      for (let i = 0; i < 500; i++) ctx.fillRect(Math.random() * 128, Math.random() * 128, 6, 2);
-      ctx.fillStyle = '#713f12';
-      ctx.fillRect(0, 36, 128, 6);
-      ctx.fillRect(0, 86, 128, 6);
-      return new THREE.CanvasTexture(c);
-    }
-
     function createMarijuanaLeafTexture() {
       const canvas = document.createElement('canvas');
       canvas.width = 128; canvas.height = 128;
@@ -804,7 +862,7 @@
     }
 
     // ==========================================
-    // 4. SZENE & MAP-OBJEKTE
+    // 4. SZENE & SAINT-TROPEZ LUXUS-MAP
     // ==========================================
     function init3D() {
       scene = new THREE.Scene();
@@ -834,6 +892,10 @@
       sunLight.shadow.mapSize.height = 1024;
       scene.add(sunLight);
 
+      // Höllenfeuer-Licht für die Todesanimation
+      hellFireLight = new THREE.PointLight(0xff2200, 0, 20);
+      scene.add(hellFireLight);
+
       const floorMat = new THREE.MeshStandardMaterial({ map: createDirtGroundTexture(), roughness: 0.85 });
       const floor = new THREE.Mesh(new THREE.PlaneGeometry(36, 36), floorMat);
       floor.rotation.x = -Math.PI / 2;
@@ -857,12 +919,13 @@
 
       spawnGoschSyltRestaurant();
       spawnDirectionalSignpost();
-      spawnLowPolyArena();
+      spawnSaintTropezVIPArea();
+      spawnFoodProps();
       spawnSkyDetails();
 
       setupFirstPersonArms();
       setupOpponentActor();
-      setupDeathCorpseModel();
+      setupSpectacularCoffinSystem();
       leafTexture = createMarijuanaLeafTexture();
 
       window.addEventListener('resize', onWindowResize);
@@ -870,7 +933,7 @@
       setupTouchControls();
     }
 
-    // 1. Gosch Sylt Restaurant mit sichtbarem Schild & Speisekarte
+    // Gosch Sylt Restaurant mit Rolex-Wanduhr & Schild
     function spawnGoschSyltRestaurant() {
       const gGroup = new THREE.Group();
 
@@ -884,52 +947,56 @@
       building.receiveShadow = true;
       gGroup.add(building);
 
-      // Reetdach: Höher und nach hinten gesetzt, damit es das Schild keinesfalls verdeckt
       const roof = new THREE.Mesh(new THREE.ConeGeometry(5.2, 2.2, 4), reetMat);
       roof.position.set(0, 4.3, -0.4);
       roof.rotation.y = Math.PI / 4;
       roof.castShadow = true;
       gGroup.add(roof);
 
-      // Blau-weißes Vordach
       const canopy = new THREE.Mesh(new THREE.BoxGeometry(7.2, 0.16, 1.4), blueTrimMat);
       canopy.position.set(0, 2.4, 3.0);
       canopy.castShadow = true;
       gGroup.add(canopy);
 
-      // GOSCH SYLT Schild: Frei stehend auf Trägern vor dem Vordach montiert
       const signMat = new THREE.MeshStandardMaterial({ map: createGoschSignTexture(), roughness: 0.35 });
       const sign = new THREE.Mesh(new THREE.BoxGeometry(4.4, 1.05, 0.12), signMat);
       sign.position.set(0, 3.2, 3.1);
       gGroup.add(sign);
 
-      // Trägerpfosten für das Schild
       const postMat = new THREE.MeshStandardMaterial({ color: 0x475569 });
       const sp1 = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.8), postMat);
       sp1.position.set(-1.8, 2.8, 3.0);
-      const sp2 = sp1.clone();
-      sp2.position.x = 1.8;
+      const sp2 = sp1.clone(); sp2.position.x = 1.8;
       gGroup.add(sp1); gGroup.add(sp2);
 
-      // Kreidetafel mit Luxus-Speisekarte rechts neben dem Tresen
+      // Goldene Wanduhr (Rolex-Style) über der Theke
+      const clockFrame = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.06, 16), new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.95 }));
+      clockFrame.rotation.x = Math.PI / 2;
+      clockFrame.position.set(0, 2.0, 2.52);
+      gGroup.add(clockFrame);
+      const clockFace = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.07, 16), new THREE.MeshStandardMaterial({ color: 0x064e3b })); // Rolex Grün
+      clockFace.rotation.x = Math.PI / 2;
+      clockFace.position.set(0, 2.0, 2.53);
+      gGroup.add(clockFace);
+
+      // Speisekarte & Rettungsring
       const menuBoard = new THREE.Mesh(new THREE.BoxGeometry(1.6, 2.1, 0.08), new THREE.MeshStandardMaterial({ map: createMenuBoardTexture() }));
       menuBoard.position.set(2.6, 1.6, 2.55);
       gGroup.add(menuBoard);
 
-      // Rettungsring an der linken Außenwand
       const ring = new THREE.Mesh(new THREE.TorusGeometry(0.4, 0.12, 8, 16), new THREE.MeshStandardMaterial({ color: 0xef4444 }));
       ring.position.set(-3.52, 1.8, 0);
       ring.rotation.y = Math.PI / 2;
       gGroup.add(ring);
 
-      // Holztisch / Tresen
+      // Theke
       const table = new THREE.Mesh(new THREE.BoxGeometry(3.6, 1.0, 1.4), new THREE.MeshStandardMaterial({ color: 0x92400e, roughness: 0.7 }));
       table.position.set(0, 0.5, 3.2);
       table.castShadow = true;
       table.receiveShadow = true;
       gGroup.add(table);
 
-      // Sektkühler mit Eis & Flasche auf dem Tresen
+      // Sektkühler
       const cooler = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.16, 0.3, 12), new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.9 }));
       cooler.position.set(0, 1.15, 3.2);
       const coldChamp = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.45, 8), new THREE.MeshStandardMaterial({ color: 0x064e3b }));
@@ -952,7 +1019,6 @@
       c1.scale.set(1.4, 0.5, 2.0); c1.position.set(0.18, 0, 0.28); c1.rotation.y = 0.35;
       const c2 = c1.clone(); c2.position.x = -0.18; c2.rotation.y = -0.35;
       lobsterGroup.add(c1); lobsterGroup.add(c2);
-
       lobsterGroup.position.set(-0.9, 1.1, 3.2);
       gGroup.add(lobsterGroup);
 
@@ -983,18 +1049,138 @@
       obstacleColliders.push({ minX: -15.5, maxX: -6.0, minZ: -15.5, maxZ: -6.0 });
     }
 
-    // 2. Wegweiser mit Pfeilen: Winterhude, Eppendorf, Dulsberg, Norderstedt, Kasseburg, Dove-Elbe
+    // Saint-Tropez VIP-Bereich: Cabana, Palmen, Moët-Pyramide, Luxus-Sportwagen
+    function spawnSaintTropezVIPArea() {
+      // 1. Luxus-Sportwagen (Cabriolet im Porsche-Style)
+      const carGroup = new THREE.Group();
+      const carPaint = new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.8, roughness: 0.2 }); // Perlmutt-Weiß
+      const goldWheel = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.95, roughness: 0.15 });
+
+      const chassis = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.55, 4.4), carPaint);
+      chassis.position.y = 0.45;
+      chassis.castShadow = true;
+      carGroup.add(chassis);
+
+      // Cockpit / Windschutzscheibe
+      const windshield = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.45, 0.1), new THREE.MeshStandardMaterial({ color: 0x0f172a, transparent: true, opacity: 0.7 }));
+      windshield.rotation.x = -0.5;
+      windshield.position.set(0, 0.9, 0.4);
+      carGroup.add(windshield);
+
+      // Goldene Felgen
+      const wheelGeo = new THREE.CylinderGeometry(0.38, 0.38, 0.28, 14);
+      const w1 = new THREE.Mesh(wheelGeo, goldWheel);
+      w1.rotation.z = Math.PI / 2; w1.position.set(1.1, 0.38, 1.3);
+      const w2 = w1.clone(); w2.position.set(-1.1, 0.38, 1.3);
+      const w3 = w1.clone(); w3.position.set(1.1, 0.38, -1.3);
+      const w4 = w1.clone(); w4.position.set(-1.1, 0.38, -1.3);
+      carGroup.add(w1); carGroup.add(w2); carGroup.add(w3); carGroup.add(w4);
+
+      carGroup.position.set(-3.5, 0, -11.5);
+      carGroup.rotation.y = Math.PI / 5;
+      scene.add(carGroup);
+      obstacleMeshes.push(chassis);
+      obstacleColliders.push({ minX: -5.0, maxX: -2.0, minZ: -13.5, maxZ: -9.5 });
+
+      // 2. VIP Beach-Cabana Daybed mit Vorhängen
+      const cabanaGroup = new THREE.Group();
+      const whiteMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.5 });
+      const woodTrim = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.4 });
+
+      // Liegefläche
+      const bed = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.45, 2.6), whiteMat);
+      bed.position.y = 0.25;
+      cabanaGroup.add(bed);
+
+      // 4 Säulen & Baldachin
+      for (let x of [-1.2, 1.2]) {
+        for (let z of [-1.2, 1.2]) {
+          const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 2.4), woodTrim);
+          pole.position.set(x, 1.2, z);
+          cabanaGroup.add(pole);
+        }
+      }
+      const roofCloth = new THREE.Mesh(new THREE.BoxGeometry(2.7, 0.08, 2.7), whiteMat);
+      roofCloth.position.y = 2.4;
+      cabanaGroup.add(roofCloth);
+
+      cabanaGroup.position.set(8.5, 0, -8.5);
+      scene.add(cabanaGroup);
+      obstacleMeshes.push(bed);
+      obstacleColliders.push({ minX: 7.2, maxX: 9.8, minZ: -9.8, maxZ: -7.2 });
+
+      // 3. Moët-Champagner-Pyramide
+      const towerGroup = new THREE.Group();
+      const glassMat = new THREE.MeshStandardMaterial({ color: 0xfef08a, transparent: true, opacity: 0.85, roughness: 0.1 });
+      const goldStand = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, 0.85, 12), new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.9 }));
+      goldStand.position.y = 0.42;
+      towerGroup.add(goldStand);
+
+      // Gläser-Stapel
+      const fluteGeo = new THREE.ConeGeometry(0.08, 0.18, 8);
+      for (let i = 0; i < 9; i++) {
+        const row = Math.floor(i / 3) - 1;
+        const col = (i % 3) - 1;
+        const g = new THREE.Mesh(fluteGeo, glassMat);
+        g.position.set(row * 0.18, 0.94, col * 0.18);
+        towerGroup.add(g);
+      }
+      for (let i = 0; i < 4; i++) {
+        const row = (i % 2) - 0.5;
+        const col = Math.floor(i / 2) - 0.5;
+        const g = new THREE.Mesh(fluteGeo, glassMat);
+        g.position.set(row * 0.18, 1.12, col * 0.18);
+        towerGroup.add(g);
+      }
+      const topGlass = new THREE.Mesh(fluteGeo, glassMat);
+      topGlass.position.set(0, 1.3, 0);
+      towerGroup.add(topGlass);
+
+      towerGroup.position.set(11, 0, -5.5);
+      scene.add(towerGroup);
+      obstacleMeshes.push(goldStand);
+      obstacleColliders.push({ minX: 10.3, maxX: 11.7, minZ: -6.2, maxZ: -4.8 });
+
+      // 4. Zwei Saint-Tropez Palmen
+      spawnPalmTree(12, -12);
+      spawnPalmTree(12, 12);
+    }
+
+    function spawnPalmTree(x, z) {
+      const palmGroup = new THREE.Group();
+      const trunkMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.9 });
+      const frondMat = new THREE.MeshStandardMaterial({ color: 0x15803d, side: THREE.DoubleSide });
+
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.35, 5.5, 8), trunkMat);
+      trunk.position.y = 2.75;
+      trunk.castShadow = true;
+      palmGroup.add(trunk);
+
+      // Palmwedel
+      for (let i = 0; i < 7; i++) {
+        const frond = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.02, 2.4), frondMat);
+        frond.position.set(0, 5.4, 1.0);
+        frond.rotation.x = 0.5;
+        const pivot = new THREE.Group();
+        pivot.rotation.y = (i / 7) * Math.PI * 2;
+        pivot.add(frond);
+        palmGroup.add(pivot);
+      }
+      palmGroup.position.set(x, 0, z);
+      scene.add(palmGroup);
+      obstacleMeshes.push(trunk);
+      obstacleColliders.push({ minX: x - 0.5, maxX: x + 0.5, minZ: z - 0.5, maxZ: z + 0.5 });
+    }
+
     function spawnDirectionalSignpost() {
       const postGroup = new THREE.Group();
       const woodMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.85 });
 
-      // Zentraler Holzstamm
       const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 4.2, 10), woodMat);
       pole.position.y = 2.1;
       pole.castShadow = true;
       postGroup.add(pole);
 
-      // Geschnitzte Schilder mit Winkeln in die jeweiligen Richtungen
       const signs = [
         { text: 'Norderstedt 18km', y: 3.6, rot: 0 },
         { text: 'Winterhude 8km',   y: 3.2, rot: Math.PI * 0.35 },
@@ -1007,7 +1193,7 @@
       signs.forEach(s => {
         const signMesh = new THREE.Mesh(
           new THREE.BoxGeometry(1.6, 0.35, 0.05),
-          new THREE.MeshStandardMaterial({ map: createSignpostArrowTexture(s.text, true) })
+          new THREE.MeshStandardMaterial({ map: createSignpostArrowTexture(s.text) })
         );
         signMesh.position.set(0, s.y, 0);
         signMesh.rotation.y = s.rot;
@@ -1016,12 +1202,10 @@
         postGroup.add(signMesh);
       });
 
-      // Steiniger Sockel
       const base = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.8, 0.3, 8), new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.9 }));
       base.position.y = 0.15;
       postGroup.add(base);
 
-      // Auf dem Platz zwischen Gosch und Zentrum platziert
       postGroup.position.set(-5, 0, -4);
       scene.add(postGroup);
 
@@ -1029,74 +1213,8 @@
       obstacleColliders.push({ minX: -5.6, maxX: -4.4, minZ: -4.6, maxZ: -3.4 });
     }
 
-    function addHayBale(x, y, z, rotY = 0) {
-      const mat = new THREE.MeshStandardMaterial({ map: createHayTexture(), roughness: 0.8 });
-      const bale = new THREE.Mesh(new THREE.BoxGeometry(2.0, 1.2, 1.2), mat);
-      bale.position.set(x, y + 0.6, z);
-      bale.rotation.y = rotY;
-      bale.castShadow = true;
-      bale.receiveShadow = true;
-      scene.add(bale);
-
-      obstacleMeshes.push(bale);
-      if (y < 1.0) {
-        obstacleColliders.push({ minX: x - 1.0, maxX: x + 1.0, minZ: z - 0.7, maxZ: z + 0.7 });
-      }
-    }
-
-    function addTractor(x, z, rotY = 0) {
-      const group = new THREE.Group();
-      const blueMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.4 });
-      const blackMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8 });
-
-      const hood = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.1, 2.2), blueMat);
-      hood.position.set(0, 1.1, 0.4);
-      hood.castShadow = true;
-      group.add(hood);
-
-      const cab = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.4, 1.4), blueMat);
-      cab.position.set(0, 1.6, -1.0);
-      cab.castShadow = true;
-      group.add(cab);
-
-      const rearWheelGeo = new THREE.CylinderGeometry(0.85, 0.85, 0.45, 14);
-      const rw1 = new THREE.Mesh(rearWheelGeo, blackMat);
-      rw1.rotation.z = Math.PI / 2;
-      rw1.position.set(0.9, 0.85, -1.0);
-      rw1.castShadow = true;
-      const rw2 = rw1.clone();
-      rw2.position.x = -0.9;
-      group.add(rw1); group.add(rw2);
-
-      const frontWheelGeo = new THREE.CylinderGeometry(0.5, 0.5, 0.35, 14);
-      const fw1 = new THREE.Mesh(frontWheelGeo, blackMat);
-      fw1.rotation.z = Math.PI / 2;
-      fw1.position.set(0.8, 0.5, 1.1);
-      fw1.castShadow = true;
-      const fw2 = fw1.clone();
-      fw2.position.x = -0.8;
-      group.add(fw1); group.add(fw2);
-
-      group.position.set(x, 0, z);
-      group.rotation.y = rotY;
-      scene.add(group);
-
-      obstacleMeshes.push(hood);
-      obstacleColliders.push({ minX: x - 1.3, maxX: x + 1.3, minZ: z - 1.8, maxZ: z + 1.8 });
-    }
-
-    function spawnLowPolyArena() {
-      addHayBale(7, 0, -6, 0);
-      addHayBale(7, 0, -4.2, 0.3);
-      addHayBale(7, 1.2, -5.1, 0.15);
-      addHayBale(-8, 0, 8, 0.4);
-
-      addTractor(4.5, 8.5, -Math.PI / 4);
-
-      spawnFoodProps();
-    }
-
     function spawnFoodProps() {
+      // Bierflasche
       const bottleGroup = new THREE.Group();
       const bottleMat = new THREE.MeshStandardMaterial({ color: 0x451a03, roughness: 0.2 });
       const b1 = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 3.2, 16), bottleMat);
@@ -1109,31 +1227,13 @@
       const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.2, 16), new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.8 }));
       cap.position.y = 4.3;
       bottleGroup.add(cap);
-      bottleGroup.position.set(10, 0, -10);
+      bottleGroup.position.set(10, 0, 8);
       scene.add(bottleGroup);
 
       obstacleMeshes.push(b1);
-      obstacleColliders.push({ minX: 9.2, maxX: 10.8, minZ: -10.8, maxZ: -9.2 });
+      obstacleColliders.push({ minX: 9.2, maxX: 10.8, minZ: 7.2, maxZ: 8.8 });
 
-      const martiniGroup = new THREE.Group();
-      const stemMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.6 });
-      const base = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.1, 16), stemMat);
-      base.position.y = 0.05;
-      martiniGroup.add(base);
-      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 2.5, 12), stemMat);
-      stem.position.y = 1.3;
-      martiniGroup.add(stem);
-      const cone = new THREE.Mesh(new THREE.ConeGeometry(1.8, 1.6, 16, 1, true), new THREE.MeshStandardMaterial({ color: 0x271306, transparent: true, opacity: 0.9 }));
-      cone.position.y = 3.1;
-      cone.rotation.x = Math.PI;
-      cone.castShadow = true;
-      martiniGroup.add(cone);
-      martiniGroup.position.set(11, 0, 4);
-      scene.add(martiniGroup);
-
-      obstacleMeshes.push(cone);
-      obstacleColliders.push({ minX: 9.8, maxX: 12.2, minZ: 2.8, maxZ: 5.2 });
-
+      // Pommes
       const friesGroup = new THREE.Group();
       const bag = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.4, 1.4), new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.4 }));
       bag.position.y = 1.2;
@@ -1258,7 +1358,7 @@
     }
 
     // ==========================================
-    // 6. VIEWMODEL & TODES-CORPSE MIT JOINT
+    // 6. VIEWMODEL & SPEKTAKULÄRER SARG (FEGEFEUER)
     // ==========================================
     let viewmodelGroup;
     let cigWeapon;
@@ -1335,46 +1435,64 @@
       });
     }
 
-    // Todes-Körper (Liegend am Boden mit fettem Joint im Mund)
-    let deadJointTipWorldPos = new THREE.Vector3();
-    function setupDeathCorpseModel() {
-      deathCorpseGroup = new THREE.Group();
+    // Spektakulärer Luxus-Sarg mit animiertem Klappdeckel & fliegendem Riesen-Joint
+    function setupSpectacularCoffinSystem() {
+      coffinGroup = new THREE.Group();
 
-      // Körper flach auf dem Rücken
-      const bodyMat = new THREE.MeshStandardMaterial({ color: 0x15803d });
-      const body = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.35, 1.2), bodyMat);
-      body.position.set(0, 0.18, 0);
-      deathCorpseGroup.add(body);
+      const woodMat = new THREE.MeshStandardMaterial({ color: 0x3b1808, roughness: 0.4 }); // Dunkles Edelholz
+      const velvetMat = new THREE.MeshStandardMaterial({ color: 0x881337, roughness: 0.9 }); // Roter Samt
+      const goldMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.95, roughness: 0.2 });
 
-      // Beine ausgestreckt
-      const legMat = new THREE.MeshStandardMaterial({ color: 0x1e293b });
-      const l1 = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.25, 0.9), legMat);
-      l1.position.set(-0.2, 0.14, 0.95);
-      const l2 = l1.clone();
-      l2.position.x = 0.2;
-      deathCorpseGroup.add(l1); deathCorpseGroup.add(l2);
+      // Sarg-Körper
+      coffinBodyMesh = new THREE.Group();
+      const bottom = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.48, 2.3), woodMat);
+      bottom.position.y = 0.24;
+      coffinBodyMesh.add(bottom);
 
-      // Kopf liegt am Boden
-      const headMat = new THREE.MeshStandardMaterial({ color: 0xd49b73 });
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.26, 12, 12), headMat);
-      head.position.set(0, 0.24, -0.75);
-      deathCorpseGroup.add(head);
+      const interior = new THREE.Mesh(new THREE.BoxGeometry(0.82, 0.38, 2.15), velvetMat);
+      interior.position.y = 0.3;
+      coffinBodyMesh.add(interior);
 
-      // Fetter Joint im Mund (Konisch geformt)
-      const jointMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.8 });
-      const joint = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.03, 0.55, 10), jointMat);
-      joint.rotation.x = -Math.PI / 3;
-      joint.position.set(0, 0.42, -0.92);
-      deathCorpseGroup.add(joint);
+      // Goldene Griffe an den Seiten
+      for (let z of [-0.6, 0, 0.6]) {
+        for (let x of [-0.5, 0.5]) {
+          const handle = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.26), goldMat);
+          handle.position.set(x, 0.26, z);
+          coffinBodyMesh.add(handle);
+        }
+      }
+      coffinGroup.add(coffinBodyMesh);
 
-      // Glühende Joint-Spitze
-      const emberMat = new THREE.MeshBasicMaterial({ color: 0xff2200 });
-      const ember = new THREE.Mesh(new THREE.SphereGeometry(0.065, 8, 8), emberMat);
-      ember.position.set(0, 0.65, -1.06);
-      deathCorpseGroup.add(ember);
+      // Klappbarer Deckel (Scharnier an der linken Längsseite)
+      coffinLid = new THREE.Group();
+      coffinLid.position.set(-0.475, 0.48, 0);
 
-      deathCorpseGroup.visible = false;
-      scene.add(deathCorpseGroup);
+      const lidPlank = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.08, 2.3), woodMat);
+      lidPlank.position.set(0.475, 0.04, 0);
+      coffinLid.add(lidPlank);
+
+      // Goldenes Kreuz auf dem Deckel
+      const cross1 = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.03, 0.8), goldMat);
+      cross1.position.set(0.475, 0.09, -0.2);
+      const cross2 = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.03, 0.12), goldMat);
+      cross2.position.set(0.475, 0.09, -0.4);
+      coffinLid.add(cross1); coffinLid.add(cross2);
+
+      coffinGroup.add(coffinLid);
+
+      // Der fliegende dicke Joint
+      airborneJoint = new THREE.Group();
+      const jPaper = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.03, 0.6, 10), new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.8 }));
+      jPaper.rotation.x = Math.PI / 2;
+      airborneJoint.add(jPaper);
+      const jEmber = new THREE.Mesh(new THREE.SphereGeometry(0.068, 8, 8), new THREE.MeshBasicMaterial({ color: 0xff3b00 }));
+      jEmber.position.z = -0.3;
+      airborneJoint.add(jEmber);
+      airborneJoint.visible = false;
+      scene.add(airborneJoint);
+
+      coffinGroup.visible = false;
+      scene.add(coffinGroup);
     }
 
     function triggerDeathSequence(respawnPos) {
@@ -1386,58 +1504,111 @@
 
       deathCamStart.copy(camera.position);
 
-      // Ego-Arme ausblenden
       if (viewmodelGroup) viewmodelGroup.visible = false;
 
-      // Leiche am Todesort flach auf den Boden legen
-      deathCorpseGroup.position.set(camera.position.x, 0, camera.position.z);
-      deathCorpseGroup.rotation.y = camera.rotation.y;
-      deathCorpseGroup.visible = true;
+      // Sarg am Todesort platzieren
+      coffinGroup.position.set(camera.position.x, 0, camera.position.z);
+      coffinGroup.rotation.y = camera.rotation.y;
+      coffinGroup.visible = true;
+
+      // Deckel sperrangelweit offen (ca. 80 Grad)
+      coffinLid.rotation.z = -Math.PI * 0.45;
+
+      // Fliegender Joint startet hoch in der Luft
+      airborneJoint.position.set(camera.position.x, 5.0, camera.position.z - 2.5);
+      airborneJoint.visible = true;
+
+      hellFireLight.position.set(camera.position.x, 0.5, camera.position.z);
+      hellFireLight.intensity = 0;
 
       deathOverlayEl.classList.remove('hidden');
       spawnLeafExplosion(camera.position);
     }
 
+    let lidHasSlammed = false;
     function updateDeathSequence(delta) {
       deathTimer += delta;
-      const progress = Math.min(deathTimer / DEATH_DURATION, 1.0);
 
-      // Weiche Kamerafahrt nach hinten-oben (Third-Person Vogelperspektive)
-      const targetCamPos = new THREE.Vector3(
-        deathCorpseGroup.position.x + Math.sin(deathCorpseGroup.rotation.y) * 3.8,
-        3.2,
-        deathCorpseGroup.position.z + Math.cos(deathCorpseGroup.rotation.y) * 3.8
+      // 1. Kamera zoomt spektakulär nach oben in die Vogelperspektive
+      const camTarget = new THREE.Vector3(
+        coffinGroup.position.x + Math.sin(coffinGroup.rotation.y) * 4.2,
+        4.8,
+        coffinGroup.position.z + Math.cos(coffinGroup.rotation.y) * 4.2
       );
+      camera.position.lerp(camTarget, delta * 2.5);
+      camera.lookAt(coffinGroup.position.x, 0.4, coffinGroup.position.z);
 
-      camera.position.lerpVectors(deathCamStart, targetCamPos, progress);
-      camera.lookAt(deathCorpseGroup.position.x, 0.4, deathCorpseGroup.position.z);
+      // Phase 1: Der fette Joint fliegt im Bogen in den Sarg
+      if (deathTimer < 1.6) {
+        lidHasSlammed = false;
+        const progress = deathTimer / 1.6;
+        const targetMouth = new THREE.Vector3(coffinGroup.position.x, 0.35, coffinGroup.position.z - 0.6);
+        const startAir = new THREE.Vector3(coffinGroup.position.x, 4.5, coffinGroup.position.z + 2.0);
 
-      // Dichter Rauch steigt kontinuierlich aus dem Joint auf
-      if (Math.random() < 0.7) {
-        const puff = new THREE.Mesh(
-          new THREE.SphereGeometry(0.08 + Math.random() * 0.08, 6, 6),
-          new THREE.MeshBasicMaterial({ color: 0xe2e8f0, transparent: true, opacity: 0.7 })
-        );
-        puff.position.set(
-          deathCorpseGroup.position.x,
-          0.65,
-          deathCorpseGroup.position.z
-        ).add(new THREE.Vector3(0, 0.2, -0.6).applyAxisAngle(new THREE.Vector3(0, 1, 0), deathCorpseGroup.rotation.y));
-        scene.add(puff);
+        airborneJoint.position.lerpVectors(startAir, targetMouth, progress);
+        airborneJoint.position.y += Math.sin(progress * Math.PI) * 1.8; // Parabel
+        airborneJoint.rotation.x += delta * 12;
+        airborneJoint.rotation.y += delta * 8;
 
-        particles.push({
-          sprite: puff,
-          vel: new THREE.Vector3((Math.random() - 0.5) * 0.6, Math.random() * 1.8 + 1.2, (Math.random() - 0.5) * 0.6),
-          rotVel: 0,
-          life: 0.9,
-          maxLife: 1.1
-        });
+        // Rauchspur am fliegenden Joint
+        if (Math.random() < 0.8) {
+          const puff = new THREE.Mesh(new THREE.SphereGeometry(0.08, 6, 6), new THREE.MeshBasicMaterial({ color: 0xe2e8f0, transparent: true, opacity: 0.6 }));
+          puff.position.copy(airborneJoint.position);
+          scene.add(puff);
+          particles.push({ sprite: puff, vel: new THREE.Vector3(0, 0.8, 0), rotVel: 0, life: 0.5, maxLife: 0.6 });
+        }
+      } 
+      // Phase 2: Der Joint landet im Sarg, der Deckel schlägt mit Wucht zu!
+      else if (deathTimer >= 1.6 && deathTimer < 2.3) {
+        airborneJoint.visible = false;
+        const lidProgress = (deathTimer - 1.6) / 0.7;
+        coffinLid.rotation.z = THREE.MathUtils.lerp(-Math.PI * 0.45, 0, lidProgress * lidProgress);
+
+        if (lidProgress >= 0.95 && !lidHasSlammed) {
+          lidHasSlammed = true;
+          coffinLid.rotation.z = 0;
+          playSargSlamSound();
+        }
+      }
+      // Phase 3: FEGEFEUER! Der Sarg sinkt in die brennende Hölle hinab
+      else if (deathTimer >= 2.3) {
+        coffinLid.rotation.z = 0;
+        const sinkDelta = delta * 1.8;
+        coffinGroup.position.y -= sinkDelta; // Sarg versinkt im Boden
+
+        // Höllenlicht lodert auf
+        hellFireLight.intensity = Math.min(hellFireLight.intensity + delta * 4, 3.5);
+
+        // Flammensäulen & Glutpartikel steigen aus dem Boden empor
+        for (let i = 0; i < 3; i++) {
+          const flameColor = Math.random() < 0.6 ? 0xdc2626 : 0xf59e0b;
+          const flame = new THREE.Mesh(
+            new THREE.SphereGeometry(0.12 + Math.random() * 0.12, 6, 6),
+            new THREE.MeshBasicMaterial({ color: flameColor, transparent: true, opacity: 0.9 })
+          );
+          flame.position.set(
+            coffinGroup.position.x + (Math.random() - 0.5) * 2.2,
+            0.1,
+            coffinGroup.position.z + (Math.random() - 0.5) * 2.8
+          );
+          scene.add(flame);
+
+          particles.push({
+            sprite: flame,
+            vel: new THREE.Vector3((Math.random() - 0.5) * 2, Math.random() * 6 + 3, (Math.random() - 0.5) * 2),
+            rotVel: 0,
+            life: 0.6,
+            maxLife: 0.7
+          });
+        }
       }
 
-      // Todessequenz beendet: Respawn am Startpunkt
+      // Todessequenz beendet: Respawn
       if (deathTimer >= DEATH_DURATION) {
         isDying = false;
-        deathCorpseGroup.visible = false;
+        coffinGroup.visible = false;
+        coffinGroup.position.y = 0;
+        hellFireLight.intensity = 0;
         deathOverlayEl.classList.add('hidden');
         if (viewmodelGroup) viewmodelGroup.visible = true;
         canAct = true;
@@ -1578,7 +1749,7 @@
     }
 
     // ==========================================
-    // 7. CHAMPAGNER-PROJEKTILE (AUSWEICHBAR)
+    // 7. PROJEKTILE (29 M/S GESCHWINDIGKEIT)
     // ==========================================
     function createChampagneBottleMesh() {
       const group = new THREE.Group();
@@ -1616,7 +1787,6 @@
       bottle.lookAt(target);
       scene.add(bottle);
 
-      // Korken fliegt nach vorne weg
       const corkMat = new THREE.MeshStandardMaterial({ color: 0x92400e, roughness: 0.9 });
       const cork = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.03, 0.08, 8), corkMat);
       cork.rotation.x = Math.PI / 2;
@@ -1629,9 +1799,9 @@
       const totalDist = flightDir.length();
       flightDir.normalize();
 
-      // Moderate Geschwindigkeit für echte Ausweich-Chancen (Dodging)
-      const speed = 24.0;
-      const corkVelocity = flightDir.clone().multiplyScalar(speed + 16.0).add(new THREE.Vector3(
+      // Exakt 5 m/s schneller (29.0 m/s)
+      const speed = 29.0;
+      const corkVelocity = flightDir.clone().multiplyScalar(speed + 19.0).add(new THREE.Vector3(
         (Math.random() - 0.5) * 4,
         Math.random() * 5 + 2,
         (Math.random() - 0.5) * 4
@@ -1744,16 +1914,13 @@
           spawnChampagneSprayPuff(neckPos, r.flightDir);
         }
 
-        // Flasche erreicht ihr Ziel
         if (r.distTraveled >= r.totalDist) {
           spawnChampagneSplash(r.target);
 
           if (r.isOwner) {
-            // Eigener Schuss schlägt ein: Trefferprüfung
             if (r.intendedHit && opponentRoot) {
               const oppDist = opponentRoot.position.distanceTo(new THREE.Vector3(r.target.x, 0, r.target.z));
               if (oppDist < 1.6) {
-                // Gegner stand noch am Ort
                 spawnLeafExplosion(r.target);
                 if (isBotMode) {
                   botScorePlayer++;
@@ -1763,25 +1930,21 @@
                   socket.emit('hit-target', opponentId);
                 }
               } else {
-                // Gegner ist ausgewichen!
                 spawnHitImpact(r.target);
               }
             } else {
               spawnHitImpact(r.target);
             }
           } else {
-            // Schuss des Gegners oder Bots schlägt am Spielerziel ein
             if (r.intendedHit && !isDying) {
               const myDist = camera.position.distanceTo(new THREE.Vector3(r.target.x, 1.6, r.target.z));
               if (myDist < 1.5) {
-                // Spieler hat nicht rechtzeitig gedasht/gesprungen -> Treffer!
                 if (isBotMode) {
                   botScoreEnemy++;
                   document.getElementById('hud-opp-score').innerText = botScoreEnemy;
                   triggerDeathSequence(new THREE.Vector3((Math.random() - 0.5) * 16, 1.6, 14));
                 }
               } else {
-                // Spieler ist dem Schuss erfolgreich ausgewichen!
                 spawnHitImpact(r.target);
               }
             } else {
@@ -2023,7 +2186,6 @@
         raycaster.ray.at(50, endPos);
       }
 
-      // Eigene Champagner-Rakete starten
       spawnChampagneRocket(startPos, endPos, true, willHitOpponent);
 
       if (!isBotMode) {
@@ -2079,7 +2241,7 @@
       respawnBot();
       if (!isTouchDevice) document.body.requestPointerLock();
 
-      startRoundCountdown(() => {
+      startAsiModeIntro(() => {
         botTimerInterval = setInterval(() => {
           botTimeLeft--;
           updateRoundTimerUI(botTimeLeft);
@@ -2153,7 +2315,6 @@
           (Math.random() - 0.5) * 1.0
         ));
 
-        // Bot feuert sichtbare, ausweichbare Flasche
         spawnChampagneRocket(botGunPos, target, false, true);
       }
     }
@@ -2164,9 +2325,11 @@
       inGame = false;
       canAct = false;
       isDying = false;
-      if (deathCorpseGroup) deathCorpseGroup.visible = false;
+      if (coffinGroup) coffinGroup.visible = false;
+      if (hellFireLight) hellFireLight.intensity = 0;
       countdownEl.classList.add('hidden');
       deathOverlayEl.classList.add('hidden');
+      asimodeOverlay.classList.add('hidden');
       opponentRoot.position.set(0, -100, 0);
       touchLayer.classList.add('hidden');
       hud.classList.add('hidden');
@@ -2211,7 +2374,7 @@
       document.getElementById('hud-opp-score').innerText = '0';
       updateRoundTimerUI(60);
 
-      startRoundCountdown();
+      startAsiModeIntro();
 
       if (!isTouchDevice) document.body.requestPointerLock();
     });
@@ -2227,7 +2390,6 @@
       }
     });
 
-    // Bei gegnerischem Treffer: 3rd-Person Todesanimation starten
     socket.on('respawn', (pos) => {
       triggerDeathSequence(pos);
     });
@@ -2246,7 +2408,9 @@
       isDying = false;
       countdownEl.classList.add('hidden');
       deathOverlayEl.classList.add('hidden');
-      if (deathCorpseGroup) deathCorpseGroup.visible = false;
+      asimodeOverlay.classList.add('hidden');
+      if (coffinGroup) coffinGroup.visible = false;
+      if (hellFireLight) hellFireLight.intensity = 0;
       hud.classList.add('hidden');
       touchLayer.classList.add('hidden');
       if (document.pointerLockElement) document.exitPointerLock();
