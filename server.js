@@ -27,7 +27,10 @@ async function sendTelegramLobbyAlert(playerName) {
 
   const now = Date.now();
   const timeSinceLastAlert = now - lastNotificationTime;
-  if (timeSinceLastAlert < NOTIFICATION_COOLDOWN_MS) return;
+
+  if (timeSinceLastAlert < NOTIFICATION_COOLDOWN_MS) {
+    return;
+  }
 
   lastNotificationTime = now;
 
@@ -113,7 +116,9 @@ io.on('connection', (socket) => {
     const p1 = players[challengerId];
     const p2 = players[socket.id];
 
-    if (!p1 || !p2 || p1.status !== 'lobby' || p2.status !== 'lobby') return;
+    if (!p1 || !p2 || p1.status !== 'lobby' || p2.status !== 'lobby') {
+      return;
+    }
 
     const gameId = `game_${p1.id}_${p2.id}`;
     p1.status = 'ingame';
@@ -127,8 +132,7 @@ io.on('connection', (socket) => {
       p2: p2.id,
       scores: { [p1.id]: 0, [p2.id]: 0 },
       timeLeft: 60,
-      interval: null,
-      isPausedForDeath: false
+      interval: null
     };
 
     games[gameId] = gameData;
@@ -161,20 +165,10 @@ io.on('connection', (socket) => {
     }, 1000);
   });
 
-  // WebRTC Signaling Relay
-  socket.on('voice-signal', (data) => {
-    const player = players[socket.id];
-    if (!player || !player.gameId) return;
-    const game = games[player.gameId];
-    if (!game) return;
-
-    const opponentId = game.p1 === socket.id ? game.p2 : game.p1;
-    io.to(opponentId).emit('voice-signal', data);
-  });
-
   socket.on('player-update', (data) => {
     const player = players[socket.id];
     if (!player || !player.gameId) return;
+
     const game = games[player.gameId];
     if (!game) return;
 
@@ -182,38 +176,30 @@ io.on('connection', (socket) => {
     io.to(opponentId).emit('opponent-moved', data);
   });
 
-  // Treffer-Verarbeitung mit Kill-Lock und synchronem Runden-Resume
   socket.on('hit-target', (targetId) => {
     const player = players[socket.id];
     if (!player || !player.gameId) return;
 
     const game = games[player.gameId];
-    if (!game || game.isPausedForDeath) return;
+    if (!game || (game[targetId] === undefined && game.p1 !== targetId && game.p2 !== targetId)) return;
 
-    game.isPausedForDeath = true;
     game.scores[socket.id] += 1;
-    if (leaderboard[player.name]) leaderboard[player.name].kills += 1;
+    if (leaderboard[player.name]) {
+      leaderboard[player.name].kills += 1;
+    }
 
-    // Punktestand synchronisieren
-    io.to(game.p1).emit('score-update', { myScore: game.scores[game.p1], oppScore: game.scores[game.p2] });
-    io.to(game.p2).emit('score-update', { myScore: game.scores[game.p2], oppScore: game.scores[game.p1] });
+    io.to(game.p1).emit('score-update', {
+      myScore: game.scores[game.p1],
+      oppScore: game.scores[game.p2]
+    });
+    io.to(game.p2).emit('score-update', {
+      myScore: game.scores[game.p2],
+      oppScore: game.scores[game.p1]
+    });
 
-    // Todes- und Atompilz-Event an beide Clients
-    io.to(game.p1).emit('player-killed', { killerId: socket.id, victimId: targetId });
-    io.to(game.p2).emit('player-killed', { killerId: socket.id, victimId: targetId });
-
-    // Exakt nach Ablauf der 4.2s Todessequenz beide Spieler zeitgleich neu starten
-    setTimeout(() => {
-      if (!games[game.id]) return;
-
-      const p1Spawn = { x: (Math.random() - 0.5) * 8, y: 1.6, z: 14, rotY: Math.PI };
-      const p2Spawn = { x: (Math.random() - 0.5) * 8, y: 1.6, z: -14, rotY: 0 };
-
-      io.to(game.p1).emit('round-resume', { mySpawn: p1Spawn, oppSpawn: p2Spawn });
-      io.to(game.p2).emit('round-resume', { mySpawn: p2Spawn, oppSpawn: p1Spawn });
-
-      game.isPausedForDeath = false;
-    }, 4200);
+    const spawnZ = targetId === game.p1 ? 14 : -14;
+    const spawnRot = targetId === game.p1 ? Math.PI : 0;
+    io.to(targetId).emit('respawn', { x: (Math.random() - 0.5) * 6, y: 1.6, z: spawnZ, rotY: spawnRot });
   });
 
   socket.on('shot-fired', (data) => {
