@@ -33,11 +33,21 @@
     /* HUD */
     #hud { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
     #crosshair { position: absolute; top: 50%; left: 50%; width: 8px; height: 8px; transform: translate(-50%, -50%); border: 2px solid #000; border-radius: 50%; background: #22c55e; }
-    #stats-bar { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); display: flex; gap: 16px; font-size: 16px; font-weight: 800; background: rgba(15, 23, 42, 0.85); padding: 6px 16px; border-radius: 6px; border: 1px solid #334155; white-space: nowrap; }
-    .hud-timer { color: #f59e0b; }
+    
+    /* Prominente Zeitanzeige */
+    #stats-bar { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 14px; font-size: 15px; font-weight: 800; background: rgba(15, 23, 42, 0.9); padding: 6px 16px; border-radius: 6px; border: 1px solid #334155; white-space: nowrap; box-shadow: 0 4px 15px rgba(0,0,0,0.6); }
+    .timer-badge { display: flex; flex-direction: column; align-items: center; background: #0b0f19; border: 1px solid #f59e0b; padding: 2px 10px; border-radius: 4px; }
+    .timer-label { font-size: 9px; color: #94a3b8; letter-spacing: 0.5px; }
+    .timer-value { font-size: 20px; color: #f59e0b; font-family: monospace; }
+    .timer-value.danger { color: #ef4444; animation: blink 0.5s infinite alternate; }
+    @keyframes blink { from { opacity: 1; } to { opacity: 0.4; } }
+
     .hud-score { color: #4ade80; }
     .hud-opp-score { color: #ef4444; }
     #hitmarker { position: absolute; top: 50%; left: 50%; width: 22px; height: 22px; transform: translate(-50%, -50%); border: 3px solid #22c55e; border-radius: 50%; opacity: 0; transition: opacity 0.08s; pointer-events: none; }
+
+    /* Runder Countdown vor Spielstart */
+    #countdown-overlay { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); font-size: 78px; font-weight: 900; color: #f59e0b; text-shadow: 0 4px 20px rgba(0,0,0,0.9), 0 0 30px #f59e0b; pointer-events: none; z-index: 15; letter-spacing: 2px; }
 
     #minimap-container { position: absolute; top: 12px; left: 12px; width: 96px; height: 96px; background: rgba(15, 23, 42, 0.85); border: 2px solid #475569; border-radius: 50%; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
     #minimap { width: 100%; height: 100%; }
@@ -54,7 +64,6 @@
     #joystick-base { position: absolute; left: 24px; bottom: 24px; width: 110px; height: 110px; background: rgba(0,0,0,0.35); border: 2px solid rgba(255,255,255,0.4); border-radius: 50%; pointer-events: auto; }
     #joystick-knob { position: absolute; top: 50%; left: 50%; width: 44px; height: 44px; background: #f59e0b; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; }
     
-    /* Ergonomisches Aktions-Cluster rechts */
     .touch-right-cluster {
       position: absolute;
       right: 18px;
@@ -78,34 +87,10 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.5);
       pointer-events: auto;
     }
-    .touch-action-btn:active {
-      transform: scale(0.92);
-    }
-    .jump-btn {
-      grid-area: jump;
-      width: 54px;
-      height: 54px;
-      background: #2563eb;
-      border: 2px solid #93c5fd;
-      font-size: 10px;
-    }
-    .dash-btn {
-      grid-area: dash;
-      width: 54px;
-      height: 54px;
-      background: #475569;
-      border: 2px solid #cbd5e1;
-      font-size: 10px;
-    }
-    .fire-btn {
-      grid-area: fire;
-      width: 76px;
-      height: 76px;
-      background: #dc2626;
-      border: 3px solid #fff;
-      font-size: 13px;
-      font-weight: 900;
-    }
+    .touch-action-btn:active { transform: scale(0.92); }
+    .jump-btn { grid-area: jump; width: 54px; height: 54px; background: #2563eb; border: 2px solid #93c5fd; font-size: 10px; }
+    .dash-btn { grid-area: dash; width: 54px; height: 54px; background: #475569; border: 2px solid #cbd5e1; font-size: 10px; }
+    .fire-btn { grid-area: fire; width: 76px; height: 76px; background: #dc2626; border: 3px solid #fff; font-size: 13px; font-weight: 900; }
   </style>
 </head>
 <body>
@@ -174,9 +159,16 @@
 
     <div id="stats-bar">
       <div>Du: <span id="hud-my-score" class="hud-score">0</span></div>
-      <div class="hud-timer"><span id="hud-timer">60</span>s</div>
+      
+      <div class="timer-badge">
+        <span class="timer-label">RUNDE</span>
+        <span id="hud-timer" class="timer-value">60</span>
+      </div>
+
       <div>Gegner: <span id="hud-opp-score" class="hud-opp-score">0</span></div>
     </div>
+
+    <div id="countdown-overlay" class="hidden">3</div>
 
     <div id="lobby-monitor" class="hidden">
       <div><strong>Lobby-Status:</strong></div>
@@ -221,6 +213,20 @@
       } else if (audioCtx.state === 'suspended') {
         audioCtx.resume();
       }
+    }
+
+    function playCountdownTone(isHigh = false) {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(isHigh ? 880 : 440, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (isHigh ? 0.35 : 0.18));
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + (isHigh ? 0.36 : 0.19));
     }
 
     function playShootSound() {
@@ -310,7 +316,7 @@
         const g = audioCtx.createGain();
         osc.type = 'sawtooth';
         osc.frequency.setValueAtTime(bassNotes[beatStep % bassNotes.length], t);
-        g.gain.setValueAtTime(0.07, t);
+        g.gain.setValueAtTime(0.06, t);
         g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
         osc.connect(g);
         g.connect(audioCtx.destination);
@@ -336,6 +342,7 @@
     let selectedChar = 'marley';
 
     let inGame = false;
+    let canAct = false; // Wird erst nach 3, 2, 1 START freigeschaltet
     let isBotMode = false;
     let botTimerInterval = null;
     let botTimeLeft = 60;
@@ -355,14 +362,15 @@
     const velocity = new THREE.Vector3();
     let velocityY = 0;
     let isGrounded = true;
-    const GRAVITY = 26.0;
-    const JUMP_FORCE = 9.5;
+    const GRAVITY = 24.0;
+    const JUMP_FORCE = 8.5;
 
     let dashCooldown = 0;
     let isDashing = false;
     let dashTimer = 0;
-    const DASH_DURATION = 0.14;
-    const DASH_SPEED = 65.0;
+    const DASH_DURATION = 0.12;
+    const DASH_SPEED = 36.0; // Angenehmer, kontrollierter Ausweichschub
+    const BASE_MOVE_SPEED = 18.0; // Spürbar entschärftes, griffiges Lauftempo
 
     let shootCooldown = 0;
     const FIRE_INTERVAL = 0.28;
@@ -384,6 +392,8 @@
     const screenChallenge = document.getElementById('screen-challenge');
     const screenGameOver = document.getElementById('screen-gameover');
     const hud = document.getElementById('hud');
+    const countdownEl = document.getElementById('countdown-overlay');
+    const timerValueEl = document.getElementById('hud-timer');
     const touchLayer = document.getElementById('touch-layer');
     const joystickBase = document.getElementById('joystick-base');
     const joystickKnob = document.getElementById('joystick-knob');
@@ -394,6 +404,40 @@
     const lobbyMonitorContent = document.getElementById('lobby-monitor-content');
 
     const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+    // Countdown-Sequenz
+    function startRoundCountdown(callback) {
+      canAct = false;
+      countdownEl.classList.remove('hidden');
+      let count = 3;
+      countdownEl.innerText = count;
+      playCountdownTone(false);
+
+      const interval = setInterval(() => {
+        count--;
+        if (count > 0) {
+          countdownEl.innerText = count;
+          playCountdownTone(false);
+        } else if (count === 0) {
+          countdownEl.innerText = 'START!';
+          playCountdownTone(true);
+          canAct = true;
+          if (callback) callback();
+        } else {
+          clearInterval(interval);
+          countdownEl.classList.add('hidden');
+        }
+      }, 1000);
+    }
+
+    function updateRoundTimerUI(seconds) {
+      timerValueEl.innerText = seconds;
+      if (seconds <= 10) {
+        timerValueEl.classList.add('danger');
+      } else {
+        timerValueEl.classList.remove('danger');
+      }
+    }
 
     document.querySelectorAll('.char-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -577,6 +621,18 @@
       return new THREE.CanvasTexture(c);
     }
 
+    function createBarrelTexture(colorHex) {
+      const c = document.createElement('canvas');
+      c.width = 128; c.height = 128;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = colorHex;
+      ctx.fillRect(0, 0, 128, 128);
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(0, 24, 128, 12);
+      ctx.fillRect(0, 92, 128, 12);
+      return new THREE.CanvasTexture(c);
+    }
+
     function createMarijuanaLeafTexture() {
       const canvas = document.createElement('canvas');
       canvas.width = 128; canvas.height = 128;
@@ -610,7 +666,7 @@
     }
 
     // ==========================================
-    // 4. SZENE & HINDERNISSE
+    // 4. SZENE & DETAILREICHE MAP
     // ==========================================
     function init3D() {
       scene = new THREE.Scene();
@@ -665,6 +721,10 @@
       makeWall(1, 5, 36, -18, 2.5, 0, 0x16a34a); // West
       makeWall(1, 5, 36, 18, 2.5, 0, 0x9333ea);  // Ost
 
+      // Überkopf-Leitungen / Drahtseile
+      createOverheadCable(-17, 4.6, -17, 17, 4.6, 17);
+      createOverheadCable(-17, 4.6, 17, 17, 4.6, -17);
+
       spawnCSMapLayout();
       spawnSkyDetails();
       setupCigaretteWeapon();
@@ -674,6 +734,18 @@
       window.addEventListener('resize', onWindowResize);
       setupControls();
       setupTouchControls();
+    }
+
+    function createOverheadCable(x1, y1, z1, x2, y2, z2) {
+      const points = [
+        new THREE.Vector3(x1, y1, z1),
+        new THREE.Vector3((x1 + x2) / 2, (y1 + y2) / 2 - 0.7, (z1 + z2) / 2),
+        new THREE.Vector3(x2, y2, z2)
+      ];
+      const curve = new THREE.QuadraticBezierCurve3(points[0], points[1], points[2]);
+      const cableGeo = new THREE.TubeGeometry(curve, 16, 0.02, 6, false);
+      const cableMat = new THREE.MeshBasicMaterial({ color: 0x1e293b });
+      scene.add(new THREE.Mesh(cableGeo, cableMat));
     }
 
     function addCrate(x, y, z, size = 1.8) {
@@ -700,7 +772,44 @@
       obstacleColliders.push({ minX: x - w / 2, maxX: x + w / 2, minZ: z - d / 2, maxZ: z + d / 2 });
     }
 
+    function addOilBarrel(x, z, colorHex = '#dc2626') {
+      const barrelGroup = new THREE.Group();
+      const barrelMat = new THREE.MeshStandardMaterial({ map: createBarrelTexture(colorHex), metalness: 0.4, roughness: 0.5 });
+      const mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 1.3, 14), barrelMat);
+      mesh.position.y = 0.65;
+      barrelGroup.add(mesh);
+      barrelGroup.position.set(x, 0, z);
+      scene.add(barrelGroup);
+
+      obstacleMeshes.push(mesh);
+      obstacleColliders.push({ minX: x - 0.48, maxX: x + 0.48, minZ: z - 0.48, maxZ: z + 0.48 });
+    }
+
+    function addSandbags(x, z, rotY = 0) {
+      const bagGroup = new THREE.Group();
+      const bagMat = new THREE.MeshStandardMaterial({ color: 0xa18262, roughness: 0.9 });
+      for (let y = 0; y < 2; y++) {
+        for (let i = -1; i <= 1; i++) {
+          const bag = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.35, 0.45), bagMat);
+          bag.position.set(i * 0.75, y * 0.35 + 0.18, 0);
+          bagGroup.add(bag);
+        }
+      }
+      bagGroup.position.set(x, 0, z);
+      bagGroup.rotation.y = rotY;
+      scene.add(bagGroup);
+
+      const hitBox = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.7, 0.5), new THREE.MeshBasicMaterial({ visible: false }));
+      hitBox.position.set(x, 0.35, z);
+      hitBox.rotation.y = rotY;
+      scene.add(hitBox);
+      obstacleMeshes.push(hitBox);
+
+      obstacleColliders.push({ minX: x - 1.2, maxX: x + 1.2, minZ: z - 0.35, maxZ: z + 0.35 });
+    }
+
     function spawnCSMapLayout() {
+      // Kistenstapel
       addCrate(-4, 0, -8, 2.0);
       addCrate(-4, 2.0, -8, 1.6);
       addCrate(7, 0, -6, 1.8);
@@ -709,8 +818,18 @@
       addCrate(-8, 0, 8, 1.8);
       addCrate(4, 0, 9, 2.0);
 
+      // Betonbarrikaden
       addConcreteWall(0, -3, 6, 1.2);
       addConcreteWall(-6, 2, 1.2, 5);
+
+      // Ölfässer
+      addOilBarrel(-1.8, -7, '#b91c1c');
+      addOilBarrel(-1.0, -7.5, '#2563eb');
+      addOilBarrel(8.5, 3.5, '#15803d');
+
+      // Sandsäcke
+      addSandbags(0, 4.5, 0);
+      addSandbags(-11, -3, Math.PI / 4);
 
       spawnFoodProps();
     }
@@ -874,7 +993,7 @@
     }
 
     // ==========================================
-    // 6. WAFFE, PARTICLES & CHARAKTERE
+    // 6. WAFFE & DETAILREICHE CHARAKTERE
     // ==========================================
     let cigWeapon;
     const smokePuffs = [];
@@ -956,55 +1075,183 @@
       Object.keys(opponentVisuals).forEach(k => { opponentVisuals[k].visible = (k === charKey); });
     }
 
+    // 1. Bob Marley (Sonnenbrille, Perlen, Goldkette, Dreadlocks)
     function buildMarleyModel() {
       const g = new THREE.Group();
       const b = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.42, 1.1, 12), new THREE.MeshStandardMaterial({ color: 0x14532d }));
       b.position.y = 0.65; g.add(b);
+
+      const chain = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.03, 8, 16), new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.9 }));
+      chain.position.set(0, 1.1, 0.12);
+      chain.rotation.x = Math.PI / 3;
+      g.add(chain);
+
       const h = new THREE.Mesh(new THREE.SphereGeometry(0.32, 12, 12), new THREE.MeshStandardMaterial({ color: 0x78350f }));
       h.position.y = 1.45; g.add(h);
+
+      const shades = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.1, 0.12), new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.1 }));
+      shades.position.set(0, 1.48, 0.28);
+      g.add(shades);
+
       const r = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.1, 14), new THREE.MeshStandardMaterial({ color: 0xef4444 }));
       r.position.y = 1.62; g.add(r);
       const y = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.36, 0.12, 14), new THREE.MeshStandardMaterial({ color: 0xfacc15 }));
       y.position.y = 1.72; g.add(y);
       const gr = new THREE.Mesh(new THREE.SphereGeometry(0.36, 12, 8), new THREE.MeshStandardMaterial({ color: 0x16a34a }));
       gr.position.y = 1.82; g.add(gr);
+
+      // Detaillierte Dreads mit Perlen
+      for (let i = 0; i < 11; i++) {
+        const dread = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.025, 0.75, 6), new THREE.MeshStandardMaterial({ color: 0x111111 }));
+        const ang = (i / 11) * Math.PI * 1.4 - Math.PI * 0.7;
+        dread.position.set(Math.sin(ang) * 0.35, 1.3, Math.cos(ang) * 0.3 - 0.08);
+        dread.rotation.z = Math.sin(ang) * 0.25;
+        g.add(dread);
+
+        if (i % 2 === 0) {
+          const bead = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.06, 6), new THREE.MeshStandardMaterial({ color: i % 4 === 0 ? 0xfacc15 : 0xef4444 }));
+          bead.position.set(Math.sin(ang) * 0.35, 1.1, Math.cos(ang) * 0.3 - 0.08);
+          g.add(bead);
+        }
+      }
       return g;
     }
 
+    // 2. Brot (Butter, Röstspuren, Gesicht, Kochmütze)
     function buildBreadModel() {
       const g = new THREE.Group();
-      const crust = new THREE.Mesh(new THREE.BoxGeometry(0.75, 1.1, 0.6), new THREE.MeshStandardMaterial({ color: 0x92400e }));
+      const crust = new THREE.Mesh(new THREE.BoxGeometry(0.75, 1.1, 0.6), new THREE.MeshStandardMaterial({ color: 0x854d0e, roughness: 0.6 }));
       crust.position.y = 0.75; g.add(crust);
-      const top = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.75, 12), new THREE.MeshStandardMaterial({ color: 0x92400e }));
+
+      const top = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.75, 12), new THREE.MeshStandardMaterial({ color: 0x92400e, roughness: 0.5 }));
       top.rotation.z = Math.PI / 2; top.position.y = 1.3; g.add(top);
+
+      // Butter-Stück auf dem Laib
+      const butter = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.08, 0.25), new THREE.MeshStandardMaterial({ color: 0xfef08a, roughness: 0.2 }));
+      butter.position.set(0, 1.62, 0);
+      g.add(butter);
+
+      // Kochmütze
+      const hatBase = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.1, 12), new THREE.MeshStandardMaterial({ color: 0xf8fafc }));
+      hatBase.position.set(0.15, 1.65, 0);
+      g.add(hatBase);
+      const hatTop = new THREE.Mesh(new THREE.SphereGeometry(0.26, 10, 10), new THREE.MeshStandardMaterial({ color: 0xffffff }));
+      hatTop.position.set(0.15, 1.78, 0);
+      g.add(hatTop);
+
+      // Augen & Mund
+      const eyeMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+      const e1 = new THREE.Mesh(new THREE.SphereGeometry(0.04, 6, 6), eyeMat);
+      e1.position.set(-0.16, 0.9, 0.31);
+      const e2 = e1.clone();
+      e2.position.x = 0.16;
+      g.add(e1); g.add(e2);
+
+      const smile = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.02, 4, 8, Math.PI), eyeMat);
+      smile.position.set(0, 0.76, 0.31);
+      smile.rotation.z = Math.PI;
+      g.add(smile);
       return g;
     }
 
+    // 3. Pferd (Zaumzeug, Blesse, Ohren, Mähne, Schweif)
     function buildHorseModel() {
       const g = new THREE.Group();
-      const fur = new THREE.MeshStandardMaterial({ color: 0x854d0e });
+      const fur = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.7 });
       const b = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.42, 1.2, 12), fur);
       b.position.y = 0.7; g.add(b);
+
+      const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.1, 0.7, 8), new THREE.MeshStandardMaterial({ color: 0x1c1917 }));
+      tail.position.set(0, 0.5, -0.42);
+      tail.rotation.x = -0.3;
+      g.add(tail);
+
       const h = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.45, 0.5), fur);
       h.position.set(0, 1.45, 0.2); h.rotation.x = 0.35; g.add(h);
+
+      // Weiße Blesse
+      const blaze = new THREE.Mesh(new THREE.PlaneGeometry(0.08, 0.4), new THREE.MeshStandardMaterial({ color: 0xf8fafc }));
+      blaze.position.set(0, 1.48, 0.46);
+      blaze.rotation.x = 0.35;
+      g.add(blaze);
+
+      // Zaumzeug (Bridle)
+      const bridleMat = new THREE.MeshStandardMaterial({ color: 0x292524 });
+      const strap = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.05, 0.52), bridleMat);
+      strap.position.set(0, 1.42, 0.2);
+      strap.rotation.x = 0.35;
+      g.add(strap);
+
+      // Ohren
+      const earMat = new THREE.MeshStandardMaterial({ color: 0x78350f });
+      const ear1 = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.22, 6), earMat);
+      ear1.position.set(-0.14, 1.76, 0.1);
+      const ear2 = ear1.clone(); ear2.position.x = 0.14;
+      g.add(ear1); g.add(ear2);
       return g;
     }
 
+    // 4. Delfin (Zweifarbig, Fliegerbrille, Blasloch-Effekt, Fluken)
     function buildDolphinModel() {
       const g = new THREE.Group();
-      const b = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.34, 1.25, 14), new THREE.MeshStandardMaterial({ color: 0x0284c7 }));
-      b.position.y = 0.75; g.add(b);
-      const h = new THREE.Mesh(new THREE.SphereGeometry(0.36, 14, 14), new THREE.MeshStandardMaterial({ color: 0x0284c7 }));
-      h.position.y = 1.4; g.add(h);
-      const f = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.38, 0.4), new THREE.MeshStandardMaterial({ color: 0x0284c7 }));
-      f.position.set(0, 1.0, -0.38); g.add(f);
+      const bMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.2 });
+      const whiteMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.3 });
+
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.34, 1.25, 14), bMat);
+      body.position.y = 0.75; g.add(body);
+
+      const belly = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.26, 1.2, 14), whiteMat);
+      belly.position.set(0, 0.75, 0.12);
+      belly.scale.set(0.9, 1, 0.4);
+      g.add(belly);
+
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.36, 14, 14), bMat);
+      head.position.y = 1.4; g.add(head);
+
+      const rostrum = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.4, 10), bMat);
+      rostrum.rotation.x = Math.PI / 2; rostrum.position.set(0, 1.35, 0.42);
+      g.add(rostrum);
+
+      // Fliegerbrille
+      const glasses = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.12, 0.15), new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.8 }));
+      glasses.position.set(0, 1.45, 0.3);
+      g.add(glasses);
+
+      // Horizontale Schwanzflosse (Fluke)
+      const fluke = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.05, 0.22), bMat);
+      fluke.position.set(0, 0.15, -0.2);
+      g.add(fluke);
+
+      const fin = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.38, 0.4), bMat);
+      fin.position.set(0, 1.0, -0.38); g.add(fin);
       return g;
     }
 
+    // 5. 3-Bein-Grill (Deckelthermometer, Grillzange, Ascheteller)
     function buildGrillModel() {
       const g = new THREE.Group();
-      const bowl = new THREE.Mesh(new THREE.SphereGeometry(0.48, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x991b1b }));
+      const bowl = new THREE.Mesh(new THREE.SphereGeometry(0.48, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x991b1b, roughness: 0.3 }));
       bowl.rotation.x = Math.PI; bowl.position.y = 1.05; g.add(bowl);
+
+      const lid = new THREE.Mesh(new THREE.SphereGeometry(0.46, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x991b1b, roughness: 0.3 }));
+      lid.position.y = 1.15; g.add(lid);
+
+      // Thermometer
+      const thermo = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.03, 10), new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.9 }));
+      thermo.position.set(0, 1.55, 0.25);
+      thermo.rotation.x = 0.5;
+      g.add(thermo);
+
+      // Grillzange seitlich
+      const tongs = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.5, 0.08), new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.9 }));
+      tongs.position.set(0.52, 0.9, 0);
+      g.add(tongs);
+
+      // Ascheschale unten
+      const ashPlate = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.28, 0.06, 12), new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.8 }));
+      ashPlate.position.y = 0.45;
+      g.add(ashPlate);
+
       const mMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.8 });
       for (let i = 0; i < 3; i++) {
         const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.15, 8), mMat);
@@ -1061,9 +1308,10 @@
     }
 
     // ==========================================
-    // 7. STEUERUNG (RECHTER DAUMEN CLUSTER)
+    // 7. STEUERUNG
     // ==========================================
     function triggerJump() {
+      if (!canAct) return;
       if (isGrounded) {
         velocityY = JUMP_FORCE;
         isGrounded = false;
@@ -1072,6 +1320,7 @@
     }
 
     function triggerDash() {
+      if (!canAct) return;
       if (dashCooldown <= 0) {
         isDashing = true;
         dashTimer = DASH_DURATION;
@@ -1124,7 +1373,6 @@
     let lastLookX = 0, lastLookY = 0;
 
     function setupTouchControls() {
-      // Joystick links
       joystickBase.addEventListener('touchstart', (e) => {
         initAudio();
         e.preventDefault();
@@ -1133,12 +1381,10 @@
         handleJoyMove(t);
       }, { passive: false });
 
-      // Buttons rechts: Direkte Event-Verarbeitung ohne Zieldrift
       btnTouchJump.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); triggerJump(); }, { passive: false });
       btnTouchDash.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); triggerDash(); }, { passive: false });
       btnTouchFire.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); fireHitscan(); }, { passive: false });
 
-      // Touch-Blickfeld auf der rechten Hälfte
       window.addEventListener('touchstart', (e) => {
         initAudio();
         if (!inGame) return;
@@ -1202,11 +1448,12 @@
     }
 
     // ==========================================
-    // 8. MANUELLER HITSCAN
+    // 8. HITSCAN
     // ==========================================
     const raycaster = new THREE.Raycaster();
 
     function fireHitscan() {
+      if (!canAct) return;
       if (shootCooldown > 0) return;
       shootCooldown = FIRE_INTERVAL;
 
@@ -1300,16 +1547,19 @@
 
       document.getElementById('hud-my-score').innerText = '0';
       document.getElementById('hud-opp-score').innerText = '0';
-      document.getElementById('hud-timer').innerText = '60';
+      updateRoundTimerUI(60);
 
       respawnBot();
       if (!isTouchDevice) document.body.requestPointerLock();
 
-      botTimerInterval = setInterval(() => {
-        botTimeLeft--;
-        document.getElementById('hud-timer').innerText = botTimeLeft;
-        if (botTimeLeft <= 0) endBotMatch();
-      }, 1000);
+      // Countdown starten, dann Timer-Takt
+      startRoundCountdown(() => {
+        botTimerInterval = setInterval(() => {
+          botTimeLeft--;
+          updateRoundTimerUI(botTimeLeft);
+          if (botTimeLeft <= 0) endBotMatch();
+        }, 1000);
+      });
     }
 
     function respawnBot() {
@@ -1331,14 +1581,15 @@
     }
 
     function updateBotAI(delta) {
+      if (!canAct) return;
       const dir = new THREE.Vector3().subVectors(botState.targetPos, opponentRoot.position);
       dir.y = 0;
       if (dir.length() < 1.0) {
         pickNewBotTarget();
       } else {
         dir.normalize();
-        const nextBotX = opponentRoot.position.x + dir.x * 5.5 * delta;
-        const nextBotZ = opponentRoot.position.z + dir.z * 5.5 * delta;
+        const nextBotX = opponentRoot.position.x + dir.x * 4.5 * delta;
+        const nextBotZ = opponentRoot.position.z + dir.z * 4.5 * delta;
 
         if (!isPositionColliding(nextBotX, opponentRoot.position.z, 0.5)) {
           opponentRoot.position.x = nextBotX;
@@ -1391,6 +1642,8 @@
       clearInterval(botTimerInterval);
       isBotMode = false;
       inGame = false;
+      canAct = false;
+      countdownEl.classList.add('hidden');
       opponentRoot.position.set(0, -100, 0);
       touchLayer.classList.add('hidden');
       hud.classList.add('hidden');
@@ -1435,13 +1688,15 @@
 
       document.getElementById('hud-my-score').innerText = '0';
       document.getElementById('hud-opp-score').innerText = '0';
-      document.getElementById('hud-timer').innerText = '60';
+      updateRoundTimerUI(60);
+
+      startRoundCountdown();
 
       if (!isTouchDevice) document.body.requestPointerLock();
     });
 
     socket.on('timer-tick', (timeLeft) => {
-      if (!isBotMode) document.getElementById('hud-timer').innerText = timeLeft;
+      if (!isBotMode) updateRoundTimerUI(timeLeft);
     });
 
     socket.on('score-update', (data) => {
@@ -1466,6 +1721,8 @@
 
     socket.on('game-over', (res) => {
       inGame = false;
+      canAct = false;
+      countdownEl.classList.add('hidden');
       hud.classList.add('hidden');
       touchLayer.classList.add('hidden');
       if (document.pointerLockElement) document.exitPointerLock();
@@ -1485,7 +1742,7 @@
     init3D();
 
     // ==========================================
-    // 11. MAIN LOOP & VERTIKALE HARD-CLAMP PHYSIK
+    // 11. MAIN LOOP & BEWEGUNG
     // ==========================================
     function animate() {
       requestAnimationFrame(animate);
@@ -1503,13 +1760,13 @@
           btnTouchDash.style.opacity = dashCooldown <= 0 ? '1' : '0.4';
         }
 
-        // Vertikale Gravitation & Sprungphysik
+        // Vertikale Gravitation & Sprung
         if (!isGrounded || velocityY !== 0) {
           velocityY -= GRAVITY * delta;
           camera.position.y += velocityY * delta;
         }
 
-        // Hard-Floor-Clamp: Verhindert Durchbrechen des Bodens
+        // Fester Boden-Clamp
         if (camera.position.y <= 1.6) {
           camera.position.y = 1.6;
           velocityY = 0;
@@ -1518,58 +1775,61 @@
           isGrounded = false;
         }
 
-        // Horizontale Richtungsvektoren basierend auf dem horizontalen Drehwinkel (Yaw)
-        const yaw = camera.rotation.y;
-        const fX = -Math.sin(yaw);
-        const fZ = -Math.cos(yaw);
-        const rX = Math.cos(yaw);
-        const rZ = -Math.sin(yaw);
+        // Bewegung nur nach Countdown-Ende
+        if (canAct) {
+          const yaw = camera.rotation.y;
+          const fX = -Math.sin(yaw);
+          const fZ = -Math.cos(yaw);
+          const rX = Math.cos(yaw);
+          const rZ = -Math.sin(yaw);
 
-        let inputX = 0;
-        let inputZ = 0;
-        if (isTouchDevice && (touchMoveVector.x !== 0 || touchMoveVector.z !== 0)) {
-          inputZ = -touchMoveVector.z;
-          inputX = touchMoveVector.x;
+          let inputX = 0;
+          let inputZ = 0;
+          if (isTouchDevice && (touchMoveVector.x !== 0 || touchMoveVector.z !== 0)) {
+            inputZ = -touchMoveVector.z;
+            inputX = touchMoveVector.x;
+          } else {
+            inputZ = Number(moveForward) - Number(moveBackward);
+            inputX = Number(moveRight) - Number(moveLeft);
+          }
+
+          const moveDir = new THREE.Vector3(
+            fX * inputZ + rX * inputX,
+            0,
+            fZ * inputZ + rZ * inputX
+          );
+          if (moveDir.lengthSq() > 0.0001) moveDir.normalize();
+
+          velocity.x -= velocity.x * 12.0 * delta;
+          velocity.z -= velocity.z * 12.0 * delta;
+
+          let currentSpeed = BASE_MOVE_SPEED;
+          if (isDashing) {
+            dashTimer -= delta;
+            currentSpeed = DASH_SPEED;
+            if (dashTimer <= 0) isDashing = false;
+          }
+
+          if (moveDir.lengthSq() > 0.0001) {
+            velocity.x += moveDir.x * currentSpeed * 12.0 * delta;
+            velocity.z += moveDir.z * currentSpeed * 12.0 * delta;
+          }
+
+          const nextX = camera.position.x + velocity.x * delta;
+          if (!isPositionColliding(nextX, camera.position.z, 0.45) && Math.abs(nextX) <= 16.5) {
+            camera.position.x = nextX;
+          } else {
+            velocity.x = 0;
+          }
+
+          const nextZ = camera.position.z + velocity.z * delta;
+          if (!isPositionColliding(camera.position.x, nextZ, 0.45) && Math.abs(nextZ) <= 16.5) {
+            camera.position.z = nextZ;
+          } else {
+            velocity.z = 0;
+          }
         } else {
-          inputZ = Number(moveForward) - Number(moveBackward);
-          inputX = Number(moveRight) - Number(moveLeft);
-        }
-
-        const moveDir = new THREE.Vector3(
-          fX * inputZ + rX * inputX,
-          0,
-          fZ * inputZ + rZ * inputX
-        );
-        if (moveDir.lengthSq() > 0.0001) moveDir.normalize();
-
-        velocity.x -= velocity.x * 10.0 * delta;
-        velocity.z -= velocity.z * 10.0 * delta;
-
-        let currentSpeed = 38.0;
-        if (isDashing) {
-          dashTimer -= delta;
-          currentSpeed = DASH_SPEED;
-          if (dashTimer <= 0) isDashing = false;
-        }
-
-        if (moveDir.lengthSq() > 0.0001) {
-          velocity.x += moveDir.x * currentSpeed * 10.0 * delta;
-          velocity.z += moveDir.z * currentSpeed * 10.0 * delta;
-        }
-
-        // X- und Z-Achsenverschiebung mit AABB-Kollisionsprüfung
-        const nextX = camera.position.x + velocity.x * delta;
-        if (!isPositionColliding(nextX, camera.position.z, 0.45) && Math.abs(nextX) <= 16.5) {
-          camera.position.x = nextX;
-        } else {
-          velocity.x = 0;
-        }
-
-        const nextZ = camera.position.z + velocity.z * delta;
-        if (!isPositionColliding(camera.position.x, nextZ, 0.45) && Math.abs(nextZ) <= 16.5) {
-          camera.position.z = nextZ;
-        } else {
-          velocity.z = 0;
+          velocity.set(0, 0, 0);
         }
 
         if (isBotMode) {
