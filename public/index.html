@@ -6,46 +6,63 @@
   <title>Hitscan Duell 1v1</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
-    body, html { width: 100%; height: 100%; overflow: hidden; background: #87ceeb; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #fff; touch-action: none; }
+    body, html { width: 100%; height: 100%; overflow: hidden; background: #60a5fa; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #fff; touch-action: none; }
     
     .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; }
     .hidden { display: none !important; }
 
-    .panel { background: rgba(22, 25, 35, 0.95); border: 1px solid #2d3348; padding: 20px; border-radius: 8px; width: 90%; max-width: 440px; box-shadow: 0 10px 30px rgba(0,0,0,0.7); max-height: 90vh; overflow-y: auto; }
-    h1 { font-size: 20px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; color: #f5a623; }
-    h2 { font-size: 13px; margin: 14px 0 6px 0; text-transform: uppercase; color: #8a93a8; border-bottom: 1px solid #2d3348; padding-bottom: 4px; }
-    input[type="text"] { width: 100%; padding: 10px; background: #12141c; border: 1px solid #3b425b; border-radius: 4px; color: #fff; font-size: 15px; outline: none; margin-bottom: 10px; }
-    input[type="text"]:focus { border-color: #f5a623; }
-    button { width: 100%; padding: 10px; background: #f5a623; border: none; border-radius: 4px; color: #000; font-weight: 700; cursor: pointer; text-transform: uppercase; }
-    button:hover { background: #e09418; }
-    button.secondary { background: #2d3348; color: #fff; margin-top: 8px; }
+    .panel { background: rgba(18, 21, 30, 0.96); border: 1px solid #334155; padding: 18px; border-radius: 8px; width: 92%; max-width: 440px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); max-height: 90vh; overflow-y: auto; }
+    h1 { font-size: 18px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; color: #f59e0b; }
+    h2 { font-size: 12px; margin: 12px 0 6px 0; text-transform: uppercase; color: #94a3b8; border-bottom: 1px solid #334155; padding-bottom: 3px; }
+    input[type="text"] { width: 100%; padding: 10px; background: #0f172a; border: 1px solid #475569; border-radius: 4px; color: #fff; font-size: 14px; outline: none; margin-bottom: 8px; }
+    input[type="text"]:focus { border-color: #f59e0b; }
+    button { width: 100%; padding: 10px; background: #f59e0b; border: none; border-radius: 4px; color: #000; font-weight: 700; cursor: pointer; text-transform: uppercase; font-size: 12px; }
+    button:hover { background: #d97706; }
+    button.secondary { background: #334155; color: #fff; margin-top: 6px; }
     button.bot-btn { background: #2563eb; color: #fff; margin-top: 10px; }
     button.bot-btn:hover { background: #1d4ed8; }
 
-    /* Charakterauswahl */
-    .char-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; }
-    .char-btn { background: #181b26; border: 2px solid #333b52; color: #cbd5e1; padding: 8px 4px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; text-transform: none; text-align: center; }
-    .char-btn.active { border-color: #f5a623; background: #2e2617; color: #f5a623; }
+    .char-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-bottom: 8px; }
+    .char-btn { background: #1e293b; border: 2px solid #334155; color: #cbd5e1; padding: 6px 2px; border-radius: 4px; font-size: 10px; font-weight: 700; cursor: pointer; text-transform: none; text-align: center; }
+    .char-btn.active { border-color: #f59e0b; background: #451a03; color: #fbbf24; }
 
-    ul { list-style: none; max-height: 100px; overflow-y: auto; margin-bottom: 6px; }
-    li { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; background: #12141c; margin-bottom: 4px; border-radius: 4px; font-size: 12px; }
-    li button { width: auto; padding: 4px 10px; font-size: 11px; }
+    ul { list-style: none; max-height: 85px; overflow-y: auto; margin-bottom: 6px; }
+    li { display: flex; justify-content: space-between; align-items: center; padding: 5px 8px; background: #0f172a; margin-bottom: 4px; border-radius: 4px; font-size: 11px; }
+    li button { width: auto; padding: 3px 8px; font-size: 10px; }
 
-    /* HUD */
+    /* In-Game HUD */
     #hud { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
-    #crosshair { position: absolute; top: 50%; left: 50%; width: 10px; height: 10px; transform: translate(-50%, -50%); border: 2px solid #000; border-radius: 50%; background: rgba(255,255,255,0.8); }
-    #stats-bar { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); display: flex; gap: 20px; font-size: 18px; font-weight: 800; background: rgba(18, 20, 29, 0.85); padding: 8px 18px; border-radius: 6px; border: 1px solid #444; white-space: nowrap; }
-    .hud-timer { color: #f5a623; }
+    #crosshair { position: absolute; top: 50%; left: 50%; width: 8px; height: 8px; transform: translate(-50%, -50%); border: 2px solid #000; border-radius: 50%; background: #22c55e; }
+    #stats-bar { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); display: flex; gap: 16px; font-size: 16px; font-weight: 800; background: rgba(15, 23, 42, 0.85); padding: 6px 16px; border-radius: 6px; border: 1px solid #334155; white-space: nowrap; }
+    .hud-timer { color: #f59e0b; }
     .hud-score { color: #4ade80; }
     .hud-opp-score { color: #ef4444; }
-    #hitmarker { position: absolute; top: 50%; left: 50%; width: 24px; height: 24px; transform: translate(-50%, -50%); border: 3px solid #22c55e; border-radius: 50%; opacity: 0; transition: opacity 0.08s; pointer-events: none; }
+    #hitmarker { position: absolute; top: 50%; left: 50%; width: 22px; height: 22px; transform: translate(-50%, -50%); border: 3px solid #22c55e; border-radius: 50%; opacity: 0; transition: opacity 0.08s; pointer-events: none; }
 
-    /* Mobile Touch */
+    /* Minimap */
+    #minimap-container { position: absolute; top: 12px; left: 12px; width: 100px; height: 100px; background: rgba(15, 23, 42, 0.75); border: 2px solid #475569; border-radius: 50%; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+    #minimap { width: 100%; height: 100%; }
+
+    /* Live Lobby Monitor während Botrunde */
+    #lobby-monitor { position: absolute; top: 12px; right: 12px; background: rgba(15, 23, 42, 0.85); border: 1px solid #334155; border-radius: 6px; padding: 6px 10px; font-size: 11px; max-width: 180px; pointer-events: auto; }
+    #lobby-monitor strong { color: #f59e0b; }
+    .monitor-player { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; gap: 6px; }
+    .monitor-player button { padding: 2px 6px; font-size: 9px; width: auto; }
+
+    /* Audio Toggle */
+    #audio-toggle { position: absolute; bottom: 12px; left: 12px; background: rgba(15, 23, 42, 0.8); border: 1px solid #475569; color: #fff; padding: 6px 10px; border-radius: 4px; font-size: 10px; font-weight: 700; pointer-events: auto; cursor: pointer; }
+
+    /* Touch Steuerung */
     #touch-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 6; pointer-events: none; }
-    #joystick-base { position: absolute; left: 25px; bottom: 25px; width: 110px; height: 110px; background: rgba(0,0,0,0.25); border: 2px solid rgba(255,255,255,0.6); border-radius: 50%; pointer-events: auto; }
-    #joystick-knob { position: absolute; top: 50%; left: 50%; width: 44px; height: 44px; background: #f5a623; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; }
-    #btn-touch-fire { position: absolute; right: 25px; bottom: 35px; width: 80px; height: 80px; border-radius: 50%; background: #ef4444; border: 3px solid #fff; color: #fff; font-size: 13px; font-weight: 900; pointer-events: auto; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
-    #btn-touch-fire:active { background: #b91c1c; transform: scale(0.95); }
+    #joystick-base { position: absolute; left: 20px; bottom: 20px; width: 100px; height: 100px; background: rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.4); border-radius: 50%; pointer-events: auto; }
+    #joystick-knob { position: absolute; top: 50%; left: 50%; width: 40px; height: 40px; background: #f59e0b; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; }
+    
+    .touch-actions { position: absolute; right: 20px; bottom: 20px; display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
+    .touch-btn-sub { display: flex; gap: 8px; }
+    .touch-circle-btn { width: 52px; height: 52px; border-radius: 50%; background: #334155; border: 2px solid #94a3b8; color: #fff; font-size: 10px; font-weight: 800; pointer-events: auto; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+    .touch-circle-btn:active { background: #475569; transform: scale(0.95); }
+    #btn-touch-fire { width: 75px; height: 75px; border-radius: 50%; background: #dc2626; border: 3px solid #fff; color: #fff; font-size: 12px; font-weight: 900; pointer-events: auto; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+    #btn-touch-fire:active { background: #991b1b; transform: scale(0.95); }
   </style>
 </head>
 <body>
@@ -63,32 +80,35 @@
   <div id="screen-lobby" class="screen hidden">
     <div class="panel">
       <h1>Lobby</h1>
-      <div>Angemeldet als: <strong id="my-name-display" style="color: #f5a623;"></strong></div>
+      <div>Angemeldet: <strong id="my-name-display" style="color: #f59e0b;"></strong></div>
 
-      <h2>Wähle deinen Charakter</h2>
+      <h2>Charakter wählen</h2>
       <div class="char-grid">
-        <button class="char-btn active" data-char="marley">Bob Marley</button>
+        <button class="char-btn active" data-char="marley">Marley</button>
         <button class="char-btn" data-char="bread">Brot</button>
         <button class="char-btn" data-char="horse">Pferd</button>
         <button class="char-btn" data-char="dolphin">Delfin</button>
-        <button class="char-btn" data-char="grill">3-Bein-Grill</button>
+        <button class="char-btn" data-char="grill">Grill</button>
       </div>
 
-      <button id="btn-start-bot" class="bot-btn">Gegen Bot spielen (Warmup)</button>
+      <button id="btn-start-bot" class="bot-btn">Warmup gegen Bot starten</button>
 
-      <h2>Verfügbare Spieler</h2>
+      <h2>Lobby-Spieler</h2>
       <ul id="player-list"></ul>
 
-      <h2>Bestenliste (1v1)</h2>
+      <h2>Multiplayer Bestenliste</h2>
       <ul id="leaderboard-list"></ul>
+
+      <h2>Bot-Training Rekorde</h2>
+      <ul id="bot-leaderboard-list"></ul>
     </div>
   </div>
 
-  <!-- Screen 3: Herausforderung -->
-  <div id="screen-challenge" class="screen hidden" style="background: rgba(0,0,0,0.75); z-index: 20;">
+  <!-- Screen 3: Herausforderungs-Dialog -->
+  <div id="screen-challenge" class="screen hidden" style="background: rgba(0,0,0,0.8); z-index: 20;">
     <div class="panel" style="text-align: center;">
       <h1>Herausforderung!</h1>
-      <p id="challenge-text" style="margin-bottom: 16px; font-size: 15px;"></p>
+      <p id="challenge-text" style="margin-bottom: 14px; font-size: 14px;"></p>
       <button id="btn-accept-challenge">Annehmen</button>
       <button id="btn-decline-challenge" class="secondary">Ablehnen</button>
     </div>
@@ -98,26 +118,44 @@
   <div id="screen-gameover" class="screen hidden" style="background: rgba(0,0,0,0.85); z-index: 20;">
     <div class="panel" style="text-align: center;">
       <h1 id="gameover-title">Runde Beendet</h1>
-      <p id="gameover-details" style="margin-bottom: 20px; font-size: 15px;"></p>
+      <p id="gameover-details" style="margin-bottom: 18px; font-size: 14px;"></p>
       <button id="btn-back-to-lobby">Zurück zur Lobby</button>
     </div>
   </div>
 
   <!-- In-Game HUD -->
   <div id="hud" class="hidden">
+    <div id="minimap-container">
+      <canvas id="minimap" width="100" height="100"></canvas>
+    </div>
+
     <div id="stats-bar">
       <div>Du: <span id="hud-my-score" class="hud-score">0</span></div>
       <div class="hud-timer"><span id="hud-timer">60</span>s</div>
       <div>Gegner: <span id="hud-opp-score" class="hud-opp-score">0</span></div>
     </div>
+
+    <div id="lobby-monitor" class="hidden">
+      <div><strong>Lobby-Status:</strong></div>
+      <div id="lobby-monitor-content">Keine Spieler da</div>
+    </div>
+
+    <button id="audio-toggle">Musik: AN</button>
+
     <div id="crosshair"></div>
     <div id="hitmarker"></div>
   </div>
 
-  <!-- Touch Controls -->
+  <!-- Touch Steuerung -->
   <div id="touch-layer" class="hidden">
     <div id="joystick-base"><div id="joystick-knob"></div></div>
-    <div id="btn-touch-fire">FEUER</div>
+    <div class="touch-actions">
+      <div class="touch-btn-sub">
+        <div id="btn-touch-dash" class="touch-circle-btn">DASH</div>
+        <div id="btn-touch-jump" class="touch-circle-btn">SPRUNG</div>
+      </div>
+      <div id="btn-touch-fire">FEUER</div>
+    </div>
   </div>
 
   <div id="game-container"></div>
@@ -126,6 +164,135 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
   <script>
+    // ==========================================
+    // 1. SYNTH AUDIO ENGINE (Web Audio API)
+    // ==========================================
+    let audioCtx = null;
+    let isMusicMuted = false;
+    let musicInterval = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContextClass();
+        startMusicLoop();
+      } else if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playShootSound() {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(320, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.09);
+    }
+
+    function playHitSound() {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(140, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(500, audioCtx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.13);
+    }
+
+    function playJumpSound() {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(420, audioCtx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.16);
+    }
+
+    function playDashSound() {
+      if (!audioCtx) return;
+      const bufferSize = audioCtx.sampleRate * 0.12;
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = buffer;
+      const gain = audioCtx.createGain();
+      gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
+      noise.connect(gain);
+      gain.connect(audioCtx.destination);
+      noise.start();
+    }
+
+    // Treibender prozeduraler Synthwave/Action-Beat
+    let beatStep = 0;
+    const bassNotes = [55, 55, 65.4, 55, 49, 49, 73.4, 65.4];
+    function startMusicLoop() {
+      if (musicInterval) clearInterval(musicInterval);
+      musicInterval = setInterval(() => {
+        if (isMusicMuted || !audioCtx || audioCtx.state !== 'running') return;
+        const t = audioCtx.currentTime;
+
+        // Basslinie
+        const note = bassNotes[beatStep % bassNotes.length];
+        const osc = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(note, t);
+        g.gain.setValueAtTime(0.08, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+        osc.connect(g);
+        g.connect(audioCtx.destination);
+        osc.start(t);
+        osc.stop(t + 0.22);
+
+        // Hi-Hat auf jedem 2. Step
+        if (beatStep % 2 === 1) {
+          const bSize = audioCtx.sampleRate * 0.04;
+          const buf = audioCtx.createBuffer(1, bSize, audioCtx.sampleRate);
+          const d = buf.getChannelData(0);
+          for (let i = 0; i < bSize; i++) d[i] = Math.random() * 2 - 1;
+          const h = audioCtx.createBufferSource();
+          h.buffer = buf;
+          const hg = audioCtx.createGain();
+          hg.gain.setValueAtTime(0.03, t);
+          hg.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+          h.connect(hg);
+          hg.connect(audioCtx.destination);
+          h.start(t);
+        }
+
+        beatStep++;
+      }, 160);
+    }
+
+    document.getElementById('audio-toggle').onclick = () => {
+      initAudio();
+      isMusicMuted = !isMusicMuted;
+      document.getElementById('audio-toggle').innerText = isMusicMuted ? 'Musik: AUS' : 'Musik: AN';
+    };
+
+    // ==========================================
+    // 2. STATE & SOCKET MANAGEMENT
+    // ==========================================
     const socket = io();
     let myName = '';
     let myId = '';
@@ -146,14 +313,38 @@
     let currentOpponentChar = 'marley';
 
     let camera, scene, renderer;
+    const clock = new THREE.Clock();
+
+    // Spieler-Physik & Bewegung
     let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
     const velocity = new THREE.Vector3();
     const direction = new THREE.Vector3();
-    const clock = new THREE.Clock();
+    let velocityY = 0;
+    let isGrounded = true;
+    const GRAVITY = 26.0;
+    const JUMP_FORCE = 9.5;
 
+    // Dash
+    let dashCooldown = 0;
+    let isDashing = false;
+    let dashTimer = 0;
+    const DASH_DURATION = 0.14;
+    const DASH_SPEED = 65.0;
+
+    // Minimap Canvas
+    const minimapCanvas = document.getElementById('minimap');
+    const minimapCtx = minimapCanvas.getContext('2d');
+    const arenaBounds = 36;
+
+    // Wolken & Vögel Arrays
+    const clouds = [];
+    const birds = [];
+
+    // Partikel
     const particles = [];
     let leafTexture = null;
 
+    // DOM-Referenzen
     const screenLogin = document.getElementById('screen-login');
     const screenLobby = document.getElementById('screen-lobby');
     const screenChallenge = document.getElementById('screen-challenge');
@@ -163,6 +354,10 @@
     const joystickBase = document.getElementById('joystick-base');
     const joystickKnob = document.getElementById('joystick-knob');
     const btnTouchFire = document.getElementById('btn-touch-fire');
+    const btnTouchJump = document.getElementById('btn-touch-jump');
+    const btnTouchDash = document.getElementById('btn-touch-dash');
+    const lobbyMonitor = document.getElementById('lobby-monitor');
+    const lobbyMonitorContent = document.getElementById('lobby-monitor-content');
 
     const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
@@ -175,8 +370,9 @@
       });
     });
 
-    // Login & Lobby
+    // Login
     document.getElementById('btn-login').addEventListener('click', () => {
+      initAudio();
       const input = document.getElementById('username-input').value.trim();
       if (!input) return;
       myName = input;
@@ -185,6 +381,7 @@
       document.getElementById('my-name-display').innerText = myName;
       screenLogin.classList.add('hidden');
       screenLobby.classList.remove('hidden');
+      renderBotLeaderboard();
     });
 
     const savedName = localStorage.getItem('duel_username');
@@ -192,7 +389,10 @@
 
     socket.on('connect', () => { myId = socket.id; });
 
+    // Lobby Ticker & Spielerliste
+    let currentLobbyPlayers = [];
     socket.on('lobby-update', (list) => {
+      currentLobbyPlayers = list;
       const ul = document.getElementById('player-list');
       ul.innerHTML = '';
       list.forEach(p => {
@@ -202,30 +402,78 @@
         if (p.status === 'lobby') {
           const btn = document.createElement('button');
           btn.innerText = 'Duellieren';
-          btn.onclick = () => socket.emit('send-challenge', p.id);
+          btn.onclick = () => { initAudio(); socket.emit('send-challenge', p.id); };
           li.appendChild(btn);
         }
         ul.appendChild(li);
       });
+      updateLobbyMonitor();
     });
+
+    function updateLobbyMonitor() {
+      const waiting = currentLobbyPlayers.filter(p => p.id !== socket.id && p.status === 'lobby');
+      if (waiting.length === 0) {
+        lobbyMonitorContent.innerHTML = '<span style="color:#64748b">Keiner in Lobby</span>';
+      } else {
+        lobbyMonitorContent.innerHTML = '';
+        waiting.forEach(w => {
+          const div = document.createElement('div');
+          div.className = 'monitor-player';
+          div.innerHTML = `<span>${w.name}</span>`;
+          const btn = document.createElement('button');
+          btn.innerText = 'Fordern';
+          btn.onclick = () => { initAudio(); socket.emit('send-challenge', w.id); };
+          div.appendChild(btn);
+          lobbyMonitorContent.appendChild(div);
+        });
+      }
+    }
 
     socket.on('leaderboard-update', (list) => {
       const ul = document.getElementById('leaderboard-list');
       ul.innerHTML = '';
       list.forEach(item => {
         const li = document.createElement('li');
-        li.innerHTML = `<span>${item.name}</span><span>${item.wins} Siege / ${item.kills} Kills</span>`;
+        li.innerHTML = `<span>${item.name}</span><span>${item.wins} W / ${item.kills} K</span>`;
         ul.appendChild(li);
       });
     });
 
+    // Bot Bestenliste (LocalStorage)
+    function saveBotScore(score) {
+      let scores = JSON.parse(localStorage.getItem('duel_bot_scores') || '[]');
+      scores.push({ name: myName || 'Du', score, date: new Date().toLocaleDateString() });
+      scores.sort((a, b) => b.score - a.score);
+      scores = scores.slice(0, 5);
+      localStorage.setItem('duel_bot_scores', JSON.stringify(scores));
+      renderBotLeaderboard();
+    }
+
+    function renderBotLeaderboard() {
+      const scores = JSON.parse(localStorage.getItem('duel_bot_scores') || '[]');
+      const ul = document.getElementById('bot-leaderboard-list');
+      ul.innerHTML = '';
+      if (scores.length === 0) {
+        ul.innerHTML = '<li style="color:#64748b">Noch keine Trainings absolviert</li>';
+        return;
+      }
+      scores.forEach(s => {
+        const li = document.createElement('li');
+        li.innerHTML = `<span>${s.name} (${s.date})</span><span style="color:#22c55e">${s.score} Kills</span>`;
+        ul.appendChild(li);
+      });
+    }
+
+    // Herausforderung empfangen
     socket.on('challenge-received', (data) => {
+      initAudio();
       pendingChallengerId = data.challengerId;
-      document.getElementById('challenge-text').innerText = `${data.challengerName} fordert dich zum Duell heraus!`;
+      document.getElementById('challenge-text').innerText = `${data.challengerName} fordert dich heraus!`;
       screenChallenge.classList.remove('hidden');
     });
 
     document.getElementById('btn-accept-challenge').onclick = () => {
+      initAudio();
       screenChallenge.classList.add('hidden');
       if (isBotMode) stopBotMatch();
       socket.emit('accept-challenge', pendingChallengerId);
@@ -238,7 +486,7 @@
     };
 
     socket.on('challenge-declined', (data) => {
-      alert(`${data.name} hat die Herausforderung abgelehnt.`);
+      alert(`${data.name} hat abgelehnt.`);
     });
 
     document.getElementById('btn-back-to-lobby').onclick = () => {
@@ -247,20 +495,80 @@
       if (document.pointerLockElement) document.exitPointerLock();
     };
 
-    // Textur für Marihuanablätter prozedural zeichnen
+    // ==========================================
+    // 3. PROZEDURALE TEXTUREN (CS / Dust II Style)
+    // ==========================================
+    function createCrateTexture() {
+      const c = document.createElement('canvas');
+      c.width = 256; c.height = 256;
+      const ctx = c.getContext('2d');
+      // Planken-Hintergrund
+      ctx.fillStyle = '#b45309';
+      ctx.fillRect(0, 0, 256, 256);
+      ctx.fillStyle = '#92400e';
+      for (let i = 0; i < 4; i++) {
+        ctx.fillRect(0, i * 64, 256, 4);
+      }
+      // Randleisten
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(0, 0, 256, 20);
+      ctx.fillRect(0, 236, 256, 20);
+      ctx.fillRect(0, 0, 20, 256);
+      ctx.fillRect(236, 0, 20, 256);
+      // Diagonales Kreuz (CS-Kiste)
+      ctx.lineWidth = 16;
+      ctx.strokeStyle = '#78350f';
+      ctx.beginPath();
+      ctx.moveTo(10, 10); ctx.lineTo(246, 246);
+      ctx.moveTo(246, 10); ctx.lineTo(10, 246);
+      ctx.stroke();
+      return new THREE.CanvasTexture(c);
+    }
+
+    function createSandstoneTexture() {
+      const c = document.createElement('canvas');
+      c.width = 256; c.height = 256;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#d6cbaf';
+      ctx.fillRect(0, 0, 256, 256);
+      for (let i = 0; i < 6000; i++) {
+        ctx.fillStyle = Math.random() < 0.5 ? '#c4b595' : '#e4dcc7';
+        ctx.fillRect(Math.random() * 256, Math.random() * 256, 2, 2);
+      }
+      const tex = new THREE.CanvasTexture(c);
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(6, 6);
+      return tex;
+    }
+
+    function createWallPlasterTexture() {
+      const c = document.createElement('canvas');
+      c.width = 256; c.height = 256;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#f1ebe1';
+      ctx.fillRect(0, 0, 256, 256);
+      // Ziegelstein-Fundament unten
+      ctx.fillStyle = '#b96c55';
+      ctx.fillRect(0, 200, 256, 56);
+      ctx.fillStyle = '#9c4d37';
+      for (let y = 200; y < 256; y += 14) {
+        ctx.fillRect(0, y, 256, 2);
+        for (let x = (y % 28 === 0 ? 0 : 16); x < 256; x += 32) {
+          ctx.fillRect(x, y, 2, 14);
+        }
+      }
+      return new THREE.CanvasTexture(c);
+    }
+
     function createMarijuanaLeafTexture() {
       const canvas = document.createElement('canvas');
-      canvas.width = 128;
-      canvas.height = 128;
+      canvas.width = 128; canvas.height = 128;
       const ctx = canvas.getContext('2d');
-
       ctx.clearRect(0, 0, 128, 128);
       ctx.fillStyle = '#16a34a';
-
       ctx.save();
       ctx.translate(64, 112);
-
-      // Fünf gezackte Blattfinger
       const leaves = [
         { rot: -0.65, length: 50, width: 7 },
         { rot: -0.32, length: 78, width: 8.5 },
@@ -268,7 +576,6 @@
         { rot: 0.32,  length: 78, width: 8.5 },
         { rot: 0.65,  length: 50, width: 7 }
       ];
-
       leaves.forEach(l => {
         ctx.save();
         ctx.rotate(l.rot);
@@ -277,27 +584,24 @@
         ctx.fill();
         ctx.restore();
       });
-
-      // Blattstiel
       ctx.strokeStyle = '#15803d';
       ctx.lineWidth = 4;
       ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(0, 14);
+      ctx.moveTo(0, 0); ctx.lineTo(0, 14);
       ctx.stroke();
-
       ctx.restore();
-
-      const tex = new THREE.CanvasTexture(canvas);
-      tex.needsUpdate = true;
-      return tex;
+      return new THREE.CanvasTexture(canvas);
     }
 
-    // Three.js Hauptszene
+    // ==========================================
+    // 4. THREE.JS SZENE, CS-OBJEKTE & HIMMEL
+    // ==========================================
+    const staticObstacles = [];
+
     function init3D() {
       scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x87ceeb);
-      scene.fog = new THREE.Fog(0x87ceeb, 45, 90);
+      scene.background = new THREE.Color(0x7ec8e3);
+      scene.fog = new THREE.Fog(0x7ec8e3, 50, 110);
 
       camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
@@ -306,48 +610,53 @@
       renderer.shadowMap.enabled = true;
       document.getElementById('game-container').appendChild(renderer.domElement);
 
-      const hemiLight = new THREE.HemisphereLight(0xffffff, 0x94a3b8, 0.75);
+      const hemiLight = new THREE.HemisphereLight(0xffffff, 0x85929e, 0.85);
       hemiLight.position.set(0, 50, 0);
       scene.add(hemiLight);
 
-      const sunLight = new THREE.DirectionalLight(0xfff7ed, 0.95);
-      sunLight.position.set(20, 40, 20);
+      const sunLight = new THREE.DirectionalLight(0xfffbeb, 1.1);
+      sunLight.position.set(30, 45, 20);
       sunLight.castShadow = true;
       scene.add(sunLight);
 
-      // Arena Boden
-      const floorGeo = new THREE.PlaneGeometry(36, 36);
-      const floorMat = new THREE.MeshStandardMaterial({ color: 0xd6cbb8, roughness: 0.7 });
-      const floor = new THREE.Mesh(floorGeo, floorMat);
+      // Sonne mit sichtbarer Korona
+      const sunGeo = new THREE.SphereGeometry(3.5, 16, 16);
+      const sunMat = new THREE.MeshBasicMaterial({ color: 0xfef08a });
+      const sunMesh = new THREE.Mesh(sunGeo, sunMat);
+      sunMesh.position.set(40, 55, 30);
+      scene.add(sunMesh);
+
+      // Boden
+      const floorMat = new THREE.MeshStandardMaterial({ map: createSandstoneTexture(), roughness: 0.8 });
+      const floor = new THREE.Mesh(new THREE.PlaneGeometry(36, 36), floorMat);
       floor.rotation.x = -Math.PI / 2;
       floor.receiveShadow = true;
       scene.add(floor);
 
-      const grid = new THREE.GridHelper(36, 36, 0x8b5cf6, 0xa8a29e);
-      grid.position.y = 0.01;
-      scene.add(grid);
-
       // Wände
-      const wallMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.5 });
+      const wallMat = new THREE.MeshStandardMaterial({ map: createWallPlasterTexture(), roughness: 0.7 });
       const makeWall = (w, h, d, x, y, z, color) => {
         const group = new THREE.Group();
         group.add(new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat));
-        const strip = new THREE.Mesh(new THREE.BoxGeometry(w > d ? w : 1.05, 0.6, d > w ? d : 1.05), new THREE.MeshBasicMaterial({ color }));
-        strip.position.y = 1.0;
+        const strip = new THREE.Mesh(new THREE.BoxGeometry(w > d ? w : 1.05, 0.5, d > w ? d : 1.05), new THREE.MeshBasicMaterial({ color }));
+        strip.position.y = 1.2;
         group.add(strip);
         group.position.set(x, y, z);
         scene.add(group);
       };
+      makeWall(36, 5, 1, 0, 2.5, -18, 0x2563eb); // N
+      makeWall(36, 5, 1, 0, 2.5, 18, 0xea580c);  // S
+      makeWall(1, 5, 36, -18, 2.5, 0, 0x16a34a); // W
+      makeWall(1, 5, 36, 18, 2.5, 0, 0x9333ea);  // O
 
-      makeWall(36, 4.5, 1, 0, 2.25, -18, 0x2563eb);
-      makeWall(36, 4.5, 1, 0, 2.25, 18, 0xea580c);
-      makeWall(1, 4.5, 36, -18, 2.25, 0, 0x16a34a);
-      makeWall(1, 4.5, 36, 18, 2.25, 0, 0x9333ea);
+      // CS-Kisten und Props
+      spawnCSMapLayout();
 
-      spawnMapProps();
+      // Wolken & Vögel
+      spawnSkyDetails();
+
       setupCigaretteWeapon();
       setupOpponentActor();
-
       leafTexture = createMarijuanaLeafTexture();
 
       window.addEventListener('resize', onWindowResize);
@@ -355,7 +664,43 @@
       setupTouchControls();
     }
 
-    function spawnMapProps() {
+    function addCrate(x, y, z, size = 1.8) {
+      const mat = new THREE.MeshStandardMaterial({ map: createCrateTexture(), roughness: 0.6 });
+      const box = new THREE.Mesh(new THREE.BoxGeometry(size, size, size), mat);
+      box.position.set(x, y + size / 2, z);
+      box.castShadow = true;
+      box.receiveShadow = true;
+      scene.add(box);
+      staticObstacles.push({ x, z, size });
+    }
+
+    function addConcreteWall(x, z, w, d) {
+      const mat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.8 });
+      const block = new THREE.Mesh(new THREE.BoxGeometry(w, 2.2, d), mat);
+      block.position.set(x, 1.1, z);
+      scene.add(block);
+      staticObstacles.push({ x, z, w, d });
+    }
+
+    function spawnCSMapLayout() {
+      // Klassische Kistenstapel
+      addCrate(-4, 0, -8, 2.0);
+      addCrate(-4, 2.0, -8, 1.6);
+      addCrate(7, 0, -6, 1.8);
+      addCrate(7, 0, -4.2, 1.8);
+      addCrate(7, 1.8, -5.1, 1.6);
+      addCrate(-8, 0, 8, 1.8);
+      addCrate(4, 0, 9, 2.0);
+
+      // Betonbarrikaden
+      addConcreteWall(0, -3, 6, 1.2);
+      addConcreteWall(-6, 2, 1.2, 5);
+
+      // Original Food-Props
+      spawnFoodProps();
+    }
+
+    function spawnFoodProps() {
       // Bierflasche
       const bottleGroup = new THREE.Group();
       const bottleMat = new THREE.MeshStandardMaterial({ color: 0x451a03, roughness: 0.2 });
@@ -368,8 +713,9 @@
       const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.2, 16), new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.8 }));
       cap.position.y = 4.3;
       bottleGroup.add(cap);
-      bottleGroup.position.set(-6, 0, -4);
+      bottleGroup.position.set(-10, 0, -10);
       scene.add(bottleGroup);
+      staticObstacles.push({ x: -10, z: -10, size: 1.6 });
 
       // Martini Glas
       const martiniGroup = new THREE.Group();
@@ -384,8 +730,9 @@
       cone.position.y = 3.1;
       cone.rotation.x = Math.PI;
       martiniGroup.add(cone);
-      martiniGroup.position.set(6, 0, 4);
+      martiniGroup.position.set(11, 0, 7);
       scene.add(martiniGroup);
+      staticObstacles.push({ x: 11, z: 7, size: 2.2 });
 
       // Pommes-Tüte
       const friesGroup = new THREE.Group();
@@ -400,36 +747,147 @@
       }
       friesGroup.position.set(0, 0, 0);
       scene.add(friesGroup);
+      staticObstacles.push({ x: 0, z: 0, size: 2.2 });
     }
 
-    // Waffe: Rauchende Zigarette
+    function spawnSkyDetails() {
+      // 6 driftende Wolken-Cluster
+      const cloudMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1.0, transparent: true, opacity: 0.92 });
+      for (let c = 0; c < 6; c++) {
+        const cluster = new THREE.Group();
+        for (let p = 0; p < 5; p++) {
+          const sphere = new THREE.Mesh(new THREE.SphereGeometry(2 + Math.random() * 2, 8, 8), cloudMat);
+          sphere.position.set((Math.random() - 0.5) * 5, (Math.random() - 0.5) * 1.2, (Math.random() - 0.5) * 4);
+          cluster.add(sphere);
+        }
+        cluster.position.set((Math.random() - 0.5) * 80, 26 + Math.random() * 8, (Math.random() - 0.5) * 80);
+        scene.add(cluster);
+        clouds.push({ mesh: cluster, speed: 0.8 + Math.random() * 0.8 });
+      }
+
+      // 5 kreisende Vögel mit Flügeln
+      const birdMat = new THREE.MeshBasicMaterial({ color: 0x1e293b, side: THREE.DoubleSide });
+      for (let b = 0; b < 5; b++) {
+        const bird = new THREE.Group();
+        const leftWing = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.35), birdMat);
+        leftWing.position.x = -0.35;
+        const rightWing = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.35), birdMat);
+        rightWing.position.x = 0.35;
+        bird.add(leftWing);
+        bird.add(rightWing);
+
+        bird.position.set((Math.random() - 0.5) * 40, 20 + Math.random() * 5, (Math.random() - 0.5) * 40);
+        scene.add(bird);
+        birds.push({
+          mesh: bird,
+          leftWing,
+          rightWing,
+          angle: Math.random() * Math.PI * 2,
+          radius: 14 + Math.random() * 12,
+          speed: 0.6 + Math.random() * 0.4
+        });
+      }
+    }
+
+    function updateSky(delta) {
+      // Wolken driften
+      clouds.forEach(c => {
+        c.mesh.position.x += c.speed * delta;
+        if (c.mesh.position.x > 50) c.mesh.position.x = -50;
+      });
+
+      // Vögel kreisen und flattern
+      const t = clock.getElapsedTime() * 8;
+      birds.forEach(b => {
+        b.angle += b.speed * delta;
+        b.mesh.position.x = Math.cos(b.angle) * b.radius;
+        b.mesh.position.z = Math.sin(b.angle) * b.radius;
+        b.mesh.rotation.y = -b.angle;
+        // Flügelschlag
+        b.leftWing.rotation.z = Math.sin(t) * 0.4;
+        b.rightWing.rotation.z = -Math.sin(t) * 0.4;
+      });
+    }
+
+    // ==========================================
+    // 5. 2D MINIMAP RENDERER
+    // ==========================================
+    function renderMinimap() {
+      minimapCtx.clearRect(0, 0, 100, 100);
+      const half = arenaBounds / 2;
+
+      const toMap = (val) => ((val + half) / arenaBounds) * 100;
+
+      // Arena-Begrenzung
+      minimapCtx.strokeStyle = '#64748b';
+      minimapCtx.lineWidth = 2;
+      minimapCtx.strokeRect(2, 2, 96, 96);
+
+      // Statische Hindernisse
+      minimapCtx.fillStyle = '#64748b';
+      staticObstacles.forEach(ob => {
+        const mx = toMap(ob.x);
+        const my = toMap(ob.z);
+        const sz = ob.size ? (ob.size / arenaBounds) * 100 : 4;
+        minimapCtx.fillRect(mx - sz / 2, my - sz / 2, sz, sz);
+      });
+
+      // Gegner / Bot
+      if (opponentRoot && opponentRoot.position.y > -50) {
+        const ox = toMap(opponentRoot.position.x);
+        const oy = toMap(opponentRoot.position.z);
+        minimapCtx.fillStyle = '#ef4444';
+        minimapCtx.beginPath();
+        minimapCtx.arc(ox, oy, 3.5, 0, Math.PI * 2);
+        minimapCtx.fill();
+      }
+
+      // Eigene Position & Sichtkegel
+      const px = toMap(camera.position.x);
+      const py = toMap(camera.position.z);
+
+      // Sichtkegel zeichnen
+      const rot = camera.rotation.y;
+      minimapCtx.fillStyle = 'rgba(34, 197, 94, 0.25)';
+      minimapCtx.beginPath();
+      minimapCtx.moveTo(px, py);
+      minimapCtx.arc(px, py, 14, -rot - Math.PI / 2 - 0.5, -rot - Math.PI / 2 + 0.5);
+      minimapCtx.closePath();
+      minimapCtx.fill();
+
+      // Eigener Punkt
+      minimapCtx.fillStyle = '#22c55e';
+      minimapCtx.beginPath();
+      minimapCtx.arc(px, py, 4, 0, Math.PI * 2);
+      minimapCtx.fill();
+    }
+
+    // ==========================================
+    // 6. WAFFE (ZIGARETTE) & CHARAKTERE
+    // ==========================================
     let cigWeapon;
-    let smokePuffs = [];
+    const smokePuffs = [];
+
     function setupCigaretteWeapon() {
       cigWeapon = new THREE.Group();
-
-      // Weißes Papier
       const paperMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.6 });
       const paper = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.45, 12), paperMat);
       paper.rotation.x = Math.PI / 2;
       cigWeapon.add(paper);
 
-      // Filter
       const filterMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.8 });
       const filter = new THREE.Mesh(new THREE.CylinderGeometry(0.0245, 0.0245, 0.16, 12), filterMat);
       filter.rotation.x = Math.PI / 2;
       filter.position.z = 0.26;
       cigWeapon.add(filter);
 
-      // Asche und brennende Glut
-      const ashMat = new THREE.MeshStandardMaterial({ color: 0x52525b, roughness: 0.9 });
+      const ashMat = new THREE.MeshStandardMaterial({ color: 0x52525b });
       const ash = new THREE.Mesh(new THREE.CylinderGeometry(0.023, 0.024, 0.04, 12), ashMat);
       ash.rotation.x = Math.PI / 2;
       ash.position.z = -0.24;
       cigWeapon.add(ash);
 
-      const glowMat = new THREE.MeshBasicMaterial({ color: 0xff3b00 });
-      const glowTip = new THREE.Mesh(new THREE.SphereGeometry(0.022, 8, 8), glowMat);
+      const glowTip = new THREE.Mesh(new THREE.SphereGeometry(0.022, 8, 8), new THREE.MeshBasicMaterial({ color: 0xff3b00 }));
       glowTip.position.z = -0.26;
       cigWeapon.add(glowTip);
 
@@ -437,12 +895,8 @@
       camera.add(cigWeapon);
       scene.add(camera);
 
-      // Initialer Rauchpartikel-Pool für die Waffe
       for (let i = 0; i < 8; i++) {
-        const p = new THREE.Mesh(
-          new THREE.SphereGeometry(0.018, 6, 6),
-          new THREE.MeshBasicMaterial({ color: 0xe2e8f0, transparent: true, opacity: 0.5 })
-        );
+        const p = new THREE.Mesh(new THREE.SphereGeometry(0.018, 6, 6), new THREE.MeshBasicMaterial({ color: 0xe2e8f0, transparent: true, opacity: 0.5 }));
         p.visible = false;
         scene.add(p);
         smokePuffs.push({ mesh: p, life: 0 });
@@ -451,43 +905,32 @@
 
     function updateCigaretteSmoke(delta) {
       if (!cigWeapon) return;
-
-      const tipWorldPos = new THREE.Vector3();
-      cigWeapon.localToWorld(tipWorldPos.set(0, 0, -0.26));
-
+      const tipPos = new THREE.Vector3();
+      cigWeapon.localToWorld(tipPos.set(0, 0, -0.26));
       smokePuffs.forEach(sp => {
         if (!sp.mesh.visible && Math.random() < 0.25) {
-          sp.mesh.position.copy(tipWorldPos);
+          sp.mesh.position.copy(tipPos);
           sp.mesh.visible = true;
           sp.life = 1.0;
           sp.mesh.scale.set(1, 1, 1);
         } else if (sp.mesh.visible) {
           sp.life -= delta * 1.8;
           sp.mesh.position.y += delta * 0.35;
-          sp.mesh.position.x += (Math.random() - 0.5) * delta * 0.1;
-          const scale = 1.0 + (1.0 - sp.life) * 2.5;
-          sp.mesh.scale.set(scale, scale, scale);
+          const s = 1.0 + (1.0 - sp.life) * 2.5;
+          sp.mesh.scale.set(s, s, s);
           sp.mesh.material.opacity = sp.life * 0.45;
-
-          if (sp.life <= 0) {
-            sp.mesh.visible = false;
-          }
+          if (sp.life <= 0) sp.mesh.visible = false;
         }
       });
     }
 
-    // Aufbau der 5 Charaktermodelle
     function setupOpponentActor() {
       opponentRoot = new THREE.Group();
-
-      // Unsichtbare Hitbox: Identischer Zylinder für 100% faire Wettbewerbsbedingungen
       const hitGeo = new THREE.CylinderGeometry(0.48, 0.48, 1.8, 12);
-      const hitMat = new THREE.MeshBasicMaterial({ visible: false, wireframe: true });
-      opponentHitbox = new THREE.Mesh(hitGeo, hitMat);
+      opponentHitbox = new THREE.Mesh(hitGeo, new THREE.MeshBasicMaterial({ visible: false }));
       opponentHitbox.position.y = 0.9;
       opponentRoot.add(opponentHitbox);
 
-      // Visuelle Modelle
       opponentVisuals['marley'] = buildMarleyModel();
       opponentVisuals['bread'] = buildBreadModel();
       opponentVisuals['horse'] = buildHorseModel();
@@ -496,224 +939,86 @@
 
       Object.values(opponentVisuals).forEach(m => opponentRoot.add(m));
       switchOpponentVisual('marley');
-
       opponentRoot.position.set(0, -100, 0);
       scene.add(opponentRoot);
     }
 
     function switchOpponentVisual(charKey) {
       currentOpponentChar = charKey;
-      Object.keys(opponentVisuals).forEach(k => {
-        opponentVisuals[k].visible = (k === charKey);
-      });
+      Object.keys(opponentVisuals).forEach(k => { opponentVisuals[k].visible = (k === charKey); });
     }
 
-    // 1. Bob Marley Modell
     function buildMarleyModel() {
       const g = new THREE.Group();
-      const coatMat = new THREE.MeshStandardMaterial({ color: 0x14532d });
-      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.42, 1.1, 12), coatMat);
-      body.position.y = 0.65;
-      g.add(body);
-
-      const skinMat = new THREE.MeshStandardMaterial({ color: 0x78350f });
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.32, 12, 12), skinMat);
-      head.position.y = 1.45;
-      g.add(head);
-
-      // Rasta Mütze (Rot, Gelb, Grün)
-      const redBand = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.1, 14), new THREE.MeshStandardMaterial({ color: 0xef4444 }));
-      redBand.position.y = 1.62;
-      g.add(redBand);
-      const yellowBand = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.36, 0.12, 14), new THREE.MeshStandardMaterial({ color: 0xfacc15 }));
-      yellowBand.position.y = 1.72;
-      g.add(yellowBand);
-      const greenTop = new THREE.Mesh(new THREE.SphereGeometry(0.36, 12, 8), new THREE.MeshStandardMaterial({ color: 0x16a34a }));
-      greenTop.position.y = 1.82;
-      g.add(greenTop);
-
-      // Dreadlocks
-      const dreadMat = new THREE.MeshStandardMaterial({ color: 0x171717, roughness: 0.9 });
-      for (let i = 0; i < 9; i++) {
-        const dread = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.03, 0.7, 6), dreadMat);
-        const ang = (i / 9) * Math.PI * 1.3 - Math.PI * 0.65;
-        dread.position.set(Math.sin(ang) * 0.34, 1.32, Math.cos(ang) * 0.28 - 0.1);
-        dread.rotation.z = Math.sin(ang) * 0.2;
-        g.add(dread);
-      }
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.42, 1.1, 12), new THREE.MeshStandardMaterial({ color: 0x14532d }));
+      body.position.y = 0.65; g.add(body);
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.32, 12, 12), new THREE.MeshStandardMaterial({ color: 0x78350f }));
+      head.position.y = 1.45; g.add(head);
+      const r = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.1, 14), new THREE.MeshStandardMaterial({ color: 0xef4444 }));
+      r.position.y = 1.62; g.add(r);
+      const y = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.36, 0.12, 14), new THREE.MeshStandardMaterial({ color: 0xfacc15 }));
+      y.position.y = 1.72; g.add(y);
+      const gr = new THREE.Mesh(new THREE.SphereGeometry(0.36, 12, 8), new THREE.MeshStandardMaterial({ color: 0x16a34a }));
+      gr.position.y = 1.82; g.add(gr);
       return g;
     }
 
-    // 2. Brot Modell
     function buildBreadModel() {
       const g = new THREE.Group();
-      const crustMat = new THREE.MeshStandardMaterial({ color: 0x92400e, roughness: 0.6 });
-      const insideMat = new THREE.MeshStandardMaterial({ color: 0xfde68a, roughness: 0.8 });
-
+      const crustMat = new THREE.MeshStandardMaterial({ color: 0x92400e });
       const block = new THREE.Mesh(new THREE.BoxGeometry(0.75, 1.1, 0.6), crustMat);
-      block.position.y = 0.75;
-      g.add(block);
-
-      const topLoaf = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.75, 12), crustMat);
-      topLoaf.rotation.z = Math.PI / 2;
-      topLoaf.position.y = 1.3;
-      g.add(topLoaf);
-
-      // Scheibenfläche vorn
-      const face = new THREE.Mesh(new THREE.PlaneGeometry(0.65, 0.95), insideMat);
-      face.position.set(0, 0.75, 0.305);
-      g.add(face);
-
-      // Augen
-      const eyeMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
-      const e1 = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), eyeMat);
-      e1.position.set(-0.16, 0.85, 0.31);
-      const e2 = e1.clone();
-      e2.position.x = 0.16;
-      g.add(e1);
-      g.add(e2);
+      block.position.y = 0.75; g.add(block);
+      const top = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.75, 12), crustMat);
+      top.rotation.z = Math.PI / 2; top.position.y = 1.3; g.add(top);
       return g;
     }
 
-    // 3. Pferd Modell
     function buildHorseModel() {
       const g = new THREE.Group();
-      const furMat = new THREE.MeshStandardMaterial({ color: 0x854d0e, roughness: 0.7 });
-      const maneMat = new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.9 });
-
-      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.42, 1.2, 12), furMat);
-      body.position.y = 0.7;
-      g.add(body);
-
-      // Pferdekopf mit langer Schnauze
-      const head = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.45, 0.5), furMat);
-      head.position.set(0, 1.45, 0.2);
-      head.rotation.x = 0.35;
-      g.add(head);
-
-      const muzzle = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.28, 0.4), new THREE.MeshStandardMaterial({ color: 0x3f2e18 }));
-      muzzle.position.set(0, 1.35, 0.46);
-      g.add(muzzle);
-
-      // Ohren
-      const earGeo = new THREE.ConeGeometry(0.08, 0.22, 6);
-      const ear1 = new THREE.Mesh(earGeo, furMat);
-      ear1.position.set(-0.14, 1.76, 0.1);
-      const ear2 = ear1.clone();
-      ear2.position.x = 0.14;
-      g.add(ear1);
-      g.add(ear2);
-
-      // Mähne
-      const mane = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.65, 0.22), maneMat);
-      mane.position.set(0, 1.4, -0.05);
-      g.add(mane);
+      const fur = new THREE.MeshStandardMaterial({ color: 0x854d0e });
+      const b = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.42, 1.2, 12), fur);
+      b.position.y = 0.7; g.add(b);
+      const h = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.45, 0.5), fur);
+      h.position.set(0, 1.45, 0.2); h.rotation.x = 0.35; g.add(h);
       return g;
     }
 
-    // 4. Delfin Modell
     function buildDolphinModel() {
       const g = new THREE.Group();
-      const dorsalMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.2 });
-      const bellyMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.3 });
-
-      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.34, 1.25, 14), dorsalMat);
-      body.position.y = 0.75;
-      g.add(body);
-
-      const belly = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.28, 1.15, 14), bellyMat);
-      belly.position.set(0, 0.75, 0.1);
-      belly.scale.set(0.9, 1, 0.5);
-      g.add(belly);
-
-      // Kopf & Rostrum
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.36, 14, 14), dorsalMat);
-      head.position.y = 1.4;
-      g.add(head);
-
-      const rostrum = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.4, 10), dorsalMat);
-      rostrum.rotation.x = Math.PI / 2;
-      rostrum.position.set(0, 1.35, 0.42);
-      g.add(rostrum);
-
-      // Rückenflosse
-      const dorsalFin = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.38, 0.4), dorsalMat);
-      dorsalFin.position.set(0, 1.0, -0.38);
-      dorsalFin.rotation.x = -0.4;
-      g.add(dorsalFin);
-
-      // Brustflossen
-      const finMat = new THREE.MeshStandardMaterial({ color: 0x0284c7 });
-      const f1 = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.08, 0.2), finMat);
-      f1.position.set(0.38, 0.8, 0.1);
-      f1.rotation.z = -0.4;
-      const f2 = f1.clone();
-      f2.position.x = -0.38;
-      f2.rotation.z = 0.4;
-      g.add(f1);
-      g.add(f2);
+      const bMat = new THREE.MeshStandardMaterial({ color: 0x0284c7 });
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.34, 1.25, 14), bMat);
+      body.position.y = 0.75; g.add(body);
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.36, 14, 14), bMat);
+      head.position.y = 1.4; g.add(head);
+      const fin = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.38, 0.4), bMat);
+      fin.position.set(0, 1.0, -0.38); g.add(fin);
       return g;
     }
 
-    // 5. 3-Bein-Grill Modell
     function buildGrillModel() {
       const g = new THREE.Group();
-      const metalMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.85, roughness: 0.2 });
-      const bowlMat = new THREE.MeshStandardMaterial({ color: 0x991b1b, roughness: 0.4 });
-
-      // Grillkugel unten
-      const bowl = new THREE.Mesh(new THREE.SphereGeometry(0.48, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), bowlMat);
-      bowl.rotation.x = Math.PI;
-      bowl.position.y = 1.05;
-      g.add(bowl);
-
-      // Kugeldeckel
-      const lid = new THREE.Mesh(new THREE.SphereGeometry(0.46, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), bowlMat);
-      lid.position.y = 1.15;
-      g.add(lid);
-
-      // Deckelgriff
-      const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.25, 8), metalMat);
-      handle.rotation.z = Math.PI / 2;
-      handle.position.y = 1.65;
-      g.add(handle);
-
-      // 3 Beine
+      const bMat = new THREE.MeshStandardMaterial({ color: 0x991b1b });
+      const mMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.8 });
+      const bowl = new THREE.Mesh(new THREE.SphereGeometry(0.48, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), bMat);
+      bowl.rotation.x = Math.PI; bowl.position.y = 1.05; g.add(bowl);
       for (let i = 0; i < 3; i++) {
-        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.15, 8), metalMat);
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.15, 8), mMat);
         const ang = (i / 3) * Math.PI * 2;
         leg.position.set(Math.sin(ang) * 0.26, 0.52, Math.cos(ang) * 0.26);
-        leg.rotation.x = Math.cos(ang) * 0.25;
-        leg.rotation.z = -Math.sin(ang) * 0.25;
         g.add(leg);
       }
       return g;
     }
 
-    // Treffer-Animation: Marihuanablätter-Explosion
     function spawnLeafExplosion(point) {
-      const leafCount = 28;
-      const mat = new THREE.SpriteMaterial({ map: leafTexture, transparent: true, opacity: 1 });
-
-      for (let i = 0; i < leafCount; i++) {
-        const sprite = new THREE.Sprite(mat.clone());
+      playHitSound();
+      for (let i = 0; i < 28; i++) {
+        const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: leafTexture, transparent: true }));
         sprite.scale.set(0.45, 0.45, 0.45);
         sprite.position.copy(point);
-
-        const velocity = new THREE.Vector3(
-          (Math.random() - 0.5) * 8.5,
-          Math.random() * 5.5 + 2.5,
-          (Math.random() - 0.5) * 8.5
-        );
-
+        const vel = new THREE.Vector3((Math.random() - 0.5) * 8.5, Math.random() * 5.5 + 2.5, (Math.random() - 0.5) * 8.5);
         scene.add(sprite);
-        particles.push({
-          sprite,
-          vel: velocity,
-          rotVel: (Math.random() - 0.5) * 8,
-          life: 1.0,
-          maxLife: 1.2 + Math.random() * 0.6
-        });
+        particles.push({ sprite, vel, rotVel: (Math.random() - 0.5) * 8, life: 1.0, maxLife: 1.2 + Math.random() * 0.6 });
       }
     }
 
@@ -721,13 +1026,10 @@
       for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
         p.life -= delta / p.maxLife;
-
-        // Gravitation und Bewegung
         p.vel.y -= 9.81 * delta;
         p.sprite.position.addScaledVector(p.vel, delta);
         p.sprite.material.rotation += p.rotVel * delta;
         p.sprite.material.opacity = Math.max(0, p.life);
-
         if (p.life <= 0) {
           scene.remove(p.sprite);
           particles.splice(i, 1);
@@ -735,14 +1037,36 @@
       }
     }
 
-    // Desktop Steuerung
+    // ==========================================
+    // 7. STEUERUNG (DASH, SPRUNG, TOUCH & PC)
+    // ==========================================
+    function triggerJump() {
+      if (isGrounded) {
+        velocityY = JUMP_FORCE;
+        isGrounded = false;
+        playJumpSound();
+      }
+    }
+
+    function triggerDash() {
+      if (dashCooldown <= 0 && (moveForward || moveBackward || moveLeft || moveRight || touchMoveVector.x !== 0 || touchMoveVector.z !== 0)) {
+        isDashing = true;
+        dashTimer = DASH_DURATION;
+        dashCooldown = 1.8;
+        playDashSound();
+      }
+    }
+
     function setupControls() {
       window.addEventListener('keydown', (e) => {
+        initAudio();
         if (!inGame) return;
         if (e.code === 'KeyW') moveForward = true;
         if (e.code === 'KeyS') moveBackward = true;
         if (e.code === 'KeyA') moveLeft = true;
         if (e.code === 'KeyD') moveRight = true;
+        if (e.code === 'Space') { e.preventDefault(); triggerJump(); }
+        if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') { triggerDash(); }
       });
 
       window.addEventListener('keyup', (e) => {
@@ -753,7 +1077,7 @@
         if (e.code === 'KeyD') moveRight = false;
       });
 
-      document.body.addEventListener('click', () => {
+      document.body.addEventListener('click', (e) => {
         if (isTouchDevice) return;
         if (inGame && document.pointerLockElement !== document.body) {
           document.body.requestPointerLock();
@@ -765,43 +1089,43 @@
       window.addEventListener('mousemove', (e) => {
         if (document.pointerLockElement === document.body && inGame) {
           camera.rotation.y -= e.movementX * 0.0022;
-          const pitchDelta = e.movementY * 0.0022;
-          camera.rotation.x = Math.max(-Math.PI / 2.5, Math.min(Math.PI / 2.5, camera.rotation.x - pitchDelta));
+          const pitch = e.movementY * 0.0022;
+          camera.rotation.x = Math.max(-Math.PI / 2.5, Math.min(Math.PI / 2.5, camera.rotation.x - pitch));
         }
       });
     }
 
-    // Touch Steuerung
     let touchMoveVector = { x: 0, z: 0 };
     let joyTouchId = null;
     let lookTouchId = null;
-    let lastTouchLookX = 0, lastTouchLookY = 0;
+    let lastLookX = 0, lastLookY = 0;
 
     function setupTouchControls() {
       joystickBase.addEventListener('touchstart', (e) => {
+        initAudio();
         e.preventDefault();
-        const touch = e.changedTouches[0];
-        joyTouchId = touch.identifier;
-        handleJoystickMove(touch);
+        const t = e.changedTouches[0];
+        joyTouchId = t.identifier;
+        handleJoyMove(t);
       }, { passive: false });
 
       window.addEventListener('touchmove', (e) => {
         for (let i = 0; i < e.touches.length; i++) {
           const t = e.touches[i];
           if (t.identifier === joyTouchId) {
-            handleJoystickMove(t);
+            handleJoyMove(t);
           } else if (t.identifier === lookTouchId) {
-            const dx = t.clientX - lastTouchLookX;
-            const dy = t.clientY - lastTouchLookY;
+            const dx = t.clientX - lastLookX;
+            const dy = t.clientY - lastLookY;
             camera.rotation.y -= dx * 0.004;
             camera.rotation.x = Math.max(-Math.PI / 2.5, Math.min(Math.PI / 2.5, camera.rotation.x - dy * 0.004));
-            lastTouchLookX = t.clientX;
-            lastTouchLookY = t.clientY;
+            lastLookX = t.clientX;
+            lastLookY = t.clientY;
           }
         }
       }, { passive: false });
 
-      const handleTouchEnd = (e) => {
+      const onEnd = (e) => {
         for (let i = 0; i < e.changedTouches.length; i++) {
           const t = e.changedTouches[i];
           if (t.identifier === joyTouchId) {
@@ -809,60 +1133,56 @@
             touchMoveVector = { x: 0, z: 0 };
             joystickKnob.style.transform = 'translate(-50%, -50%)';
           }
-          if (t.identifier === lookTouchId) {
-            lookTouchId = null;
-          }
+          if (t.identifier === lookTouchId) lookTouchId = null;
         }
       };
-      window.addEventListener('touchend', handleTouchEnd);
-      window.addEventListener('touchcancel', handleTouchEnd);
+      window.addEventListener('touchend', onEnd);
+      window.addEventListener('touchcancel', onEnd);
 
       window.addEventListener('touchstart', (e) => {
+        initAudio();
         if (!inGame) return;
         for (let i = 0; i < e.changedTouches.length; i++) {
           const t = e.changedTouches[i];
           if (t.clientX > window.innerWidth * 0.35 && lookTouchId === null) {
-            const btnRect = btnTouchFire.getBoundingClientRect();
-            if (t.clientX >= btnRect.left && t.clientX <= btnRect.right &&
-                t.clientY >= btnRect.top && t.clientY <= btnRect.bottom) {
-              continue;
+            const fRect = btnTouchFire.getBoundingClientRect();
+            const jRect = btnTouchJump.getBoundingClientRect();
+            const dRect = btnTouchDash.getBoundingClientRect();
+            const inB = (r) => (t.clientX >= r.left && t.clientX <= r.right && t.clientY >= r.top && t.clientY <= r.bottom);
+            if (!inB(fRect) && !inB(jRect) && !inB(dRect)) {
+              lookTouchId = t.identifier;
+              lastLookX = t.clientX;
+              lastLookY = t.clientY;
             }
-            lookTouchId = t.identifier;
-            lastTouchLookX = t.clientX;
-            lastTouchLookY = t.clientY;
           }
         }
       });
 
-      btnTouchFire.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (inGame) fireHitscan();
-      }, { passive: false });
+      btnTouchFire.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); if (inGame) fireHitscan(); }, { passive: false });
+      btnTouchJump.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); if (inGame) triggerJump(); }, { passive: false });
+      btnTouchDash.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); if (inGame) triggerDash(); }, { passive: false });
     }
 
-    function handleJoystickMove(touch) {
+    function handleJoyMove(touch) {
       const rect = joystickBase.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-      let dx = touch.clientX - centerX;
-      let dy = touch.clientY - centerY;
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      let dx = touch.clientX - cx;
+      let dy = touch.clientY - cy;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      const maxRadius = rect.width / 2;
-
-      if (dist > maxRadius) {
-        dx = (dx / dist) * maxRadius;
-        dy = (dy / dist) * maxRadius;
-      }
+      const maxR = rect.width / 2;
+      if (dist > maxR) { dx = (dx / dist) * maxR; dy = (dy / dist) * maxR; }
       joystickKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-      touchMoveVector.x = dx / maxRadius;
-      touchMoveVector.z = dy / maxRadius;
+      touchMoveVector.x = dx / maxR;
+      touchMoveVector.z = dy / maxR;
     }
 
-    // Schusslogik (Hitscan gegen Hitbox)
+    // ==========================================
+    // 8. HITSCAN & SCHUSSLOGIK
+    // ==========================================
     const raycaster = new THREE.Raycaster();
     function fireHitscan() {
-      // Rückstoß der Zigarette
+      playShootSound();
       cigWeapon.position.z += 0.05;
       setTimeout(() => { cigWeapon.position.z -= 0.05; }, 50);
 
@@ -875,12 +1195,10 @@
 
       if (hits.length > 0) {
         endPos.copy(hits[0].point);
-
         const marker = document.getElementById('hitmarker');
         marker.style.opacity = '1';
         setTimeout(() => { marker.style.opacity = '0'; }, 90);
 
-        // Blätter-Animation starten
         spawnLeafExplosion(hits[0].point);
 
         if (isBotMode) {
@@ -894,25 +1212,39 @@
         raycaster.ray.at(50, endPos);
       }
 
-      renderTracer(startPos, endPos, 0xff4400);
+      renderTracer(startPos, endPos, 0xff5500);
       if (!isBotMode) {
         socket.emit('shot-fired', { start: startPos, end: endPos, hitPoint: hits.length > 0 ? hits[0].point : null });
       }
     }
 
     function renderTracer(start, end, colorHex) {
-      const material = new THREE.LineBasicMaterial({ color: colorHex, linewidth: 3 });
-      const geometry = new THREE.BufferGeometry().setFromPoints([start, end]);
-      const line = new THREE.Line(geometry, material);
+      const line = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([start, end]),
+        new THREE.LineBasicMaterial({ color: colorHex, linewidth: 3 })
+      );
       scene.add(line);
       setTimeout(() => { scene.remove(line); }, 50);
     }
 
-    // Bot Logik
+    // Anti-Desorientierungs-Respawn: Kamera blickt immer zur Arena-Mitte
+    function respawnPlayer(x, z) {
+      camera.position.set(x, 1.6, z);
+      camera.lookAt(0, 1.6, 0);
+      camera.rotation.x = 0;
+      camera.rotation.z = 0;
+      velocityY = 0;
+      isGrounded = true;
+    }
+
+    // ==========================================
+    // 9. BOT LOGIK (TRAINING & LEADERBOARD)
+    // ==========================================
     const botState = { targetPos: new THREE.Vector3(0, 0, 0), shootCooldown: 2.2 };
     const botChars = ['marley', 'bread', 'horse', 'dolphin', 'grill'];
 
     document.getElementById('btn-start-bot').addEventListener('click', () => {
+      initAudio();
       startBotMatch();
     });
 
@@ -923,17 +1255,15 @@
       botScoreEnemy = 0;
       botTimeLeft = 60;
 
-      // Zufälliger Bot-Charakter
-      const randomChar = botChars[Math.floor(Math.random() * botChars.length)];
-      switchOpponentVisual(randomChar);
+      switchOpponentVisual(botChars[Math.floor(Math.random() * botChars.length)]);
 
       screenLobby.classList.add('hidden');
       screenGameOver.classList.add('hidden');
       hud.classList.remove('hidden');
+      lobbyMonitor.classList.remove('hidden');
       if (isTouchDevice) touchLayer.classList.remove('hidden');
 
-      camera.position.set(0, 1.6, 14);
-      camera.rotation.set(0, Math.PI, 0);
+      respawnPlayer(0, 14);
 
       document.getElementById('hud-my-score').innerText = '0';
       document.getElementById('hud-opp-score').innerText = '0';
@@ -951,20 +1281,14 @@
 
     function respawnBot() {
       opponentRoot.position.set((Math.random() - 0.5) * 24, 0, (Math.random() - 0.5) * 12 - 4);
-      pickNewBotTarget();
-    }
-
-    function pickNewBotTarget() {
       botState.targetPos.set((Math.random() - 0.5) * 26, 0, (Math.random() - 0.5) * 26);
     }
 
     function updateBotAI(delta) {
       const dir = new THREE.Vector3().subVectors(botState.targetPos, opponentRoot.position);
       dir.y = 0;
-      const dist = dir.length();
-
-      if (dist < 1.0) {
-        pickNewBotTarget();
+      if (dir.length() < 1.0) {
+        botState.targetPos.set((Math.random() - 0.5) * 26, 0, (Math.random() - 0.5) * 26);
       } else {
         dir.normalize();
         opponentRoot.position.addScaledVector(dir, 5.5 * delta);
@@ -974,19 +1298,19 @@
       botState.shootCooldown -= delta;
       if (botState.shootCooldown <= 0) {
         botState.shootCooldown = 2.0 + Math.random() * 1.5;
-        const botGunPos = opponentRoot.position.clone().add(new THREE.Vector3(0, 1.2, 0));
+        const bPos = opponentRoot.position.clone().add(new THREE.Vector3(0, 1.2, 0));
         const target = camera.position.clone().add(new THREE.Vector3(
-          (Math.random() - 0.5) * 1.8,
-          (Math.random() - 0.5) * 1.2,
-          (Math.random() - 0.5) * 1.8
+          (Math.random() - 0.5) * 1.6,
+          (Math.random() - 0.5) * 1.0,
+          (Math.random() - 0.5) * 1.6
         ));
-        renderTracer(botGunPos, target, 0xff4400);
+        renderTracer(bPos, target, 0xff4400);
 
-        if (target.distanceTo(camera.position) < 1.0) {
+        if (target.distanceTo(camera.position) < 1.1) {
           botScoreEnemy++;
           document.getElementById('hud-opp-score').innerText = botScoreEnemy;
           spawnLeafExplosion(camera.position);
-          camera.position.set((Math.random() - 0.5) * 16, 1.6, 14);
+          respawnPlayer((Math.random() - 0.5) * 16, 14);
         }
       }
     }
@@ -998,16 +1322,20 @@
       opponentRoot.position.set(0, -100, 0);
       touchLayer.classList.add('hidden');
       hud.classList.add('hidden');
+      lobbyMonitor.classList.add('hidden');
     }
 
     function endBotMatch() {
+      saveBotScore(botScorePlayer);
       stopBotMatch();
       screenGameOver.classList.remove('hidden');
       document.getElementById('gameover-title').innerText = botScorePlayer >= botScoreEnemy ? 'TRAINING GEWONNEN' : 'TRAINING BEENDET';
-      document.getElementById('gameover-details').innerText = `Ergebnis gegen Bot: ${botScorePlayer} zu ${botScoreEnemy}`;
+      document.getElementById('gameover-details').innerText = `Kills: ${botScorePlayer} | Tode: ${botScoreEnemy}`;
     }
 
-    // Multiplayer Socket Events
+    // ==========================================
+    // 10. MULTIPLAYER SOCKET EVENTS
+    // ==========================================
     socket.on('opponent-shot', (tracer) => {
       renderTracer(
         new THREE.Vector3(tracer.start.x, tracer.start.y, tracer.start.z),
@@ -1021,18 +1349,17 @@
 
     socket.on('match-start', (data) => {
       if (isBotMode) stopBotMatch();
-
       screenLobby.classList.add('hidden');
       screenGameOver.classList.add('hidden');
       hud.classList.remove('hidden');
+      lobbyMonitor.classList.add('hidden');
       if (isTouchDevice) touchLayer.classList.remove('hidden');
 
       inGame = true;
       isBotMode = false;
       opponentId = data.opponentId;
 
-      camera.position.set(data.spawn.x, data.spawn.y, data.spawn.z);
-      camera.rotation.set(0, data.spawn.rotY, 0);
+      respawnPlayer(data.spawn.x, data.spawn.z);
 
       document.getElementById('hud-my-score').innerText = '0';
       document.getElementById('hud-opp-score').innerText = '0';
@@ -1054,8 +1381,7 @@
 
     socket.on('respawn', (pos) => {
       spawnLeafExplosion(camera.position);
-      camera.position.set(pos.x, pos.y, pos.z);
-      camera.rotation.set(0, pos.rotY, 0);
+      respawnPlayer(pos.x, pos.z);
     });
 
     socket.on('opponent-moved', (data) => {
@@ -1077,7 +1403,6 @@
       screenGameOver.classList.remove('hidden');
       document.getElementById('gameover-title').innerText = res.winner === myName ? 'SIEG!' : (res.winner === 'Unentschieden' ? 'UNENTSCHIEDEN' : 'NIEDERLAGE');
       document.getElementById('gameover-details').innerText = `Endstand: ${res.p1Name} (${res.p1Score}) vs ${res.p2Name} (${res.p2Score})`;
-      
       opponentRoot.position.set(0, -100, 0);
     });
 
@@ -1089,15 +1414,36 @@
 
     init3D();
 
-    // Render Loop
+    // ==========================================
+    // 11. MAIN ENGINE LOOP (RENDER & PHYSIK)
+    // ==========================================
     function animate() {
       requestAnimationFrame(animate);
-      const delta = clock.getDelta();
+      const delta = Math.min(clock.getDelta(), 0.05);
 
+      updateSky(delta);
       updateCigaretteSmoke(delta);
       updateParticles(delta);
 
       if (inGame) {
+        // Cooldowns
+        if (dashCooldown > 0) {
+          dashCooldown -= delta;
+          btnTouchDash.style.opacity = dashCooldown <= 0 ? '1' : '0.4';
+        }
+
+        // Vertikalbewegung (Sprung & Gravitation)
+        if (!isGrounded) {
+          velocityY -= GRAVITY * delta;
+          camera.position.y += velocityY * delta;
+          if (camera.position.y <= 1.6) {
+            camera.position.y = 1.6;
+            velocityY = 0;
+            isGrounded = true;
+          }
+        }
+
+        // Horizontalbewegung berechnen
         velocity.x -= velocity.x * 10.0 * delta;
         velocity.z -= velocity.z * 10.0 * delta;
 
@@ -1110,14 +1456,22 @@
         }
         direction.normalize();
 
-        const speed = 40.0;
-        if (direction.z !== 0) velocity.z -= direction.z * speed * delta;
-        if (direction.x !== 0) velocity.x -= direction.x * speed * delta;
+        let currentSpeed = 38.0;
+
+        // Dash-Schub
+        if (isDashing) {
+          dashTimer -= delta;
+          currentSpeed = DASH_SPEED;
+          if (dashTimer <= 0) isDashing = false;
+        }
+
+        if (direction.z !== 0) velocity.z -= direction.z * currentSpeed * delta;
+        if (direction.x !== 0) velocity.x -= direction.x * currentSpeed * delta;
 
         camera.translateX(-velocity.x * delta);
         camera.translateZ(velocity.z * delta);
-        camera.position.y = 1.6;
 
+        // Map-Begrenzung (-16.5 bis +16.5)
         camera.position.x = Math.max(-16.5, Math.min(16.5, camera.position.x));
         camera.position.z = Math.max(-16.5, Math.min(16.5, camera.position.z));
 
@@ -1132,6 +1486,8 @@
             char: selectedChar
           });
         }
+
+        renderMinimap();
       }
 
       renderer.render(scene, camera);
