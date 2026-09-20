@@ -1,1 +1,516 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Hitscan Duell 1v1</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    body, html { width: 100%; height: 100%; overflow: hidden; background: #0d0e12; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #fff; }
+    
+    .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; }
+    .hidden { display: none !important; }
+
+    .panel { background: rgba(22, 25, 35, 0.95); border: 1px solid #2d3348; padding: 24px; border-radius: 8px; width: 420px; box-shadow: 0 10px 30px rgba(0,0,0,0.7); }
+    h1 { font-size: 20px; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px; color: #f5a623; }
+    h2 { font-size: 14px; margin: 16px 0 8px 0; text-transform: uppercase; color: #8a93a8; border-bottom: 1px solid #2d3348; padding-bottom: 4px; }
+    input[type="text"] { width: 100%; padding: 10px 12px; background: #12141c; border: 1px solid #3b425b; border-radius: 4px; color: #fff; font-size: 14px; outline: none; margin-bottom: 12px; }
+    input[type="text"]:focus { border-color: #f5a623; }
+    button { width: 100%; padding: 10px; background: #f5a623; border: none; border-radius: 4px; color: #000; font-weight: 700; cursor: pointer; text-transform: uppercase; }
+    button:hover { background: #e09418; }
+    button.secondary { background: #2d3348; color: #fff; margin-top: 8px; }
+    button.secondary:hover { background: #3b425b; }
+
+    ul { list-style: none; max-height: 140px; overflow-y: auto; margin-bottom: 8px; }
+    li { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; background: #12141c; margin-bottom: 4px; border-radius: 4px; font-size: 13px; }
+    li button { width: auto; padding: 4px 10px; font-size: 11px; }
+
+    #hud { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
+    #crosshair { position: absolute; top: 50%; left: 50%; width: 10px; height: 10px; transform: translate(-50%, -50%); border: 2px solid rgba(255,255,255,0.7); border-radius: 50%; }
+    #stats-bar { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 40px; font-size: 24px; font-weight: 800; background: rgba(0,0,0,0.6); padding: 8px 24px; border-radius: 4px; border: 1px solid #333; }
+    .hud-timer { color: #f5a623; }
+    .hud-score { color: #4ade80; }
+    .hud-opp-score { color: #ef4444; }
+    #hitmarker { position: absolute; top: 50%; left: 50%; width: 20px; height: 20px; transform: translate(-50%, -50%); border: 2px solid #ef4444; border-radius: 50%; opacity: 0; transition: opacity 0.1s; }
+  </style>
+</head>
+<body>
+
+  <div id="screen-login" class="screen">
+    <div class="panel">
+      <h1>Hitscan Duell 1v1</h1>
+      <input type="text" id="username-input" placeholder="Spielername eingeben..." maxlength="14">
+      <button id="btn-login">Lobby Betreten</button>
+    </div>
+  </div>
+
+  <div id="screen-lobby" class="screen hidden">
+    <div class="panel" style="width: 500px;">
+      <h1>Lobby</h1>
+      <div>Angemeldet als: <strong id="my-name-display" style="color: #f5a623;"></strong></div>
+
+      <h2>Verfügbare Spieler</h2>
+      <ul id="player-list"></ul>
+
+      <h2>Bestenliste</h2>
+      <ul id="leaderboard-list"></ul>
+    </div>
+  </div>
+
+  <div id="screen-challenge" class="screen hidden" style="background: rgba(0,0,0,0.7);">
+    <div class="panel" style="text-align: center;">
+      <h1>Herausforderung!</h1>
+      <p id="challenge-text" style="margin-bottom: 16px;"></p>
+      <button id="btn-accept-challenge">Annehmen</button>
+      <button id="btn-decline-challenge" class="secondary">Ablehnen</button>
+    </div>
+  </div>
+
+  <div id="screen-gameover" class="screen hidden" style="background: rgba(0,0,0,0.8);">
+    <div class="panel" style="text-align: center;">
+      <h1 id="gameover-title">Runde Beendet</h1>
+      <p id="gameover-details" style="margin-bottom: 20px; font-size: 16px;"></p>
+      <button id="btn-back-to-lobby">Zurück zur Lobby</button>
+    </div>
+  </div>
+
+  <div id="hud" class="hidden">
+    <div id="stats-bar">
+      <div>Du: <span id="hud-my-score" class="hud-score">0</span></div>
+      <div class="hud-timer"><span id="hud-timer">60</span>s</div>
+      <div>Gegner: <span id="hud-opp-score" class="hud-opp-score">0</span></div>
+    </div>
+    <div id="crosshair"></div>
+    <div id="hitmarker"></div>
+  </div>
+
+  <div id="game-container"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <script>
+    const socket = io();
+    let myName = '';
+    let myId = '';
+    let pendingChallengerId = null;
+
+    let inGame = false;
+    let opponentId = null;
+    let opponentMesh = null;
+    let camera, scene, renderer;
+    let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
+    const velocity = new THREE.Vector3();
+    const direction = new THREE.Vector3();
+    const clock = new THREE.Clock();
+
+    const screenLogin = document.getElementById('screen-login');
+    const screenLobby = document.getElementById('screen-lobby');
+    const screenChallenge = document.getElementById('screen-challenge');
+    const screenGameOver = document.getElementById('screen-gameover');
+    const hud = document.getElementById('hud');
+
+    document.getElementById('btn-login').addEventListener('click', () => {
+      const input = document.getElementById('username-input').value.trim();
+      if (!input) return;
+      myName = input;
+      localStorage.setItem('duel_username', myName);
+      socket.emit('join-lobby', myName);
+      document.getElementById('my-name-display').innerText = myName;
+      screenLogin.classList.add('hidden');
+      screenLobby.classList.remove('hidden');
+    });
+
+    const savedName = localStorage.getItem('duel_username');
+    if (savedName) document.getElementById('username-input').value = savedName;
+
+    socket.on('connect', () => { myId = socket.id; });
+
+    socket.on('lobby-update', (list) => {
+      const ul = document.getElementById('player-list');
+      ul.innerHTML = '';
+      list.forEach(p => {
+        if (p.id === socket.id) return;
+        const li = document.createElement('li');
+        li.innerHTML = `<span>${p.name} (${p.status})</span>`;
+        if (p.status === 'lobby') {
+          const btn = document.createElement('button');
+          btn.innerText = 'Duellieren';
+          btn.onclick = () => socket.emit('send-challenge', p.id);
+          li.appendChild(btn);
+        }
+        ul.appendChild(li);
+      });
+    });
+
+    socket.on('leaderboard-update', (list) => {
+      const ul = document.getElementById('leaderboard-list');
+      ul.innerHTML = '';
+      list.forEach(item => {
+        const li = document.createElement('li');
+        li.innerHTML = `<span>${item.name}</span><span>${item.wins} Siege / ${item.kills} Kills</span>`;
+        ul.appendChild(li);
+      });
+    });
+
+    socket.on('challenge-received', (data) => {
+      pendingChallengerId = data.challengerId;
+      document.getElementById('challenge-text').innerText = `${data.challengerName} fordert dich zum 1v1 Duell heraus!`;
+      screenChallenge.classList.remove('hidden');
+    });
+
+    document.getElementById('btn-accept-challenge').onclick = () => {
+      screenChallenge.classList.add('hidden');
+      socket.emit('accept-challenge', pendingChallengerId);
+    };
+
+    document.getElementById('btn-decline-challenge').onclick = () => {
+      screenChallenge.classList.add('hidden');
+      socket.emit('decline-challenge', pendingChallengerId);
+      pendingChallengerId = null;
+    };
+
+    socket.on('challenge-declined', (data) => {
+      alert(`${data.name} hat die Herausforderung abgelehnt.`);
+    });
+
+    document.getElementById('btn-back-to-lobby').onclick = () => {
+      screenGameOver.classList.add('hidden');
+      screenLobby.classList.remove('hidden');
+      document.exitPointerLock();
+    };
+
+    function init3D() {
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0a0c12);
+      scene.fog = new THREE.FogExp2(0x0a0c12, 0.025);
+
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.shadowMap.enabled = true;
+      document.getElementById('game-container').appendChild(renderer.domElement);
+
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+      scene.add(ambientLight);
+
+      const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+      dirLight.position.set(20, 40, 20);
+      dirLight.castShadow = true;
+      scene.add(dirLight);
+
+      const floorGeo = new THREE.PlaneGeometry(36, 36);
+      const floorMat = new THREE.MeshStandardMaterial({ color: 0x1a1d26, roughness: 0.8 });
+      const floor = new THREE.Mesh(floorGeo, floorMat);
+      floor.rotation.x = -Math.PI / 2;
+      floor.receiveShadow = true;
+      scene.add(floor);
+
+      const grid = new THREE.GridHelper(36, 36, 0xf5a623, 0x2d3348);
+      grid.position.y = 0.01;
+      scene.add(grid);
+
+      const wallMat = new THREE.MeshStandardMaterial({ color: 0x12141c });
+      const createWall = (w, h, d, x, y, z) => {
+        const wall = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat);
+        wall.position.set(x, y, z);
+        scene.add(wall);
+      };
+      createWall(36, 4, 1, 0, 2, -18);
+      createWall(36, 4, 1, 0, 2, 18);
+      createWall(1, 4, 36, -18, 2, 0);
+      createWall(1, 4, 36, 18, 2, 0);
+
+      spawnMapProps();
+      setupWurstWeapon();
+      setupOpponentMesh();
+
+      window.addEventListener('resize', onWindowResize);
+      setupControls();
+    }
+
+    function spawnMapProps() {
+      // Bierflasche
+      const bottleGroup = new THREE.Group();
+      const bodyMat = new THREE.MeshStandardMaterial({ color: 0x3d2314, roughness: 0.3 });
+      const capMat = new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.8, roughness: 0.2 });
+      
+      const bottleBody = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 3.2, 16), bodyMat);
+      bottleBody.position.y = 1.6;
+      bottleGroup.add(bottleBody);
+
+      const bottleNeck = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.7, 1.2, 16), bodyMat);
+      bottleNeck.position.y = 3.6;
+      bottleGroup.add(bottleNeck);
+
+      const bottleCap = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.2, 16), capMat);
+      bottleCap.position.y = 4.3;
+      bottleGroup.add(bottleCap);
+
+      bottleGroup.position.set(-6, 0, -4);
+      scene.add(bottleGroup);
+
+      // Espresso Martini Glas
+      const martiniGroup = new THREE.Group();
+      const glassMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.1, transparent: true, opacity: 0.85 });
+      const stemMat = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.5, roughness: 0.2 });
+
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.1, 16), stemMat);
+      base.position.y = 0.05;
+      martiniGroup.add(base);
+
+      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 2.5, 12), stemMat);
+      stem.position.y = 1.3;
+      martiniGroup.add(stem);
+
+      const cone = new THREE.Mesh(new THREE.ConeGeometry(1.8, 1.6, 16, 1, true), glassMat);
+      cone.position.y = 3.1;
+      cone.rotation.x = Math.PI;
+      martiniGroup.add(cone);
+
+      const beanMat = new THREE.MeshStandardMaterial({ color: 0x1a0f07 });
+      const bean = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 8), beanMat);
+      bean.scale.set(1.5, 0.8, 1);
+      bean.position.set(0, 3.7, 0);
+      martiniGroup.add(bean);
+
+      martiniGroup.position.set(6, 0, 4);
+      scene.add(martiniGroup);
+
+      // Pommes-Tüte
+      const friesGroup = new THREE.Group();
+      const boxMat = new THREE.MeshStandardMaterial({ color: 0xb91c1c });
+      const fryMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.5 });
+
+      const bag = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.4, 1.4), boxMat);
+      bag.position.y = 1.2;
+      friesGroup.add(bag);
+
+      for (let i = 0; i < 7; i++) {
+        const fry = new THREE.Mesh(new THREE.BoxGeometry(0.22, 1.8, 0.22), fryMat);
+        fry.position.set((Math.random() - 0.5) * 1.4, 2.2, (Math.random() - 0.5) * 0.8);
+        fry.rotation.set((Math.random() - 0.5) * 0.3, (Math.random() - 0.5) * 0.3, (Math.random() - 0.5) * 0.3);
+        friesGroup.add(fry);
+      }
+      friesGroup.position.set(0, 0, 0);
+      scene.add(friesGroup);
+    }
+
+    let wurstGun;
+    function setupWurstWeapon() {
+      wurstGun = new THREE.Group();
+      const wurstMat = new THREE.MeshStandardMaterial({ color: 0x8b3a1a, roughness: 0.4 });
+      const senfMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.2 });
+
+      const wurstBody = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.7, 12), wurstMat);
+      wurstBody.rotation.x = Math.PI / 2;
+      wurstGun.add(wurstBody);
+
+      const endCap1 = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), wurstMat);
+      endCap1.position.z = 0.35;
+      wurstGun.add(endCap1);
+
+      const endCap2 = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), wurstMat);
+      endCap2.position.z = -0.35;
+      wurstGun.add(endCap2);
+
+      const senf = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.02, 0.5), senfMat);
+      senf.position.set(0, 0.06, 0);
+      wurstGun.add(senf);
+
+      wurstGun.position.set(0.3, -0.25, -0.5);
+      camera.add(wurstGun);
+      scene.add(camera);
+    }
+
+    function setupOpponentMesh() {
+      opponentMesh = new THREE.Group();
+      const oppMat = new THREE.MeshStandardMaterial({ color: 0xef4444 });
+
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 1.4, 12), oppMat);
+      body.position.y = 0.7;
+      opponentMesh.add(body);
+
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.35, 12, 12), oppMat);
+      head.position.y = 1.6;
+      opponentMesh.add(head);
+
+      opponentMesh.position.set(0, -100, 0);
+      scene.add(opponentMesh);
+    }
+
+    function setupControls() {
+      window.addEventListener('keydown', (e) => {
+        if (!inGame) return;
+        if (e.code === 'KeyW') moveForward = true;
+        if (e.code === 'KeyS') moveBackward = true;
+        if (e.code === 'KeyA') moveLeft = true;
+        if (e.code === 'KeyD') moveRight = true;
+      });
+
+      window.addEventListener('keyup', (e) => {
+        if (!inGame) return;
+        if (e.code === 'KeyW') moveForward = false;
+        if (e.code === 'KeyS') moveBackward = false;
+        if (e.code === 'KeyA') moveLeft = false;
+        if (e.code === 'KeyD') moveRight = false;
+      });
+
+      document.body.addEventListener('click', () => {
+        if (inGame && document.pointerLockElement !== document.body) {
+          document.body.requestPointerLock();
+        } else if (inGame && document.pointerLockElement === document.body) {
+          fireHitscan();
+        }
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (document.pointerLockElement === document.body && inGame) {
+          camera.rotation.y -= e.movementX * 0.0022;
+          const pitchDelta = e.movementY * 0.0022;
+          camera.rotation.x = Math.max(-Math.PI / 2.5, Math.min(Math.PI / 2.5, camera.rotation.x - pitchDelta));
+        }
+      });
+    }
+
+    const raycaster = new THREE.Raycaster();
+    function fireHitscan() {
+      wurstGun.position.z += 0.08;
+      setTimeout(() => { wurstGun.position.z -= 0.08; }, 60);
+
+      raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+      const hits = raycaster.intersectObjects(opponentMesh.children, true);
+
+      const startPos = new THREE.Vector3();
+      wurstGun.getWorldPosition(startPos);
+      const endPos = new THREE.Vector3();
+
+      if (hits.length > 0) {
+        endPos.copy(hits[0].point);
+        const marker = document.getElementById('hitmarker');
+        marker.style.opacity = '1';
+        setTimeout(() => { marker.style.opacity = '0'; }, 100);
+
+        socket.emit('hit-target', opponentId);
+      } else {
+        raycaster.ray.at(50, endPos);
+      }
+
+      renderTracer(startPos, endPos, 0xfacc15);
+      socket.emit('shot-fired', { start: startPos, end: endPos });
+    }
+
+    function renderTracer(start, end, colorHex) {
+      const material = new THREE.LineBasicMaterial({ color: colorHex, linewidth: 2 });
+      const geometry = new THREE.BufferGeometry().setFromPoints([start, end]);
+      const line = new THREE.Line(geometry, material);
+      scene.add(line);
+      setTimeout(() => { scene.remove(line); }, 50);
+    }
+
+    socket.on('opponent-shot', (tracer) => {
+      renderTracer(
+        new THREE.Vector3(tracer.start.x, tracer.start.y, tracer.start.z),
+        new THREE.Vector3(tracer.end.x, tracer.end.y, tracer.end.z),
+        0xef4444
+      );
+    });
+
+    socket.on('match-start', (data) => {
+      screenLobby.classList.add('hidden');
+      screenGameOver.classList.add('hidden');
+      hud.classList.remove('hidden');
+
+      inGame = true;
+      opponentId = data.opponentId;
+
+      camera.position.set(data.spawn.x, data.spawn.y, data.spawn.z);
+      camera.rotation.set(0, data.spawn.rotY, 0);
+
+      document.getElementById('hud-my-score').innerText = '0';
+      document.getElementById('hud-opp-score').innerText = '0';
+      document.getElementById('hud-timer').innerText = '60';
+
+      document.body.requestPointerLock();
+    });
+
+    socket.on('timer-tick', (timeLeft) => {
+      document.getElementById('hud-timer').innerText = timeLeft;
+    });
+
+    socket.on('score-update', (data) => {
+      document.getElementById('hud-my-score').innerText = data.myScore;
+      document.getElementById('hud-opp-score').innerText = data.oppScore;
+    });
+
+    socket.on('respawn', (pos) => {
+      camera.position.set(pos.x, pos.y, pos.z);
+      camera.rotation.set(0, pos.rotY, 0);
+    });
+
+    socket.on('opponent-moved', (data) => {
+      if (opponentMesh) {
+        opponentMesh.position.set(data.x, data.y - 0.9, data.z);
+        opponentMesh.rotation.y = data.rotY;
+      }
+    });
+
+    socket.on('game-over', (res) => {
+      inGame = false;
+      hud.classList.add('hidden');
+      document.exitPointerLock();
+
+      screenGameOver.classList.remove('hidden');
+      document.getElementById('gameover-title').innerText = res.winner === myName ? 'SIEG!' : (res.winner === 'Unentschieden' ? 'UNENTSCHIEDEN' : 'NIEDERLAGE');
+      document.getElementById('gameover-details').innerText = `Endstand: ${res.p1Name} (${res.p1Score}) vs ${res.p2Name} (${res.p2Score})`;
+      
+      opponentMesh.position.set(0, -100, 0);
+    });
+
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    init3D();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const delta = clock.getDelta();
+
+      if (inGame) {
+        velocity.x -= velocity.x * 10.0 * delta;
+        velocity.z -= velocity.z * 10.0 * delta;
+
+        direction.z = Number(moveForward) - Number(moveBackward);
+        direction.x = Number(moveRight) - Number(moveLeft);
+        direction.normalize();
+
+        const speed = 40.0;
+        if (moveForward || moveBackward) velocity.z -= direction.z * speed * delta;
+        if (moveLeft || moveRight) velocity.x -= direction.x * speed * delta;
+
+        camera.translateX(-velocity.x * delta);
+        camera.translateZ(velocity.z * delta);
+        camera.position.y = 1.6;
+
+        camera.position.x = Math.max(-16.5, Math.min(16.5, camera.position.x));
+        camera.position.z = Math.max(-16.5, Math.min(16.5, camera.position.z));
+
+        socket.emit('player-update', {
+          x: camera.position.x,
+          y: camera.position.y,
+          z: camera.position.z,
+          rotY: camera.rotation.y
+        });
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    animate();
+  </script>
+</body>
+</html>
 
