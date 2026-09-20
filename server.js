@@ -5,9 +5,7 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {
-  cors: { origin: '*' }
-});
+const io = new Server(server, { cors: { origin: '*' } });
 
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -26,9 +24,7 @@ async function sendTelegramLobbyAlert(playerName) {
   if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
 
   const now = Date.now();
-  const timeSinceLastAlert = now - lastNotificationTime;
-  if (timeSinceLastAlert < NOTIFICATION_COOLDOWN_MS) return;
-
+  if (now - lastNotificationTime < NOTIFICATION_COOLDOWN_MS) return;
   lastNotificationTime = now;
 
   const payload = {
@@ -39,9 +35,7 @@ async function sendTelegramLobbyAlert(playerName) {
 
   if (GAME_URL) {
     payload.reply_markup = {
-      inline_keyboard: [
-        [{ text: 'Jetzt beitreten und duellieren', url: GAME_URL }]
-      ]
+      inline_keyboard: [[{ text: '🎮 Jetzt duellieren', url: GAME_URL }]]
     };
   }
 
@@ -75,7 +69,6 @@ io.on('connection', (socket) => {
   socket.on('join-lobby', (name) => {
     const cleanName = (name || 'Spieler').trim().substring(0, 16);
 
-    // Laufende Matches vor versehentlichem Reset durch App-Wechsel schützen
     if (players[socket.id] && players[socket.id].status === 'ingame') {
       players[socket.id].name = cleanName;
       return;
@@ -135,14 +128,14 @@ io.on('connection', (socket) => {
       scores: { [p1.id]: 0, [p2.id]: 0 },
       timeLeft: 60,
       interval: null,
-      isPausedForDeath: false
+      isRoundLocked: false
     };
 
     games[gameId] = gameData;
     io.emit('lobby-update', getLobbyList());
 
-    // Spieler 1 steht im Süden (Z=14) und blickt nach Norden (rotY=0)
-    // Spieler 2 steht im Norden (Z=-14) und blickt nach Süden (rotY=Math.PI)
+    // P1 (Süden, Z=14, Blick nach Norden = 0)
+    // P2 (Norden, Z=-14, Blick nach Süden = Math.PI)
     const p1Spawn = { x: 0, y: 1.6, z: 14, rotY: 0 };
     const p2Spawn = { x: 0, y: 1.6, z: -14, rotY: Math.PI };
 
@@ -175,16 +168,6 @@ io.on('connection', (socket) => {
     }, 1000);
   });
 
-  socket.on('voice-signal', (data) => {
-    const player = players[socket.id];
-    if (!player || !player.gameId) return;
-    const game = games[player.gameId];
-    if (!game) return;
-
-    const opponentId = game.p1 === socket.id ? game.p2 : game.p1;
-    io.to(opponentId).emit('voice-signal', data);
-  });
-
   socket.on('player-update', (data) => {
     const player = players[socket.id];
     if (!player || !player.gameId) return;
@@ -200,9 +183,10 @@ io.on('connection', (socket) => {
     if (!player || !player.gameId) return;
 
     const game = games[player.gameId];
-    if (!game || game.isPausedForDeath) return;
+    if (!game || game.isRoundLocked) return;
 
-    game.isPausedForDeath = true;
+    // Runde sperren: Keine weiteren Kills während der Todessequenz
+    game.isRoundLocked = true;
     game.scores[socket.id] += 1;
     if (leaderboard[player.name]) leaderboard[player.name].kills += 1;
 
@@ -212,17 +196,18 @@ io.on('connection', (socket) => {
     io.to(game.p1).emit('player-killed', { killerId: socket.id, victimId: targetId });
     io.to(game.p2).emit('player-killed', { killerId: socket.id, victimId: targetId });
 
+    // Nach 4 Sekunden Rundenpause beide synchron neu starten
     setTimeout(() => {
       if (!games[game.id]) return;
 
-      const p1Spawn = { x: (Math.random() - 0.5) * 8, y: 1.6, z: 14, rotY: 0 };
-      const p2Spawn = { x: (Math.random() - 0.5) * 8, y: 1.6, z: -14, rotY: Math.PI };
+      const p1Spawn = { x: (Math.random() - 0.5) * 6, y: 1.6, z: 14, rotY: 0 };
+      const p2Spawn = { x: (Math.random() - 0.5) * 6, y: 1.6, z: -14, rotY: Math.PI };
 
       io.to(game.p1).emit('round-resume', { mySpawn: p1Spawn, oppSpawn: p2Spawn });
       io.to(game.p2).emit('round-resume', { mySpawn: p2Spawn, oppSpawn: p1Spawn });
 
-      game.isPausedForDeath = false;
-    }, 4200);
+      game.isRoundLocked = false;
+    }, 4000);
   });
 
   socket.on('shot-fired', (data) => {
