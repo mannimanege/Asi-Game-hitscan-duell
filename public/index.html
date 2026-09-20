@@ -337,6 +337,7 @@
     function playCorkPopSound() {
       if (!audioCtx) return;
       const t = audioCtx.currentTime;
+
       const osc = audioCtx.createOscillator();
       const popGain = audioCtx.createGain();
       osc.type = 'sine';
@@ -416,10 +417,10 @@
       if (!audioCtx) return;
       const bSize = audioCtx.sampleRate * 0.12;
       const buf = audioCtx.createBuffer(1, bSize, audioCtx.sampleRate);
-      const d = buf.getChannelData(0);
+      const data = buf.getChannelData(0);
       for (let i = 0; i < bSize; i++) data[i] = Math.random() * 2 - 1;
       const noise = audioCtx.createBufferSource();
-      noise.buffer = buffer;
+      noise.buffer = buf;
       const gain = audioCtx.createGain();
       gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
@@ -478,6 +479,7 @@
     let botScoreEnemy = 0;
 
     let isDying = false;
+    let isOpponentDead = false;
     let deathTimer = 0;
     const DEATH_DURATION = 4.0;
     let deathCamStart = new THREE.Vector3();
@@ -768,7 +770,78 @@
     };
 
     // ==========================================
-    // 3. TEXTUREN & MAP
+    // 3. ATOMPILZ EXPLOSION
+    // ==========================================
+    function spawnNukeMushroom(pos) {
+      playNukeExplosionSound();
+
+      const nukeFlash = new THREE.PointLight(0xffffff, 8, 30);
+      nukeFlash.position.set(pos.x, 2, pos.z);
+      scene.add(nukeFlash);
+
+      const ringGeo = new THREE.RingGeometry(0.5, 1.2, 24);
+      const ringMat = new THREE.MeshBasicMaterial({ color: 0xfef08a, side: THREE.DoubleSide, transparent: true, opacity: 0.95 });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.set(pos.x, 0.05, pos.z);
+      scene.add(ring);
+
+      let animTimer = 0;
+      const nukeInterval = setInterval(() => {
+        animTimer += 0.04;
+
+        nukeFlash.intensity = Math.max(0, 8 - animTimer * 7);
+        ring.scale.multiplyScalar(1.08);
+        ringMat.opacity = Math.max(0, 0.95 - animTimer * 1.5);
+
+        if (animTimer < 1.2) {
+          const stemPuff = new THREE.Mesh(
+            new THREE.SphereGeometry(0.35 + Math.random() * 0.25, 8, 8),
+            new THREE.MeshBasicMaterial({ color: Math.random() < 0.6 ? 0xdc2626 : 0x475569, transparent: true, opacity: 0.85 })
+          );
+          stemPuff.position.set(pos.x + (Math.random() - 0.5) * 0.6, 0.2, pos.z + (Math.random() - 0.5) * 0.6);
+          scene.add(stemPuff);
+
+          particles.push({
+            sprite: stemPuff,
+            vel: new THREE.Vector3((Math.random() - 0.5) * 0.8, 6.5 + Math.random() * 3, (Math.random() - 0.5) * 0.8),
+            rotVel: 0,
+            life: 1.6,
+            maxLife: 1.8
+          });
+        }
+
+        if (animTimer > 0.4 && animTimer < 1.8) {
+          const capAngle = Math.random() * Math.PI * 2;
+          const capDist = Math.random() * 2.2 + 0.8;
+          const capColor = Math.random() < 0.5 ? 0xf59e0b : 0x1f2937;
+
+          const capPuff = new THREE.Mesh(
+            new THREE.SphereGeometry(0.6 + Math.random() * 0.4, 8, 8),
+            new THREE.MeshBasicMaterial({ color: capColor, transparent: true, opacity: 0.9 })
+          );
+          capPuff.position.set(pos.x, 5.5 + Math.random() * 0.8, pos.z);
+          scene.add(capPuff);
+
+          particles.push({
+            sprite: capPuff,
+            vel: new THREE.Vector3(Math.cos(capAngle) * capDist * 1.8, Math.sin(animTimer) * 0.5, Math.sin(capAngle) * capDist * 1.8),
+            rotVel: 0,
+            life: 2.0,
+            maxLife: 2.2
+          });
+        }
+
+        if (animTimer >= 2.2) {
+          clearInterval(nukeInterval);
+          scene.remove(nukeFlash);
+          scene.remove(ring);
+        }
+      }, 40);
+    }
+
+    // ==========================================
+    // 4. TEXTUREN & MAP
     // ==========================================
     function createGoschSignTexture() {
       const c = document.createElement('canvas');
@@ -925,7 +998,7 @@
     }
 
     // ==========================================
-    // 4. SZENE & OBJEKTE
+    // 5. SZENE & OBJEKTE
     // ==========================================
     function init3D() {
       scene = new THREE.Scene();
@@ -933,6 +1006,7 @@
       scene.fog = new THREE.Fog(0x7ec8e3, 50, 110);
 
       camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.rotation.order = 'YXZ';
 
       renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
       renderer.setSize(window.innerWidth, window.innerHeight);
@@ -966,8 +1040,7 @@
 
       const barnMat = new THREE.MeshStandardMaterial({ map: createBarnWallTexture(), roughness: 0.65 });
       const makeWall = (w, h, d, x, y, z) => {
-        const mesh = new THREE.BoxGeometry(w, h, d);
-        const wall = new THREE.Mesh(mesh, barnMat);
+        const wall = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), barnMat);
         wall.position.set(x, y, z);
         wall.receiveShadow = true;
         scene.add(wall);
@@ -1148,7 +1221,7 @@
     }
 
     // ==========================================
-    // 5. MINIMAP
+    // 6. MINIMAP
     // ==========================================
     function renderMinimap() {
       minimapCtx.clearRect(0, 0, 78, 78);
@@ -1168,7 +1241,7 @@
         minimapCtx.fillRect(x1, y1, Math.max(x2 - x1, 2), Math.max(y2 - y1, 2));
       });
 
-      if (opponentRoot && opponentRoot.visible) {
+      if (opponentRoot && opponentRoot.visible && !isOpponentDead) {
         minimapCtx.fillStyle = '#ef4444';
         minimapCtx.beginPath();
         minimapCtx.arc(toMap(opponentRoot.position.x), toMap(opponentRoot.position.z), 3.5, 0, Math.PI * 2);
@@ -1193,7 +1266,7 @@
     }
 
     // ==========================================
-    // 6. VIEWMODEL & SARG (INNEN PINK)
+    // 7. VIEWMODEL & SARG (INNEN PINK)
     // ==========================================
     let viewmodelGroup;
     let cigWeapon;
@@ -1507,7 +1580,7 @@
     }
 
     // ==========================================
-    // 7. PROJEKTILE (34 M/S)
+    // 8. PROJEKTILE (34 M/S)
     // ==========================================
     function createChampagneBottleMesh() {
       const group = new THREE.Group();
@@ -1612,17 +1685,19 @@
           spawnChampagneSplash(r.target);
 
           if (r.isOwner) {
-            if (r.intendedHit && opponentRoot && opponentHitbox.position.y > 0) {
+            if (r.intendedHit && opponentRoot && !isOpponentDead && opponentHitbox.position.y > 0) {
               const oppDist = opponentRoot.position.distanceTo(new THREE.Vector3(r.target.x, 0, r.target.z));
               if (oppDist < 1.8) {
                 if (isBotMode) {
                   botScorePlayer++;
                   document.getElementById('hud-my-score').innerText = botScorePlayer;
-                  spawnNukeMushroom(r.target);
+                  isOpponentDead = true;
+                  spawnNukeMushroom(opponentRoot.position.clone().add(new THREE.Vector3(0, 1.0, 0)));
                   opponentHitbox.position.set(0, -999, 0);
                   canAct = false;
                   setTimeout(() => {
                     if (inGame && isBotMode) {
+                      isOpponentDead = false;
                       respawnBot();
                       opponentHitbox.position.set(0, 0.9, 0);
                       canAct = true;
@@ -1631,7 +1706,11 @@
                 } else {
                   socket.emit('hit-target', opponentId);
                 }
+              } else {
+                spawnHitImpact(r.target);
               }
+            } else {
+              spawnHitImpact(r.target);
             }
           } else {
             if (r.intendedHit && !isDying) {
@@ -1644,13 +1723,19 @@
                   if (inGame && isBotMode) {
                     isDying = false;
                     coffinGroup.visible = false;
+                    coffinGroup.position.y = 0;
+                    if (hellFireLight) hellFireLight.intensity = 0;
                     deathOverlayEl.classList.add('hidden');
                     if (viewmodelGroup) viewmodelGroup.visible = true;
                     respawnPlayer((Math.random() - 0.5) * 8, 14, 0);
                     canAct = true;
                   }
                 }, 4000);
+              } else {
+                spawnHitImpact(r.target);
               }
+            } else {
+              spawnHitImpact(r.target);
             }
           }
 
@@ -1691,7 +1776,7 @@
     }
 
     // ==========================================
-    // 8. STEUERUNG
+    // 9. STEUERUNG
     // ==========================================
     function triggerJump() {
       if (!canAct || isDying) return;
@@ -1830,7 +1915,7 @@
     }
 
     // ==========================================
-    // 9. SCHUSSLOGIK & SPARK
+    // 10. SCHUSSLOGIK & SPARK
     // ==========================================
     const raycaster = new THREE.Raycaster();
 
@@ -1883,13 +1968,15 @@
 
     function respawnPlayer(x, z, rotY = 0) {
       camera.position.set(x, 1.6, z);
-      camera.rotation.set(0, rotY, 0, 'YXZ');
+      camera.rotation.order = 'YXZ';
+      camera.rotation.set(0, rotY, 0);
+      velocity.set(0, 0, 0);
       velocityY = 0;
       isGrounded = true;
     }
 
     // ==========================================
-    // 10. BOT TRAINING
+    // 11. BOT TRAINING
     // ==========================================
     const botState = { targetPos: new THREE.Vector3(0, 0, 0), shootCooldown: 2.2 };
     const botChars = ['marley', 'bread', 'horse', 'dolphin', 'grill'];
@@ -1905,6 +1992,7 @@
       botScorePlayer = 0;
       botScoreEnemy = 0;
       botTimeLeft = 60;
+      isOpponentDead = false;
 
       switchOpponentVisual(botChars[Math.floor(Math.random() * botChars.length)]);
 
@@ -1941,7 +2029,7 @@
     }
 
     function updateBotAI(delta) {
-      if (!canAct || opponentHitbox.position.y < 0) return;
+      if (!canAct || isOpponentDead || opponentHitbox.position.y < 0) return;
       const dir = new THREE.Vector3().subVectors(botState.targetPos, opponentRoot.position);
       dir.y = 0;
       if (dir.length() < 1.0) {
@@ -1967,6 +2055,7 @@
       inGame = false;
       canAct = false;
       isDying = false;
+      isOpponentDead = false;
       if (coffinGroup) coffinGroup.visible = false;
       if (hellFireLight) hellFireLight.intensity = 0;
       countdownEl.classList.add('hidden');
@@ -1987,7 +2076,7 @@
     }
 
     // ==========================================
-    // 11. MULTIPLAYER SOCKET EVENTS
+    // 12. MULTIPLAYER SOCKET EVENTS
     // ==========================================
     socket.on('opponent-shot', (data) => {
       spawnChampagneRocket(
@@ -2009,13 +2098,16 @@
       inGame = true;
       isBotMode = false;
       isDying = false;
+      isOpponentDead = false;
       opponentId = data.opponentId;
 
       respawnPlayer(data.spawn.x, data.spawn.z, data.spawn.rotY);
 
       opponentRoot.visible = true;
-      opponentRoot.position.set(data.oppSpawn.x, 0, data.oppSpawn.z);
-      opponentRoot.rotation.y = data.oppSpawn.rotY;
+      if (data.oppSpawn) {
+        opponentRoot.position.set(data.oppSpawn.x, 0, data.oppSpawn.z);
+        opponentRoot.rotation.y = data.oppSpawn.rotY;
+      }
       opponentHitbox.position.set(0, 0.9, 0);
 
       document.getElementById('hud-my-score').innerText = '0';
@@ -2042,7 +2134,8 @@
       if (data.victimId === socket.id) {
         triggerDeathSequence();
       } else {
-        spawnNukeMushroom(opponentRoot.position.clone().add(new THREE.Vector3(0, 1.2, 0)));
+        isOpponentDead = true;
+        spawnNukeMushroom(opponentRoot.position.clone().add(new THREE.Vector3(0, 1.0, 0)));
         opponentHitbox.position.set(0, -999, 0);
         canAct = false;
       }
@@ -2050,6 +2143,7 @@
 
     socket.on('round-resume', (data) => {
       isDying = false;
+      isOpponentDead = false;
       if (coffinGroup) coffinGroup.visible = false;
       coffinGroup.position.y = 0;
       if (hellFireLight) hellFireLight.intensity = 0;
@@ -2067,7 +2161,7 @@
     });
 
     socket.on('opponent-moved', (data) => {
-      if (!isBotMode && opponentRoot) {
+      if (!isBotMode && opponentRoot && !isOpponentDead) {
         opponentRoot.visible = true;
         opponentRoot.position.set(data.x, 0, data.z);
         opponentRoot.rotation.y = data.rotY;
@@ -2079,6 +2173,7 @@
       inGame = false;
       canAct = false;
       isDying = false;
+      isOpponentDead = false;
       countdownEl.classList.add('hidden');
       deathOverlayEl.classList.add('hidden');
       asimodeOverlay.classList.add('hidden');
@@ -2103,7 +2198,7 @@
     init3D();
 
     // ==========================================
-    // 12. ENGINE LOOP
+    // 13. ENGINE LOOP
     // ==========================================
     function animate() {
       requestAnimationFrame(animate);
