@@ -19,16 +19,24 @@ const leaderboard = {};
 // Telegram-Konfiguration
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
-// Render setzt RENDER_EXTERNAL_URL automatisch (z. B. https://hitscan-duell-2.onrender.com)
 const GAME_URL = process.env.RENDER_EXTERNAL_URL || process.env.GAME_URL || '';
+
+// Cooldown-Sperre: Exakt 1 Stunde (3.600.000 ms)
+const NOTIFICATION_COOLDOWN_MS = 60 * 60 * 1000;
 let lastNotificationTime = 0;
 
 async function sendTelegramLobbyAlert(playerName) {
   if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
 
-  // Spam-Sperre: Maximal eine Benachrichtigung alle 60 Sekunden
   const now = Date.now();
-  if (now - lastNotificationTime < 60000) return;
+  const timeSinceLastAlert = now - lastNotificationTime;
+
+  if (timeSinceLastAlert < NOTIFICATION_COOLDOWN_MS) {
+    const remainingMinutes = Math.ceil((NOTIFICATION_COOLDOWN_MS - timeSinceLastAlert) / 60000);
+    console.log(`Telegram-Alert blockiert: Cooldown noch ${remainingMinutes} Minute(n) aktiv.`);
+    return;
+  }
+
   lastNotificationTime = now;
 
   const payload = {
@@ -37,7 +45,6 @@ async function sendTelegramLobbyAlert(playerName) {
     parse_mode: 'Markdown'
   };
 
-  // Wenn eine URL vorhanden ist, wird ein nativer Inline-Button angehängt
   if (GAME_URL) {
     payload.reply_markup = {
       inline_keyboard: [
@@ -52,6 +59,7 @@ async function sendTelegramLobbyAlert(playerName) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
+    console.log(`Telegram-Alert fuer ${playerName} erfolgreich gesendet.`);
   } catch (err) {
     console.error('Telegram-Benachrichtigung fehlgeschlagen:', err);
   }
