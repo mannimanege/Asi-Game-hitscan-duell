@@ -30,7 +30,7 @@
     li { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; background: #0b0f19; margin-bottom: 4px; border-radius: 6px; font-size: 11px; }
     li button { width: auto; padding: 4px 8px; font-size: 10px; }
 
-    /* HUD Layout: Drei getrennte Spalten verhindern jedes Überlappen */
+    /* HUD Layout */
     #hud { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
     
     .hud-top-bar {
@@ -43,11 +43,9 @@
       align-items: flex-start;
     }
 
-    /* Links: Minimap */
     #minimap-container { width: 78px; height: 78px; background: rgba(11, 15, 25, 0.85); border: 2px solid rgba(255,255,255,0.25); border-radius: 50%; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.6); flex-shrink: 0; }
     #minimap { width: 100%; height: 100%; }
 
-    /* Mitte: Score-Banner im Stil von Foto 2 */
     .scoreboard {
       display: flex;
       align-items: center;
@@ -74,7 +72,6 @@
     .timer-sec.danger { color: #ef4444; animation: blink 0.5s infinite alternate; }
     @keyframes blink { from { opacity: 1; } to { opacity: 0.3; } }
 
-    /* Rechts: Lobby Widget */
     #lobby-monitor {
       background: rgba(11, 15, 25, 0.85);
       border: 1.5px solid rgba(255, 255, 255, 0.2);
@@ -91,14 +88,13 @@
     .monitor-player { display: flex; justify-content: space-between; align-items: center; margin-top: 3px; gap: 4px; }
     .monitor-player button { padding: 2px 5px; font-size: 8px; width: auto; }
 
-    /* Fadenkreuz & Hitmarker */
     #crosshair { position: absolute; top: 50%; left: 50%; width: 6px; height: 6px; transform: translate(-50%, -50%); border: 2px solid #000; border-radius: 50%; background: #22c55e; }
     #hitmarker { position: absolute; top: 50%; left: 50%; width: 24px; height: 24px; transform: translate(-50%, -50%); border: 3px solid #22c55e; border-radius: 50%; opacity: 0; transition: opacity 0.08s; pointer-events: none; }
 
     #countdown-overlay { position: absolute; top: 38%; left: 50%; transform: translate(-50%, -50%); font-size: 72px; font-weight: 900; color: #f59e0b; text-shadow: 0 4px 20px rgba(0,0,0,0.9), 0 0 30px #f59e0b; pointer-events: none; z-index: 15; letter-spacing: 2px; }
     #audio-toggle { position: absolute; bottom: 12px; left: 12px; background: rgba(11, 15, 25, 0.8); border: 1px solid rgba(255,255,255,0.25); color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; cursor: pointer; pointer-events: auto; }
 
-    /* Touch Controls: Stylized Glassmorphism */
+    /* Touch Controls */
     #touch-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 6; pointer-events: none; }
     #joystick-base { position: absolute; left: 20px; bottom: 20px; width: 110px; height: 110px; background: rgba(15, 23, 42, 0.4); border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; pointer-events: auto; backdrop-filter: blur(2px); }
     #joystick-knob { position: absolute; top: 50%; left: 50%; width: 44px; height: 44px; background: #f59e0b; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; box-shadow: 0 2px 10px rgba(0,0,0,0.6); }
@@ -135,7 +131,6 @@
 </head>
 <body>
 
-  <!-- Screen 1: Login -->
   <div id="screen-login" class="screen">
     <div class="panel">
       <h1>Hitscan Duell 1v1</h1>
@@ -144,7 +139,6 @@
     </div>
   </div>
 
-  <!-- Screen 2: Lobby -->
   <div id="screen-lobby" class="screen hidden">
     <div class="panel">
       <h1>Lobby</h1>
@@ -172,7 +166,6 @@
     </div>
   </div>
 
-  <!-- Screen 3: Herausforderung -->
   <div id="screen-challenge" class="screen hidden" style="background: rgba(0,0,0,0.85); z-index: 20;">
     <div class="panel" style="text-align: center;">
       <h1>Herausforderung!</h1>
@@ -182,7 +175,6 @@
     </div>
   </div>
 
-  <!-- Screen 4: Game Over -->
   <div id="screen-gameover" class="screen hidden" style="background: rgba(0,0,0,0.88); z-index: 20;">
     <div class="panel" style="text-align: center;">
       <h1 id="gameover-title">Runde Beendet</h1>
@@ -191,15 +183,12 @@
     </div>
   </div>
 
-  <!-- In-Game HUD (Kein Überlappen) -->
   <div id="hud" class="hidden">
     <div class="hud-top-bar">
-      <!-- Links -->
       <div id="minimap-container">
         <canvas id="minimap" width="78" height="78"></canvas>
       </div>
 
-      <!-- Mitte -->
       <div class="scoreboard">
         <div class="score-box blue">Du <span id="hud-my-score">0</span></div>
         <div class="timer-center">
@@ -209,7 +198,6 @@
         <div class="score-box red"><span id="hud-opp-score">0</span> Gegner</div>
       </div>
 
-      <!-- Rechts -->
       <div id="lobby-monitor" class="hidden">
         <div><strong>LOBBY:</strong></div>
         <div id="lobby-monitor-content">Keiner da</div>
@@ -222,7 +210,6 @@
     <div id="hitmarker"></div>
   </div>
 
-  <!-- Touch Controls -->
   <div id="touch-layer" class="hidden">
     <div id="joystick-base"><div id="joystick-knob"></div></div>
     
@@ -270,19 +257,38 @@
       osc.stop(audioCtx.currentTime + (isHigh ? 0.36 : 0.19));
     }
 
-    function playShootSound() {
+    function playCorkPopSound() {
       if (!audioCtx) return;
+      const t = audioCtx.currentTime;
+
       const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(320, audioCtx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.08);
-      gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.09);
+      const popGain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(520, t);
+      osc.frequency.exponentialRampToValueAtTime(90, t + 0.05);
+      popGain.gain.setValueAtTime(0.65, t);
+      popGain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+      osc.connect(popGain);
+      popGain.connect(audioCtx.destination);
+      osc.start(t);
+      osc.stop(t + 0.07);
+
+      const bufferSize = audioCtx.sampleRate * 0.18;
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = buffer;
+      const noiseFilter = audioCtx.createBiquadFilter();
+      noiseFilter.type = 'bandpass';
+      noiseFilter.frequency.setValueAtTime(3400, t);
+      const noiseGain = audioCtx.createGain();
+      noiseGain.gain.setValueAtTime(0.35, t);
+      noiseGain.gain.exponentialRampToValueAtTime(0.01, t + 0.18);
+      noise.connect(noiseFilter);
+      noiseFilter.connect(noiseGain);
+      noiseGain.connect(audioCtx.destination);
+      noise.start(t);
     }
 
     function playHitSound() {
@@ -414,7 +420,7 @@
     const BASE_MOVE_SPEED = 18.0;
 
     let shootCooldown = 0;
-    const FIRE_INTERVAL = 0.28;
+    const FIRE_INTERVAL = 0.32;
 
     const minimapCanvas = document.getElementById('minimap');
     const minimapCtx = minimapCanvas.getContext('2d');
@@ -423,6 +429,7 @@
     const clouds = [];
     const birds = [];
     const particles = [];
+    const champagneRockets = [];
     let leafTexture = null;
 
     const obstacleColliders = [];
@@ -607,18 +614,33 @@
     };
 
     // ==========================================
-    // 3. LOW-POLY TEXTUREN & MATERIALIEN
+    // 3. TEXTUREN & GOSCH LOGO
     // ==========================================
+    function createGoschSignTexture() {
+      const c = document.createElement('canvas');
+      c.width = 512; c.height = 128;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#b91c1c';
+      ctx.fillRect(0, 0, 512, 128);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 8;
+      ctx.strokeRect(6, 6, 500, 116);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 54px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('GOSCH SYLT', 256, 64);
+      return new THREE.CanvasTexture(c);
+    }
+
     function createBarnWallTexture() {
       const c = document.createElement('canvas');
       c.width = 256; c.height = 256;
       const ctx = c.getContext('2d');
-      // Rotes Scheunenholz wie auf Foto 2
       ctx.fillStyle = '#991b1b';
       ctx.fillRect(0, 0, 256, 256);
       ctx.fillStyle = '#7f1d1d';
       for (let i = 0; i < 8; i++) ctx.fillRect(0, i * 32, 256, 3);
-      // Weiße Balkenverstrebungen
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, 256, 12);
       ctx.fillRect(0, 244, 256, 12);
@@ -636,7 +658,6 @@
       const c = document.createElement('canvas');
       c.width = 256; c.height = 256;
       const ctx = c.getContext('2d');
-      // Warmer Erdboden wie auf Foto 2
       ctx.fillStyle = '#785438';
       ctx.fillRect(0, 0, 256, 256);
       for (let i = 0; i < 4000; i++) {
@@ -656,10 +677,7 @@
       ctx.fillStyle = '#eab308';
       ctx.fillRect(0, 0, 128, 128);
       ctx.fillStyle = '#ca8a04';
-      for (let i = 0; i < 500; i++) {
-        ctx.fillRect(Math.random() * 128, Math.random() * 128, 6, 2);
-      }
-      // Schnüre
+      for (let i = 0; i < 500; i++) ctx.fillRect(Math.random() * 128, Math.random() * 128, 6, 2);
       ctx.fillStyle = '#713f12';
       ctx.fillRect(0, 36, 128, 6);
       ctx.fillRect(0, 86, 128, 6);
@@ -699,7 +717,7 @@
     }
 
     // ==========================================
-    // 4. THREE.JS SZENE MIT PRO-BELEUCHTUNG
+    // 4. SZENE, GOSCH SYLT & OBJEKTE
     // ==========================================
     function init3D() {
       scene = new THREE.Scene();
@@ -711,17 +729,13 @@
       renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-      // Professionelles Color Grading (Tone Mapping)
       renderer.outputEncoding = THREE.sRGBEncoding;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1.08;
-
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       document.getElementById('game-container').appendChild(renderer.domElement);
 
-      // Lichtgestaltung wie auf Foto 2: Warmes Sonnenlicht + Erdboden-Reflexion
       const hemiLight = new THREE.HemisphereLight(0xbfdbfe, 0x785438, 0.85);
       hemiLight.position.set(0, 50, 0);
       scene.add(hemiLight);
@@ -731,22 +745,14 @@
       sunLight.castShadow = true;
       sunLight.shadow.mapSize.width = 1024;
       sunLight.shadow.mapSize.height = 1024;
-      sunLight.shadow.camera.near = 0.5;
-      sunLight.shadow.camera.far = 80;
-      sunLight.shadow.camera.left = -22;
-      sunLight.shadow.camera.right = 22;
-      sunLight.shadow.camera.top = 22;
-      sunLight.shadow.camera.bottom = -22;
       scene.add(sunLight);
 
-      // Boden
       const floorMat = new THREE.MeshStandardMaterial({ map: createDirtGroundTexture(), roughness: 0.85 });
       const floor = new THREE.Mesh(new THREE.PlaneGeometry(36, 36), floorMat);
       floor.rotation.x = -Math.PI / 2;
       floor.receiveShadow = true;
       scene.add(floor);
 
-      // Scheunenwände nach Vorlage von Foto 2
       const barnMat = new THREE.MeshStandardMaterial({ map: createBarnWallTexture(), roughness: 0.65 });
       const makeWall = (w, h, d, x, y, z) => {
         const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), barnMat);
@@ -762,11 +768,13 @@
       makeWall(1, 5.5, 36, -18, 2.75, 0);
       makeWall(1, 5.5, 36, 18, 2.75, 0);
 
-      // Low-Poly Props & Hindernisse
+      // 1. Gosch Sylt Restaurant platzieren
+      spawnGoschSyltRestaurant();
+
+      // 2. Props & Arena
       spawnLowPolyArena();
       spawnSkyDetails();
 
-      // First-Person Arme & Zigarette
       setupFirstPersonArms();
       setupOpponentActor();
       leafTexture = createMarijuanaLeafTexture();
@@ -774,6 +782,121 @@
       window.addEventListener('resize', onWindowResize);
       setupControls();
       setupTouchControls();
+    }
+
+    // Gosch Sylt Restaurant mit Hummer & Kaviar
+    function spawnGoschSyltRestaurant() {
+      const gGroup = new THREE.Group();
+
+      // Hauptgebäude (Weißes Holz & Reetdach)
+      const wallMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.8 });
+      const reetMat = new THREE.MeshStandardMaterial({ color: 0x854d0e, roughness: 0.9 });
+      const blueTrimMat = new THREE.MeshStandardMaterial({ color: 0x0284c7 });
+
+      const building = new THREE.Mesh(new THREE.BoxGeometry(7, 3.2, 5), wallMat);
+      building.position.set(0, 1.6, 0);
+      building.castShadow = true;
+      building.receiveShadow = true;
+      gGroup.add(building);
+
+      // Reetdach
+      const roof = new THREE.Mesh(new THREE.ConeGeometry(5.2, 2.4, 4), reetMat);
+      roof.position.set(0, 4.4, 0);
+      roof.rotation.y = Math.PI / 4;
+      roof.castShadow = true;
+      gGroup.add(roof);
+
+      // Blau-weißes Vordach
+      const canopy = new THREE.Mesh(new THREE.BoxGeometry(7.2, 0.2, 1.6), blueTrimMat);
+      canopy.position.set(0, 2.8, 3.2);
+      canopy.rotation.x = 0.15;
+      canopy.castShadow = true;
+      gGroup.add(canopy);
+
+      // Großes Gosch Sylt Schild
+      const signMat = new THREE.MeshStandardMaterial({ map: createGoschSignTexture(), roughness: 0.4 });
+      const sign = new THREE.Mesh(new THREE.BoxGeometry(4.2, 1.0, 0.15), signMat);
+      sign.position.set(0, 3.3, 3.4);
+      gGroup.add(sign);
+
+      // Außentheke / Holztisch
+      const tableMat = new THREE.MeshStandardMaterial({ color: 0x92400e, roughness: 0.7 });
+      const table = new THREE.Mesh(new THREE.BoxGeometry(3.6, 1.0, 1.4), tableMat);
+      table.position.set(0, 0.5, 3.2);
+      table.castShadow = true;
+      table.receiveShadow = true;
+      gGroup.add(table);
+
+      // Teller / Holzbrett
+      const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.05, 16), new THREE.MeshStandardMaterial({ color: 0xf1f5f9 }));
+      plate.position.set(-0.8, 1.03, 3.2);
+      gGroup.add(plate);
+
+      // === HUMMER (Lobster) ===
+      const lobsterGroup = new THREE.Group();
+      const redMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.3 });
+      const darkRedMat = new THREE.MeshStandardMaterial({ color: 0x991b1b, roughness: 0.3 });
+
+      // Körper
+      const lBody = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 8), redMat);
+      lBody.scale.set(1, 0.7, 1.8);
+      lobsterGroup.add(lBody);
+
+      // Scheren
+      const clawGeo = new THREE.SphereGeometry(0.09, 8, 8);
+      const c1 = new THREE.Mesh(clawGeo, darkRedMat);
+      c1.scale.set(1.4, 0.5, 2.0);
+      c1.position.set(0.18, 0, 0.28);
+      c1.rotation.y = 0.35;
+      const c2 = c1.clone();
+      c2.position.x = -0.18;
+      c2.rotation.y = -0.35;
+      lobsterGroup.add(c1); lobsterGroup.add(c2);
+
+      // Schwanzfächer
+      const tail = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.04, 0.2), redMat);
+      tail.position.set(0, -0.02, -0.28);
+      lobsterGroup.add(tail);
+
+      lobsterGroup.position.set(-0.8, 1.1, 3.2);
+      gGroup.add(lobsterGroup);
+
+      // === KAVIAR (Caviar) ===
+      const caviarGroup = new THREE.Group();
+      // Eisbett
+      const ice = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 0.08, 14), new THREE.MeshStandardMaterial({ color: 0xe0f2fe, roughness: 0.1, transparent: true, opacity: 0.85 }));
+      ice.position.set(0.8, 1.05, 3.2);
+      gGroup.add(ice);
+
+      // Kaviar-Dose (Gold / Marineblau)
+      const tin = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 0.08, 16), new THREE.MeshStandardMaterial({ color: 0x1e3a8a, metalness: 0.8 }));
+      tin.position.set(0.8, 1.12, 3.2);
+      gGroup.add(tin);
+
+      // Schwarze Kaviar-Perlen
+      const caviarMat = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.15 });
+      for (let i = 0; i < 18; i++) {
+        const pearl = new THREE.Mesh(new THREE.SphereGeometry(0.045, 6, 6), caviarMat);
+        const ang = Math.random() * Math.PI * 2;
+        const dist = Math.random() * 0.16;
+        pearl.position.set(0.8 + Math.cos(ang) * dist, 1.17 + Math.random() * 0.02, 3.2 + Math.sin(ang) * dist);
+        gGroup.add(pearl);
+      }
+
+      // Zitronenscheibe
+      const lemon = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.02, 8), new THREE.MeshStandardMaterial({ color: 0xfacc15 }));
+      lemon.rotation.x = Math.PI / 3;
+      lemon.position.set(1.05, 1.14, 3.35);
+      gGroup.add(lemon);
+
+      // Platzierung Nordwest-Ecke
+      gGroup.position.set(-11, 0, -11);
+      gGroup.rotation.y = Math.PI / 4;
+      scene.add(gGroup);
+
+      obstacleMeshes.push(building);
+      obstacleMeshes.push(table);
+      obstacleColliders.push({ minX: -15.5, maxX: -6.5, minZ: -15.5, maxZ: -6.5 });
     }
 
     function addHayBale(x, y, z, rotY = 0) {
@@ -791,41 +914,21 @@
       }
     }
 
-    function addSilo(x, z) {
-      const siloMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.6, roughness: 0.35 });
-      const group = new THREE.Group();
-      const body = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.6, 6.0, 16), siloMat);
-      body.position.y = 3.0;
-      body.castShadow = true;
-      group.add(body);
-      const dome = new THREE.Mesh(new THREE.SphereGeometry(1.6, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), siloMat);
-      dome.position.y = 6.0;
-      group.add(dome);
-      group.position.set(x, 0, z);
-      scene.add(group);
-
-      obstacleMeshes.push(body);
-      obstacleColliders.push({ minX: x - 1.6, maxX: x + 1.6, minZ: z - 1.6, maxZ: z + 1.6 });
-    }
-
     function addTractor(x, z, rotY = 0) {
       const group = new THREE.Group();
       const blueMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.4 });
       const blackMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8 });
 
-      // Motorhaube
       const hood = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.1, 2.2), blueMat);
       hood.position.set(0, 1.1, 0.4);
       hood.castShadow = true;
       group.add(hood);
 
-      // Fahrerkabine
       const cab = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.4, 1.4), blueMat);
       cab.position.set(0, 1.6, -1.0);
       cab.castShadow = true;
       group.add(cab);
 
-      // Große Hinterräder
       const rearWheelGeo = new THREE.CylinderGeometry(0.85, 0.85, 0.45, 14);
       const rw1 = new THREE.Mesh(rearWheelGeo, blackMat);
       rw1.rotation.z = Math.PI / 2;
@@ -835,7 +938,6 @@
       rw2.position.x = -0.9;
       group.add(rw1); group.add(rw2);
 
-      // Vorderräder
       const frontWheelGeo = new THREE.CylinderGeometry(0.5, 0.5, 0.35, 14);
       const fw1 = new THREE.Mesh(frontWheelGeo, blackMat);
       fw1.rotation.z = Math.PI / 2;
@@ -853,51 +955,13 @@
       obstacleColliders.push({ minX: x - 1.3, maxX: x + 1.3, minZ: z - 1.8, maxZ: z + 1.8 });
     }
 
-    function addWoodenFence(x, z, len, isHorizontal = true) {
-      const fenceMat = new THREE.MeshStandardMaterial({ color: 0xa16207, roughness: 0.8 });
-      const group = new THREE.Group();
-      const numPosts = Math.floor(len / 1.8) + 1;
-      for (let i = 0; i < numPosts; i++) {
-        const post = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.2, 0.18), fenceMat);
-        post.position.set(isHorizontal ? i * 1.8 : 0, 0.6, isHorizontal ? 0 : i * 1.8);
-        post.castShadow = true;
-        group.add(post);
-      }
-      const rail1 = new THREE.Mesh(new THREE.BoxGeometry(isHorizontal ? len : 0.08, 0.1, isHorizontal ? 0.08 : len), fenceMat);
-      rail1.position.set(isHorizontal ? len / 2 : 0, 0.85, isHorizontal ? 0 : len / 2);
-      const rail2 = rail1.clone();
-      rail2.position.y = 0.45;
-      group.add(rail1); group.add(rail2);
-      group.position.set(x, 0, z);
-      scene.add(group);
-
-      obstacleMeshes.push(rail1);
-      obstacleColliders.push({
-        minX: isHorizontal ? x : x - 0.2,
-        maxX: isHorizontal ? x + len : x + 0.2,
-        minZ: isHorizontal ? z - 0.2 : z,
-        maxZ: isHorizontal ? z + 0.2 : z + len
-      });
-    }
-
     function spawnLowPolyArena() {
-      // Heuballen-Stapel wie auf Foto 2
-      addHayBale(-4, 0, -8, 0.2);
-      addHayBale(-4, 1.2, -8, -0.1);
       addHayBale(7, 0, -6, 0);
       addHayBale(7, 0, -4.2, 0.3);
       addHayBale(7, 1.2, -5.1, 0.15);
       addHayBale(-8, 0, 8, 0.4);
 
-      // Traktor
       addTractor(4.5, 8.5, -Math.PI / 4);
-
-      // Silo
-      addSilo(-12, -12);
-
-      // Zäune
-      addWoodenFence(-15, 2, 7, true);
-      addWoodenFence(6, -14, 8, false);
 
       // Original Food-Props
       spawnFoodProps();
@@ -917,11 +981,11 @@
       const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.2, 16), new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.8 }));
       cap.position.y = 4.3;
       bottleGroup.add(cap);
-      bottleGroup.position.set(-10, 0, -5);
+      bottleGroup.position.set(10, 0, -10);
       scene.add(bottleGroup);
 
       obstacleMeshes.push(b1);
-      obstacleColliders.push({ minX: -10.8, maxX: -9.2, minZ: -5.8, maxZ: -4.2 });
+      obstacleColliders.push({ minX: 9.2, maxX: 10.8, minZ: -10.8, maxZ: -9.2 });
 
       // Martini Glas
       const martiniGroup = new THREE.Group();
@@ -973,7 +1037,6 @@
     }
 
     function spawnSkyDetails() {
-      // Fluffige Low-Poly-Wolken
       const cloudMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9, transparent: true, opacity: 0.95 });
       for (let c = 0; c < 7; c++) {
         const cluster = new THREE.Group();
@@ -987,7 +1050,6 @@
         clouds.push({ mesh: cluster, speed: 0.6 + Math.random() * 0.6 });
       }
 
-      // Vögel
       const birdMat = new THREE.MeshBasicMaterial({ color: 0x0f172a, side: THREE.DoubleSide });
       for (let b = 0; b < 5; b++) {
         const bird = new THREE.Group();
@@ -1025,7 +1087,7 @@
     }
 
     // ==========================================
-    // 5. MINIMAP RENDERER
+    // 5. MINIMAP
     // ==========================================
     function renderMinimap() {
       minimapCtx.clearRect(0, 0, 78, 78);
@@ -1070,7 +1132,7 @@
     }
 
     // ==========================================
-    // 6. FIRST-PERSON ARME & ZIGARETTE
+    // 6. FIRST-PERSON VIEWMODEL
     // ==========================================
     let viewmodelGroup;
     let cigWeapon;
@@ -1081,21 +1143,18 @@
       viewmodelGroup = new THREE.Group();
 
       const skinMat = new THREE.MeshStandardMaterial({ color: 0xd49b73, roughness: 0.6 });
-      const sleeveMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.7 }); // Camo/Green Sleeve
+      const sleeveMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.7 });
 
-      // Rechter Arm
       const rArm = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.08, 0.65, 8), sleeveMat);
       rArm.rotation.set(-0.8, 0.2, -0.4);
       rArm.position.set(0.24, -0.28, -0.32);
       viewmodelGroup.add(rArm);
 
-      // Rechte Hand
       const rHand = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.08, 0.14), skinMat);
       rHand.position.set(0.25, -0.18, -0.45);
       rHand.rotation.set(-0.3, 0.1, 0);
       viewmodelGroup.add(rHand);
 
-      // Zigarette in der Hand
       cigWeapon = new THREE.Group();
       const paper = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.42, 10), new THREE.MeshStandardMaterial({ color: 0xf8fafc }));
       paper.rotation.x = Math.PI / 2;
@@ -1279,6 +1338,194 @@
       return g;
     }
 
+    // ==========================================
+    // 7. ECHTES CHAMPAGNER-PROJEKTIL (KEIN LASER)
+    // ==========================================
+    function createChampagneBottleMesh() {
+      const group = new THREE.Group();
+      const glassMat = new THREE.MeshStandardMaterial({ color: 0x064e3b, roughness: 0.25, metalness: 0.1 });
+      const goldMat = new THREE.MeshStandardMaterial({ color: 0xd97706, metalness: 0.8, roughness: 0.3 });
+      const labelMat = new THREE.MeshStandardMaterial({ color: 0xfef08a, roughness: 0.6 });
+
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.085, 0.36, 12), glassMat);
+      body.rotation.x = Math.PI / 2;
+      group.add(body);
+
+      const label = new THREE.Mesh(new THREE.CylinderGeometry(0.082, 0.087, 0.14, 12), labelMat);
+      label.rotation.x = Math.PI / 2;
+      label.position.z = 0.03;
+      group.add(label);
+
+      const shoulder = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.16, 12, 1, true), glassMat);
+      shoulder.rotation.x = -Math.PI / 2;
+      shoulder.position.z = -0.26;
+      group.add(shoulder);
+
+      const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.04, 0.18, 12), goldMat);
+      neck.rotation.x = Math.PI / 2;
+      neck.position.z = -0.42;
+      group.add(neck);
+
+      return group;
+    }
+
+    function spawnChampagneRocket(start, target, isHit, hitPoint) {
+      playCorkPopSound();
+
+      const bottle = createChampagneBottleMesh();
+      bottle.position.copy(start);
+      bottle.lookAt(target);
+      scene.add(bottle);
+
+      // Korken fliegt nach vorne weg
+      const corkMat = new THREE.MeshStandardMaterial({ color: 0x92400e, roughness: 0.9 });
+      const cork = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.03, 0.08, 8), corkMat);
+      cork.rotation.x = Math.PI / 2;
+
+      const corkStart = start.clone().add(new THREE.Vector3(0, 0, -0.5).applyQuaternion(bottle.quaternion));
+      cork.position.copy(corkStart);
+      scene.add(cork);
+
+      const flightDir = new THREE.Vector3().subVectors(target, start);
+      const totalDist = flightDir.length();
+      flightDir.normalize();
+
+      const speed = 52.0;
+      const corkSpeed = speed + 22.0;
+      const corkVelocity = flightDir.clone().multiplyScalar(corkSpeed).add(new THREE.Vector3(
+        (Math.random() - 0.5) * 6,
+        Math.random() * 7 + 3,
+        (Math.random() - 0.5) * 6
+      ));
+
+      champagneRockets.push({
+        bottle,
+        cork,
+        corkVelocity,
+        corkLife: 1.2,
+        currentPos: start.clone(),
+        flightDir,
+        speed,
+        distTraveled: 0,
+        totalDist,
+        target,
+        isHit,
+        hitPoint,
+        spawnFoamTimer: 0
+      });
+    }
+
+    // Champagner-Tropfen & Schaum während des Flugs
+    function spawnChampagneSprayPuff(pos, baseDir) {
+      // 1. Weißer Schaum
+      const foamMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85 });
+      const puff = new THREE.Mesh(new THREE.SphereGeometry(0.08 + Math.random() * 0.06, 6, 6), foamMat);
+      puff.position.copy(pos);
+      scene.add(puff);
+
+      const sprayVel = baseDir.clone().multiplyScalar(-7 - Math.random() * 8).add(new THREE.Vector3(
+        (Math.random() - 0.5) * 3.5,
+        Math.random() * 3 + 1,
+        (Math.random() - 0.5) * 3.5
+      ));
+
+      particles.push({
+        sprite: puff,
+        vel: sprayVel,
+        rotVel: 0,
+        life: 0.35 + Math.random() * 0.2,
+        maxLife: 0.5
+      });
+
+      // 2. Goldene Flüssigkeitstropfen
+      if (Math.random() < 0.6) {
+        const dropMat = new THREE.MeshBasicMaterial({ color: 0xfef08a, transparent: true, opacity: 0.9 });
+        const drop = new THREE.Mesh(new THREE.SphereGeometry(0.04, 4, 4), dropMat);
+        drop.position.copy(pos);
+        scene.add(drop);
+
+        particles.push({
+          sprite: drop,
+          vel: sprayVel.clone().add(new THREE.Vector3((Math.random() - 0.5) * 2, -2, (Math.random() - 0.5) * 2)),
+          rotVel: 0,
+          life: 0.4,
+          maxLife: 0.4
+        });
+      }
+    }
+
+    // Splash-Animation beim Einschlag
+    function spawnChampagneSplash(point) {
+      for (let i = 0; i < 24; i++) {
+        const isFoam = Math.random() < 0.6;
+        const mat = new THREE.MeshBasicMaterial({ color: isFoam ? 0xffffff : 0xfef08a, transparent: true, opacity: 0.9 });
+        const drop = new THREE.Mesh(new THREE.SphereGeometry(0.1 + Math.random() * 0.1, 6, 6), mat);
+        drop.position.copy(point);
+        scene.add(drop);
+
+        const vel = new THREE.Vector3(
+          (Math.random() - 0.5) * 12,
+          Math.random() * 8 + 3,
+          (Math.random() - 0.5) * 12
+        );
+
+        particles.push({
+          sprite: drop,
+          vel,
+          rotVel: 0,
+          life: 0.5 + Math.random() * 0.3,
+          maxLife: 0.7
+        });
+      }
+    }
+
+    function updateChampagneRockets(delta) {
+      for (let i = champagneRockets.length - 1; i >= 0; i--) {
+        const r = champagneRockets[i];
+
+        if (r.cork) {
+          r.corkLife -= delta;
+          r.corkVelocity.y -= 18.0 * delta;
+          r.cork.position.addScaledVector(r.corkVelocity, delta);
+          r.cork.rotation.x += delta * 14;
+          r.cork.rotation.y += delta * 9;
+
+          if (r.corkLife <= 0 || r.cork.position.y <= 0.05) {
+            scene.remove(r.cork);
+            r.cork = null;
+          }
+        }
+
+        const step = r.speed * delta;
+        r.distTraveled += step;
+        r.currentPos.addScaledVector(r.flightDir, step);
+        r.bottle.position.copy(r.currentPos);
+        r.bottle.rotateZ(delta * 22);
+
+        // Kontinuierlich Champagner herausspritzen
+        r.spawnFoamTimer += delta;
+        if (r.spawnFoamTimer >= 0.012) {
+          r.spawnFoamTimer = 0;
+          const neckPos = r.currentPos.clone().add(r.flightDir.clone().multiplyScalar(0.42));
+          spawnChampagneSprayPuff(neckPos, r.flightDir);
+        }
+
+        if (r.distTraveled >= r.totalDist) {
+          spawnChampagneSplash(r.target);
+
+          if (r.isHit && r.hitPoint) {
+            spawnLeafExplosion(new THREE.Vector3(r.hitPoint.x, r.hitPoint.y, r.hitPoint.z));
+          } else {
+            spawnHitImpact(r.target);
+          }
+
+          scene.remove(r.bottle);
+          if (r.cork) scene.remove(r.cork);
+          champagneRockets.splice(i, 1);
+        }
+      }
+    }
+
     function spawnLeafExplosion(point) {
       playHitSound();
       for (let i = 0; i < 28; i++) {
@@ -1325,7 +1572,7 @@
     }
 
     // ==========================================
-    // 7. STEUERUNG
+    // 8. STEUERUNG
     // ==========================================
     function triggerJump() {
       if (!canAct) return;
@@ -1465,7 +1712,7 @@
     }
 
     // ==========================================
-    // 8. HITSCAN & WEAPON SWAY
+    // 9. SCHUSSLOGIK & CHAMPAGNER-LAUNCH
     // ==========================================
     const raycaster = new THREE.Raycaster();
 
@@ -1474,9 +1721,6 @@
       if (shootCooldown > 0) return;
       shootCooldown = FIRE_INTERVAL;
 
-      playShootSound();
-
-      // Rückstoß der Arme
       if (viewmodelGroup) {
         viewmodelGroup.position.z += 0.06;
         viewmodelGroup.rotation.x += 0.04;
@@ -1492,17 +1736,17 @@
       const startPos = new THREE.Vector3();
       cigWeapon.getWorldPosition(startPos);
       const endPos = new THREE.Vector3();
+      let didHitOpponent = false;
 
       if (hits.length > 0) {
         const firstHit = hits[0];
         endPos.copy(firstHit.point);
 
         if (firstHit.object === opponentHitbox) {
+          didHitOpponent = true;
           const marker = document.getElementById('hitmarker');
           marker.style.opacity = '1';
           setTimeout(() => { marker.style.opacity = '0'; }, 90);
-
-          spawnLeafExplosion(firstHit.point);
 
           if (isBotMode) {
             botScorePlayer++;
@@ -1511,26 +1755,21 @@
           } else {
             socket.emit('hit-target', opponentId);
           }
-        } else {
-          spawnHitImpact(firstHit.point);
         }
       } else {
         raycaster.ray.at(50, endPos);
       }
 
-      renderTracer(startPos, endPos, 0xff5500);
-      if (!isBotMode) {
-        socket.emit('shot-fired', { start: startPos, end: endPos, hitPoint: hits.length > 0 && hits[0].object === opponentHitbox ? hits[0].point : null });
-      }
-    }
+      // 100% Champagnerflasche, 0% Laser
+      spawnChampagneRocket(startPos, endPos, didHitOpponent, didHitOpponent ? endPos : null);
 
-    function renderTracer(start, end, colorHex) {
-      const line = new THREE.Line(
-        new THREE.BufferGeometry().setFromPoints([start, end]),
-        new THREE.LineBasicMaterial({ color: colorHex, linewidth: 3 })
-      );
-      scene.add(line);
-      setTimeout(() => { scene.remove(line); }, 50);
+      if (!isBotMode) {
+        socket.emit('shot-fired', {
+          start: startPos,
+          end: endPos,
+          hitPoint: didHitOpponent ? endPos : null
+        });
+      }
     }
 
     function respawnPlayer(x, z) {
@@ -1543,7 +1782,7 @@
     }
 
     // ==========================================
-    // 9. BOT LOGIK
+    // 10. BOT LOGIK
     // ==========================================
     const botState = { targetPos: new THREE.Vector3(0, 0, 0), shootCooldown: 2.2 };
     const botChars = ['marley', 'bread', 'horse', 'dolphin', 'grill'];
@@ -1641,8 +1880,7 @@
         const hits = botRay.intersectObjects(obstacleMeshes, true);
 
         if (hits.length > 0 && hits[0].distance < distToPlayer) {
-          renderTracer(botGunPos, hits[0].point, 0xff4400);
-          spawnHitImpact(hits[0].point);
+          spawnChampagneRocket(botGunPos, hits[0].point, false, null);
           return;
         }
 
@@ -1651,12 +1889,13 @@
           (Math.random() - 0.5) * 0.8,
           (Math.random() - 0.5) * 1.4
         ));
-        renderTracer(botGunPos, target, 0xff4400);
 
-        if (target.distanceTo(camera.position) < 1.1) {
+        const hitPlayer = target.distanceTo(camera.position) < 1.1;
+        spawnChampagneRocket(botGunPos, target, hitPlayer, hitPlayer ? camera.position : null);
+
+        if (hitPlayer) {
           botScoreEnemy++;
           document.getElementById('hud-opp-score').innerText = botScoreEnemy;
-          spawnLeafExplosion(camera.position);
           respawnPlayer((Math.random() - 0.5) * 16, 14);
         }
       }
@@ -1685,15 +1924,13 @@
     // ==========================================
     // 10. MULTIPLAYER SOCKET EVENTS
     // ==========================================
-    socket.on('opponent-shot', (tracer) => {
-      renderTracer(
-        new THREE.Vector3(tracer.start.x, tracer.start.y, tracer.start.z),
-        new THREE.Vector3(tracer.end.x, tracer.end.y, tracer.end.z),
-        0xff4400
+    socket.on('opponent-shot', (data) => {
+      spawnChampagneRocket(
+        new THREE.Vector3(data.start.x, data.start.y, data.start.z),
+        new THREE.Vector3(data.end.x, data.end.y, data.end.z),
+        !!data.hitPoint,
+        data.hitPoint ? new THREE.Vector3(data.hitPoint.x, data.hitPoint.y, data.hitPoint.z) : null
       );
-      if (tracer.hitPoint) {
-        spawnLeafExplosion(new THREE.Vector3(tracer.hitPoint.x, tracer.hitPoint.y, tracer.hitPoint.z));
-      }
     });
 
     socket.on('match-start', (data) => {
@@ -1731,7 +1968,6 @@
     });
 
     socket.on('respawn', (pos) => {
-      spawnLeafExplosion(camera.position);
       respawnPlayer(pos.x, pos.z);
     });
 
@@ -1766,7 +2002,7 @@
     init3D();
 
     // ==========================================
-    // 11. MAIN LOOP & WEAPON BOBBING
+    // 11. MAIN ENGINE LOOP
     // ==========================================
     function animate() {
       requestAnimationFrame(animate);
@@ -1774,6 +2010,7 @@
 
       updateSky(delta);
       updateCigaretteSmoke(delta);
+      updateChampagneRockets(delta);
       updateParticles(delta);
 
       if (inGame) {
@@ -1858,7 +2095,6 @@
           velocity.set(0, 0, 0);
         }
 
-        // Weapon Bobbing (Natürliche Bewegung beim Laufen)
         if (viewmodelGroup) {
           if (isMoving && isGrounded) {
             walkBobTimer += delta * 12;
