@@ -40,7 +40,7 @@ async function sendTelegramLobbyAlert(playerName) {
   if (GAME_URL) {
     payload.reply_markup = {
       inline_keyboard: [
-        [{ text: '🎮 Jetzt beitreten & duellieren', url: GAME_URL }]
+        [{ text: 'Jetzt beitreten und duellieren', url: GAME_URL }]
       ]
     };
   }
@@ -74,6 +74,13 @@ function getLeaderboardList() {
 io.on('connection', (socket) => {
   socket.on('join-lobby', (name) => {
     const cleanName = (name || 'Spieler').trim().substring(0, 16);
+
+    // Laufende Matches vor versehentlichem Reset durch App-Wechsel schützen
+    if (players[socket.id] && players[socket.id].status === 'ingame') {
+      players[socket.id].name = cleanName;
+      return;
+    }
+
     players[socket.id] = {
       id: socket.id,
       name: cleanName,
@@ -134,8 +141,10 @@ io.on('connection', (socket) => {
     games[gameId] = gameData;
     io.emit('lobby-update', getLobbyList());
 
-    const p1Spawn = { x: 0, y: 1.6, z: 14, rotY: Math.PI };
-    const p2Spawn = { x: 0, y: 1.6, z: -14, rotY: 0 };
+    // Spieler 1 steht im Süden (Z=14) und blickt nach Norden (rotY=0)
+    // Spieler 2 steht im Norden (Z=-14) und blickt nach Süden (rotY=Math.PI)
+    const p1Spawn = { x: 0, y: 1.6, z: 14, rotY: 0 };
+    const p2Spawn = { x: 0, y: 1.6, z: -14, rotY: Math.PI };
 
     io.to(p1.id).emit('match-start', {
       gameId,
@@ -206,8 +215,8 @@ io.on('connection', (socket) => {
     setTimeout(() => {
       if (!games[game.id]) return;
 
-      const p1Spawn = { x: (Math.random() - 0.5) * 8, y: 1.6, z: 14, rotY: Math.PI };
-      const p2Spawn = { x: (Math.random() - 0.5) * 8, y: 1.6, z: -14, rotY: 0 };
+      const p1Spawn = { x: (Math.random() - 0.5) * 8, y: 1.6, z: 14, rotY: 0 };
+      const p2Spawn = { x: (Math.random() - 0.5) * 8, y: 1.6, z: -14, rotY: Math.PI };
 
       io.to(game.p1).emit('round-resume', { mySpawn: p1Spawn, oppSpawn: p2Spawn });
       io.to(game.p2).emit('round-resume', { mySpawn: p2Spawn, oppSpawn: p1Spawn });
