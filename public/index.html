@@ -65,10 +65,14 @@
     .timer-sec.danger { color: #ef4444; animation: blink 0.5s infinite alternate; }
     @keyframes blink { from { opacity: 1; } to { opacity: 0.3; } }
 
-    #lobby-monitor { background: rgba(11, 15, 25, 0.85); border: 1.5px solid rgba(255, 255, 255, 0.2); border-radius: 8px; padding: 5px 8px; font-size: 10px; min-width: 105px; max-width: 140px; pointer-events: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.5); flex-shrink: 0; }
+    .hud-right-stack { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; pointer-events: auto; }
+    #lobby-monitor { background: rgba(11, 15, 25, 0.85); border: 1.5px solid rgba(255, 255, 255, 0.2); border-radius: 8px; padding: 5px 8px; font-size: 10px; min-width: 105px; max-width: 140px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
     #lobby-monitor strong { color: #f59e0b; }
     .monitor-player { display: flex; justify-content: space-between; align-items: center; margin-top: 3px; gap: 4px; }
     .monitor-player button { padding: 2px 5px; font-size: 8px; width: auto; background: #22c55e; color: #000; font-weight: 900; }
+
+    .hud-btn { background: rgba(15, 23, 42, 0.85); border: 1.5px solid #475569; color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; cursor: pointer; pointer-events: auto; }
+    .hud-btn.mic-active { border-color: #22c55e; color: #4ade80; background: rgba(20, 83, 45, 0.85); }
 
     #crosshair { position: absolute; top: 50%; left: 50%; width: 6px; height: 6px; transform: translate(-50%, -50%); border: 2px solid #000; border-radius: 50%; background: #22c55e; }
     #hitmarker { position: absolute; top: 50%; left: 50%; width: 24px; height: 24px; transform: translate(-50%, -50%); border: 3px solid #22c55e; border-radius: 50%; opacity: 0; transition: opacity 0.08s; pointer-events: none; }
@@ -94,6 +98,9 @@
   </style>
 </head>
 <body>
+
+  <!-- Audio Element für Gegner-Sprache -->
+  <audio id="remote-voice" autoplay playsinline></audio>
 
   <!-- Screen 1: Login -->
   <div id="screen-login" class="screen">
@@ -202,9 +209,12 @@
         <div class="score-box red"><span id="hud-opp-score">0</span> Gegner</div>
       </div>
 
-      <div id="lobby-monitor" class="hidden">
-        <div><strong>LOBBY:</strong></div>
-        <div id="lobby-monitor-content">Keiner da</div>
+      <div class="hud-right-stack">
+        <button id="btn-voice-toggle" class="hud-btn">🎤 MIC: AUS</button>
+        <div id="lobby-monitor" class="hidden">
+          <div><strong>LOBBY:</strong></div>
+          <div id="lobby-monitor-content">Keiner da</div>
+        </div>
       </div>
     </div>
 
@@ -248,6 +258,46 @@
       } else if (audioCtx.state === 'suspended') {
         audioCtx.resume();
       }
+    }
+
+    function playNukeExplosionSound() {
+      if (!audioCtx) return;
+      const t = audioCtx.currentTime;
+
+      // 1. Initialer harter Einschlag-Donnerschlag
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(110, t);
+      osc.frequency.exponentialRampToValueAtTime(18, t + 1.2);
+      gain.gain.setValueAtTime(0.85, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 1.4);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(t);
+      osc.stop(t + 1.45);
+
+      // 2. Anhaltendes nukleares Grollen (Rauschen gefiltert)
+      const bSize = audioCtx.sampleRate * 2.2;
+      const buf = audioCtx.createBuffer(1, bSize, audioCtx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < bSize; i++) d[i] = Math.random() * 2 - 1;
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = buf;
+
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(650, t);
+      filter.frequency.exponentialRampToValueAtTime(35, t + 2.0);
+
+      const nGain = audioCtx.createGain();
+      nGain.gain.setValueAtTime(0.8, t);
+      nGain.gain.exponentialRampToValueAtTime(0.01, t + 2.1);
+
+      noise.connect(filter);
+      filter.connect(nGain);
+      nGain.connect(audioCtx.destination);
+      noise.start(t);
     }
 
     function playSubBassDrop() {
@@ -381,7 +431,7 @@
       const d = buf.getChannelData(0);
       for (let i = 0; i < bSize; i++) data[i] = Math.random() * 2 - 1;
       const noise = audioCtx.createBufferSource();
-      noise.buffer = buffer;
+      noise.buffer = buf;
       const gain = audioCtx.createGain();
       gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
@@ -418,7 +468,75 @@
     };
 
     // ==========================================
-    // 2. SOCKET & LOBBY LOGIK (MIT AUTO-RECONNECT)
+    // 2. WEBRTC VOICECHAT IMPLEMENTIERUNG
+    // ==========================================
+    let localStream = null;
+    let peerConnection = null;
+    let isMicActive = false;
+    const btnVoiceToggle = document.getElementById('btn-voice-toggle');
+    const remoteAudioEl = document.getElementById('remote-voice');
+
+    const rtcConfig = {
+      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+    };
+
+    function initPeerConnection() {
+      if (peerConnection) return;
+      peerConnection = new RTCPeerConnection(rtcConfig);
+
+      peerConnection.onicecandidate = (event) => {
+        if (event.candidate) {
+          socket.emit('voice-signal', { type: 'candidate', candidate: event.candidate });
+        }
+      };
+
+      peerConnection.ontrack = (event) => {
+        if (remoteAudioEl) {
+          remoteAudioEl.srcObject = event.streams[0];
+          remoteAudioEl.play().catch(e => console.log('Audio Autoplay Block:', e));
+        }
+      };
+
+      if (localStream) {
+        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+      }
+    }
+
+    async function toggleMicrophone() {
+      initAudio();
+      try {
+        if (!localStream) {
+          localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+          initPeerConnection();
+          localStream.getTracks().forEach(track => {
+            peerConnection.addTrack(track, localStream);
+          });
+          isMicActive = true;
+          btnVoiceToggle.className = 'hud-btn mic-active';
+          btnVoiceToggle.innerText = '🎤 MIC: AN';
+
+          // Wenn im Duell, Offer an Gegner senden
+          if (inGame && !isBotMode) {
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+            socket.emit('voice-signal', { type: 'offer', offer });
+          }
+        } else {
+          isMicActive = !isMicActive;
+          localStream.getAudioTracks().forEach(t => { t.enabled = isMicActive; });
+          btnVoiceToggle.className = isMicActive ? 'hud-btn mic-active' : 'hud-btn';
+          btnVoiceToggle.innerText = isMicActive ? '🎤 MIC: AN' : '🎤 MIC: AUS';
+        }
+      } catch (err) {
+        alert('Mikrofon-Zugriff fehlgeschlagen oder im Browser abgelehnt.');
+        console.error('Mikrofonfehler:', err);
+      }
+    }
+
+    btnVoiceToggle.addEventListener('click', toggleMicrophone);
+
+    // ==========================================
+    // 3. SOCKET & LOBBY LOGIK (AUTO-RECONNECT)
     // ==========================================
     const socket = io({
       reconnection: true,
@@ -513,16 +631,13 @@
 
     const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
-    // Auto-Rejoin bei Verbindungsaufbau / Reconnect
     socket.on('connect', () => {
       myId = socket.id;
       if (connBadge) {
         connBadge.className = 'status-online';
         connBadge.innerText = '🟢 Server verbunden';
       }
-      if (myName) {
-        socket.emit('join-lobby', myName);
-      }
+      if (myName) socket.emit('join-lobby', myName);
     });
 
     socket.on('disconnect', () => {
@@ -532,7 +647,6 @@
       }
     });
 
-    // Wenn der Nutzer die App wieder in den Vordergrund holt
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
         if (socket.connected && myName) {
@@ -540,6 +654,25 @@
         } else if (socket.disconnected) {
           socket.connect();
         }
+      }
+    });
+
+    // WebRTC Signaling Nachrichten verarbeiten
+    socket.on('voice-signal', async (data) => {
+      initPeerConnection();
+      try {
+        if (data.type === 'offer') {
+          await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+          const answer = await peerConnection.createAnswer();
+          await peerConnection.setLocalDescription(answer);
+          socket.emit('voice-signal', { type: 'answer', answer });
+        } else if (data.type === 'answer') {
+          await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+        } else if (data.type === 'candidate') {
+          await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+        }
+      } catch (err) {
+        console.error('WebRTC-Fehler:', err);
       }
     });
 
@@ -630,7 +763,7 @@
       
       if (otherPlayers.length === 0) {
         const li = document.createElement('li');
-        li.innerHTML = '<span style="color:#94a3b8; font-style:italic;">Kein anderer Spieler online (Oleg muss den Tab im Browser offen haben)</span>';
+        li.innerHTML = '<span style="color:#94a3b8; font-style:italic;">Kein Gegner online (Oleg muss den Tab aktiv offen haben)</span>';
         ul.appendChild(li);
       } else {
         otherPlayers.forEach(p => {
@@ -706,7 +839,6 @@
       });
     }
 
-    // Herausforderung empfangen
     socket.on('challenge-received', (data) => {
       initAudio();
       pendingChallengerId = data.challengerId;
@@ -737,7 +869,83 @@
     };
 
     // ==========================================
-    // 3. TEXTUREN
+    // 4. ATOMPILZ ANIMATION (ATOMARE EXPLOSION)
+    // ==========================================
+    function spawnNukeMushroom(pos) {
+      playNukeExplosionSound();
+
+      // Heller Initialblitz
+      const nukeFlash = new THREE.PointLight(0xffffff, 8, 30);
+      nukeFlash.position.set(pos.x, 2, pos.z);
+      scene.add(nukeFlash);
+
+      // Schockwellenring am Boden
+      const ringGeo = new THREE.RingGeometry(0.5, 1.2, 24);
+      const ringMat = new THREE.MeshBasicMaterial({ color: 0xfef08a, side: THREE.DoubleSide, transparent: true, opacity: 0.95 });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.set(pos.x, 0.05, pos.z);
+      scene.add(ring);
+
+      let animTimer = 0;
+      const nukeInterval = setInterval(() => {
+        animTimer += 0.04;
+
+        // Blitz & Schockwelle abflauen lassen
+        nukeFlash.intensity = Math.max(0, 8 - animTimer * 7);
+        ring.scale.multiplyScalar(1.08);
+        ringMat.opacity = Math.max(0, 0.95 - animTimer * 1.5);
+
+        // 1. Aufsteigende Säule (Stamm des Pilzes)
+        if (animTimer < 1.2) {
+          const stemPuff = new THREE.Mesh(
+            new THREE.SphereGeometry(0.35 + Math.random() * 0.25, 8, 8),
+            new THREE.MeshBasicMaterial({ color: Math.random() < 0.6 ? 0xdc2626 : 0x475569, transparent: true, opacity: 0.85 })
+          );
+          stemPuff.position.set(pos.x + (Math.random() - 0.5) * 0.6, 0.2, pos.z + (Math.random() - 0.5) * 0.6);
+          scene.add(stemPuff);
+
+          particles.push({
+            sprite: stemPuff,
+            vel: new THREE.Vector3((Math.random() - 0.5) * 0.8, 6.5 + Math.random() * 3, (Math.random() - 0.5) * 0.8),
+            rotVel: 0,
+            life: 1.6,
+            maxLife: 1.8
+          });
+        }
+
+        // 2. Pilzkopf-Schirm (Umbrella Cloud oben)
+        if (animTimer > 0.4 && animTimer < 1.8) {
+          const capAngle = Math.random() * Math.PI * 2;
+          const capDist = Math.random() * 2.2 + 0.8;
+          const capColor = Math.random() < 0.5 ? 0xf59e0b : 0x1f2937;
+
+          const capPuff = new THREE.Mesh(
+            new THREE.SphereGeometry(0.6 + Math.random() * 0.4, 8, 8),
+            new THREE.MeshBasicMaterial({ color: capColor, transparent: true, opacity: 0.9 })
+          );
+          capPuff.position.set(pos.x, 5.5 + Math.random() * 0.8, pos.z);
+          scene.add(capPuff);
+
+          particles.push({
+            sprite: capPuff,
+            vel: new THREE.Vector3(Math.cos(capAngle) * capDist * 1.8, Math.sin(animTimer) * 0.5, Math.sin(capAngle) * capDist * 1.8),
+            rotVel: 0,
+            life: 2.0,
+            maxLife: 2.2
+          });
+        }
+
+        if (animTimer >= 2.2) {
+          clearInterval(nukeInterval);
+          scene.remove(nukeFlash);
+          scene.remove(ring);
+        }
+      }, 40);
+    }
+
+    // ==========================================
+    // 5. TEXTUREN & MAP-ELEMENTE
     // ==========================================
     function createGoschSignTexture() {
       const c = document.createElement('canvas');
@@ -894,7 +1102,7 @@
     }
 
     // ==========================================
-    // 4. SZENE & SAINT-TROPEZ LUXUS-MAP
+    // 6. THREE.JS SZENE & OBJEKTE
     // ==========================================
     function init3D() {
       scene = new THREE.Scene();
@@ -1324,7 +1532,7 @@
     }
 
     // ==========================================
-    // 5. MINIMAP
+    // 7. MINIMAP
     // ==========================================
     function renderMinimap() {
       minimapCtx.clearRect(0, 0, 78, 78);
@@ -1369,7 +1577,7 @@
     }
 
     // ==========================================
-    // 6. VIEWMODEL & SARG (INNEN PINK MIT CHARAKTER)
+    // 8. VIEWMODEL & SARG (INNEN PINK)
     // ==========================================
     let viewmodelGroup;
     let cigWeapon;
@@ -1549,7 +1757,7 @@
       hellFireLight.intensity = 0;
 
       deathOverlayEl.classList.remove('hidden');
-      spawnLeafExplosion(camera.position);
+      spawnNukeMushroom(camera.position);
     }
 
     let lidHasSlammed = false;
@@ -1790,7 +1998,7 @@
     }
 
     // ==========================================
-    // 7. PROJEKTILE (34 M/S)
+    // 9. PROJEKTILE & AUSWEICHBARE SCHÜSSE
     // ==========================================
     function createChampagneBottleMesh() {
       const group = new THREE.Group();
@@ -1883,21 +2091,6 @@
         life: 0.35 + Math.random() * 0.2,
         maxLife: 0.5
       });
-
-      if (Math.random() < 0.6) {
-        const dropMat = new THREE.MeshBasicMaterial({ color: 0xfef08a, transparent: true, opacity: 0.9 });
-        const drop = new THREE.Mesh(new THREE.SphereGeometry(0.04, 4, 4), dropMat);
-        drop.position.copy(pos);
-        scene.add(drop);
-
-        particles.push({
-          sprite: drop,
-          vel: sprayVel.clone().add(new THREE.Vector3((Math.random() - 0.5) * 2, -2, (Math.random() - 0.5) * 2)),
-          rotVel: 0,
-          life: 0.4,
-          maxLife: 0.4
-        });
-      }
     }
 
     function spawnChampagneSplash(point) {
@@ -1958,14 +2151,19 @@
           spawnChampagneSplash(r.target);
 
           if (r.isOwner) {
-            if (r.intendedHit && opponentRoot) {
+            // Eigener Schuss trifft Gegner
+            if (r.intendedHit && opponentRoot && opponentRoot.position.y > -50) {
               const oppDist = opponentRoot.position.distanceTo(new THREE.Vector3(r.target.x, 0, r.target.z));
               if (oppDist < 1.6) {
-                spawnLeafExplosion(r.target);
                 if (isBotMode) {
                   botScorePlayer++;
                   document.getElementById('hud-my-score').innerText = botScorePlayer;
-                  respawnBot();
+                  spawnNukeMushroom(r.target);
+                  opponentRoot.position.set(0, -100, 0);
+                  opponentHitbox.position.set(0, -100, 0);
+                  setTimeout(() => {
+                    if (inGame && isBotMode) respawnBot();
+                  }, 4200);
                 } else {
                   socket.emit('hit-target', opponentId);
                 }
@@ -1976,6 +2174,7 @@
               spawnHitImpact(r.target);
             }
           } else {
+            // Gegnerischer Schuss schlägt bei mir ein
             if (r.intendedHit && !isDying) {
               const myDist = camera.position.distanceTo(new THREE.Vector3(r.target.x, 1.6, r.target.z));
               if (myDist < 1.5) {
@@ -1996,18 +2195,6 @@
           if (r.cork) scene.remove(r.cork);
           champagneRockets.splice(i, 1);
         }
-      }
-    }
-
-    function spawnLeafExplosion(point) {
-      playHitSound();
-      for (let i = 0; i < 28; i++) {
-        const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: leafTexture, transparent: true }));
-        sprite.scale.set(0.45, 0.45, 0.45);
-        sprite.position.copy(point);
-        const vel = new THREE.Vector3((Math.random() - 0.5) * 8.5, Math.random() * 5.5 + 2.5, (Math.random() - 0.5) * 8.5);
-        scene.add(sprite);
-        particles.push({ sprite, vel, rotVel: (Math.random() - 0.5) * 8, life: 1.0, maxLife: 1.2 + Math.random() * 0.6 });
       }
     }
 
@@ -2045,7 +2232,7 @@
     }
 
     // ==========================================
-    // 8. STEUERUNG
+    // 10. STEUERUNG
     // ==========================================
     function triggerJump() {
       if (!canAct || isDying) return;
@@ -2186,7 +2373,7 @@
     }
 
     // ==========================================
-    // 9. SCHUSSLOGIK
+    // 11. SCHUSS & HITSCAN
     // ==========================================
     const raycaster = new THREE.Raycaster();
 
@@ -2216,7 +2403,7 @@
         const firstHit = hits[0];
         endPos.copy(firstHit.point);
 
-        if (firstHit.object === opponentHitbox) {
+        if (firstHit.object === opponentHitbox && opponentRoot.position.y > -50) {
           willHitOpponent = true;
           const marker = document.getElementById('hitmarker');
           marker.style.opacity = '1';
@@ -2247,7 +2434,7 @@
     }
 
     // ==========================================
-    // 10. BOT LOGIK
+    // 12. BOT LOGIK
     // ==========================================
     const botState = { targetPos: new THREE.Vector3(0, 0, 0), shootCooldown: 2.2 };
     const botChars = ['marley', 'bread', 'horse', 'dolphin', 'grill'];
@@ -2301,6 +2488,7 @@
         tries++;
       }
       opponentRoot.position.set(rx, 0, rz);
+      opponentHitbox.position.set(0, 0.9, 0);
       pickNewBotTarget();
     }
 
@@ -2309,7 +2497,7 @@
     }
 
     function updateBotAI(delta) {
-      if (!canAct) return;
+      if (!canAct || opponentRoot.position.y < -50) return;
       const dir = new THREE.Vector3().subVectors(botState.targetPos, opponentRoot.position);
       dir.y = 0;
       if (dir.length() < 1.0) {
@@ -2385,7 +2573,7 @@
     }
 
     // ==========================================
-    // 10. MULTIPLAYER SOCKET EVENTS
+    // 13. MULTIPLAYER SOCKET EVENTS
     // ==========================================
     socket.on('opponent-shot', (data) => {
       spawnChampagneRocket(
@@ -2430,12 +2618,41 @@
       }
     });
 
-    socket.on('respawn', (pos) => {
-      triggerDeathSequence(pos);
+    // Synchrones Kill-Event
+    socket.on('player-killed', (data) => {
+      if (data.victimId === socket.id) {
+        // Ich wurde getötet: Eigene Todes- & Fegefeuer-Sequenz starten
+        triggerDeathSequence(null);
+      } else {
+        // Ich bin der Killer: Atompilz am Standort des Gegners zünden und Gegner verstecken
+        spawnNukeMushroom(opponentRoot.position.clone().add(new THREE.Vector3(0, 0.8, 0)));
+        opponentRoot.position.set(0, -100, 0);
+        opponentHitbox.position.set(0, -100, 0);
+        canAct = false; // Schießen sperren, bis beide respawnen
+      }
+    });
+
+    // Synchroner Rundenstart für beide Spieler nach 4.2 Sekunden
+    socket.on('round-resume', (data) => {
+      isDying = false;
+      if (coffinGroup) coffinGroup.visible = false;
+      coffinGroup.position.y = 0;
+      if (hellFireLight) hellFireLight.intensity = 0;
+      deathOverlayEl.classList.add('hidden');
+      if (viewmodelGroup) viewmodelGroup.visible = true;
+
+      // Eigene Position setzen
+      respawnPlayer(data.mySpawn.x, data.mySpawn.z);
+
+      // Gegner wieder an seinem Spawn anzeigen
+      opponentRoot.position.set(data.oppSpawn.x, 0, data.oppSpawn.z);
+      opponentHitbox.position.set(0, 0.9, 0);
+
+      canAct = true;
     });
 
     socket.on('opponent-moved', (data) => {
-      if (!isBotMode && opponentRoot) {
+      if (!isBotMode && opponentRoot && !isDying && opponentRoot.position.y > -50) {
         opponentRoot.position.set(data.x, data.y - 0.9, data.z);
         opponentRoot.rotation.y = data.rotY;
         if (data.char && data.char !== currentOpponentChar) switchOpponentVisual(data.char);
@@ -2470,7 +2687,7 @@
     init3D();
 
     // ==========================================
-    // 11. MAIN ENGINE LOOP
+    // 14. MAIN ENGINE LOOP
     // ==========================================
     function animate() {
       requestAnimationFrame(animate);
