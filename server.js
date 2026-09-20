@@ -134,8 +134,8 @@ io.on('connection', (socket) => {
     games[gameId] = gameData;
     io.emit('lobby-update', getLobbyList());
 
-    // P1 (Sueden Z=14, Blick nach Norden = 0)
-    // P2 (Norden Z=-14, Blick nach Sueden = Math.PI)
+    // P1 steht im Sueden bei Z=14 mit Blick nach Norden (rotY=0)
+    // P2 steht im Norden bei Z=-14 mit Blick nach Sueden (rotY=Math.PI)
     const p1Spawn = { x: 0, y: 1.6, z: 14, rotY: 0 };
     const p2Spawn = { x: 0, y: 1.6, z: -14, rotY: Math.PI };
 
@@ -185,7 +185,6 @@ io.on('connection', (socket) => {
     const game = games[player.gameId];
     if (!game || game.isRoundLocked) return;
 
-    // Runde sperren: Kein Farming waehrend der Todessequenz moeglich
     game.isRoundLocked = true;
     game.scores[socket.id] += 1;
     if (leaderboard[player.name]) leaderboard[player.name].kills += 1;
@@ -196,7 +195,6 @@ io.on('connection', (socket) => {
     io.to(game.p1).emit('round-killed', { killerId: socket.id, victimId: targetId });
     io.to(game.p2).emit('round-killed', { killerId: socket.id, victimId: targetId });
 
-    // Nach 4 Sekunden synchroner Rundenneustart
     setTimeout(() => {
       if (!games[game.id]) return;
 
