@@ -35,7 +35,7 @@ async function sendTelegramLobbyAlert(playerName) {
 
   if (GAME_URL) {
     payload.reply_markup = {
-      inline_keyboard: [[{ text: '🎮 Jetzt duellieren', url: GAME_URL }]]
+      inline_keyboard: [[{ text: 'Jetzt duellieren', url: GAME_URL }]]
     };
   }
 
@@ -134,8 +134,8 @@ io.on('connection', (socket) => {
     games[gameId] = gameData;
     io.emit('lobby-update', getLobbyList());
 
-    // P1 (Süden, Z=14, Blick nach Norden = 0)
-    // P2 (Norden, Z=-14, Blick nach Süden = Math.PI)
+    // P1 (Sueden Z=14, Blick nach Norden = 0)
+    // P2 (Norden Z=-14, Blick nach Sueden = Math.PI)
     const p1Spawn = { x: 0, y: 1.6, z: 14, rotY: 0 };
     const p2Spawn = { x: 0, y: 1.6, z: -14, rotY: Math.PI };
 
@@ -185,7 +185,7 @@ io.on('connection', (socket) => {
     const game = games[player.gameId];
     if (!game || game.isRoundLocked) return;
 
-    // Runde sperren: Keine weiteren Kills während der Todessequenz
+    // Runde sperren: Kein Farming waehrend der Todessequenz moeglich
     game.isRoundLocked = true;
     game.scores[socket.id] += 1;
     if (leaderboard[player.name]) leaderboard[player.name].kills += 1;
@@ -193,10 +193,10 @@ io.on('connection', (socket) => {
     io.to(game.p1).emit('score-update', { myScore: game.scores[game.p1], oppScore: game.scores[game.p2] });
     io.to(game.p2).emit('score-update', { myScore: game.scores[game.p2], oppScore: game.scores[game.p1] });
 
-    io.to(game.p1).emit('player-killed', { killerId: socket.id, victimId: targetId });
-    io.to(game.p2).emit('player-killed', { killerId: socket.id, victimId: targetId });
+    io.to(game.p1).emit('round-killed', { killerId: socket.id, victimId: targetId });
+    io.to(game.p2).emit('round-killed', { killerId: socket.id, victimId: targetId });
 
-    // Nach 4 Sekunden Rundenpause beide synchron neu starten
+    // Nach 4 Sekunden synchroner Rundenneustart
     setTimeout(() => {
       if (!games[game.id]) return;
 
