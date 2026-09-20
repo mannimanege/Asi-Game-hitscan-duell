@@ -11,24 +11,27 @@
     .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; padding: 12px; }
     .hidden { display: none !important; }
 
-    /* Stilvolles Luxus-Panel */
     .panel { background: rgba(15, 23, 42, 0.96); border: 2px solid #f59e0b; padding: 18px; border-radius: 14px; width: 100%; max-width: 450px; box-shadow: 0 15px 40px rgba(0,0,0,0.9), 0 0 25px rgba(245, 158, 11, 0.2); max-height: 94vh; overflow-y: auto; backdrop-filter: blur(10px); }
     
-    /* ASI-MODE Header */
     .asi-title { font-size: 26px; font-weight: 950; text-transform: uppercase; letter-spacing: 3px; color: #facc15; text-align: center; text-shadow: 0 0 20px rgba(245, 158, 11, 0.8), 0 3px 6px #000; margin-bottom: 2px; }
-    .asi-subtitle { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: #94a3b8; text-align: center; margin-bottom: 12px; }
+    .asi-subtitle { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: #94a3b8; text-align: center; margin-bottom: 8px; }
     
-    /* Story & Lore Box */
+    #conn-status-badge { font-size: 10px; font-weight: 800; text-align: center; padding: 3px 8px; border-radius: 20px; background: rgba(0,0,0,0.4); margin-bottom: 10px; width: fit-content; margin-left: auto; margin-right: auto; }
+    .status-online { color: #4ade80; border: 1px solid #22c55e; }
+    .status-offline { color: #ef4444; border: 1px solid #ef4444; }
+
     .lore-box { background: rgba(2, 6, 23, 0.8); border-left: 3px solid #f59e0b; padding: 10px 12px; border-radius: 4px; font-size: 11px; line-height: 1.45; color: #cbd5e1; margin-bottom: 14px; }
     .lore-box strong { color: #facc15; }
 
-    /* Bild-Präsentation */
     .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
     .photo-card { background: #020617; border: 1.5px solid #334155; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 4px 12px rgba(0,0,0,0.6); }
     .photo-card img { width: 100%; height: 110px; object-fit: cover; object-position: center top; display: block; }
     .photo-caption { font-size: 9px; font-weight: 800; color: #f59e0b; padding: 5px; text-align: center; background: rgba(15, 23, 42, 0.95); letter-spacing: 0.5px; }
 
-    h2 { font-size: 11px; margin: 12px 0 6px 0; text-transform: uppercase; color: #94a3b8; border-bottom: 1px solid #334155; padding-bottom: 4px; letter-spacing: 1px; }
+    .section-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 4px; margin: 12px 0 6px 0; }
+    h2 { font-size: 11px; text-transform: uppercase; color: #94a3b8; letter-spacing: 1px; margin: 0; }
+    .btn-small-refresh { background: #334155; color: #f59e0b; border: 1px solid #475569; padding: 2px 8px; font-size: 9px; font-weight: 800; border-radius: 4px; cursor: pointer; text-transform: uppercase; }
+
     input[type="text"] { width: 100%; padding: 12px; background: #020617; border: 1.5px solid #475569; border-radius: 6px; color: #fff; font-size: 15px; outline: none; margin-bottom: 10px; }
     input[type="text"]:focus { border-color: #f59e0b; }
     button { width: 100%; padding: 12px; background: #f59e0b; border: none; border-radius: 6px; color: #000; font-weight: 900; cursor: pointer; text-transform: uppercase; font-size: 12px; letter-spacing: 0.8px; }
@@ -41,11 +44,12 @@
     .char-btn { background: #1e293b; border: 2px solid #334155; color: #cbd5e1; padding: 8px 2px; border-radius: 6px; font-size: 10px; font-weight: 800; cursor: pointer; text-transform: none; text-align: center; }
     .char-btn.active { border-color: #f59e0b; background: #451a03; color: #fbbf24; }
 
-    ul { list-style: none; max-height: 80px; overflow-y: auto; margin-bottom: 6px; }
+    ul { list-style: none; max-height: 90px; overflow-y: auto; margin-bottom: 6px; }
     li { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; background: #020617; margin-bottom: 4px; border-radius: 6px; font-size: 11px; }
-    li button { width: auto; padding: 4px 8px; font-size: 10px; }
+    li button { width: auto; padding: 4px 10px; font-size: 10px; background: #22c55e; color: #000; font-weight: 900; }
+    li button:hover { background: #16a34a; }
 
-    /* In-Game HUD */
+    /* HUD Layout */
     #hud { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
     .hud-top-bar { position: absolute; top: 8px; left: 8px; right: 8px; display: flex; justify-content: space-between; align-items: flex-start; }
     #minimap-container { width: 78px; height: 78px; background: rgba(11, 15, 25, 0.85); border: 2px solid rgba(255,255,255,0.25); border-radius: 50%; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.6); flex-shrink: 0; }
@@ -64,7 +68,7 @@
     #lobby-monitor { background: rgba(11, 15, 25, 0.85); border: 1.5px solid rgba(255, 255, 255, 0.2); border-radius: 8px; padding: 5px 8px; font-size: 10px; min-width: 105px; max-width: 140px; pointer-events: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.5); flex-shrink: 0; }
     #lobby-monitor strong { color: #f59e0b; }
     .monitor-player { display: flex; justify-content: space-between; align-items: center; margin-top: 3px; gap: 4px; }
-    .monitor-player button { padding: 2px 5px; font-size: 8px; width: auto; }
+    .monitor-player button { padding: 2px 5px; font-size: 8px; width: auto; background: #22c55e; color: #000; font-weight: 900; }
 
     #crosshair { position: absolute; top: 50%; left: 50%; width: 6px; height: 6px; transform: translate(-50%, -50%); border: 2px solid #000; border-radius: 50%; background: #22c55e; }
     #hitmarker { position: absolute; top: 50%; left: 50%; width: 24px; height: 24px; transform: translate(-50%, -50%); border: 3px solid #22c55e; border-radius: 50%; opacity: 0; transition: opacity 0.08s; pointer-events: none; }
@@ -122,9 +126,10 @@
   <div id="screen-lobby" class="screen hidden">
     <div class="panel">
       <div class="asi-title">ASI-MODE</div>
-      <div style="text-align:center; font-size: 12px; color: #94a3b8; margin-bottom: 10px;">
+      <div style="text-align:center; font-size: 12px; color: #94a3b8; margin-bottom: 4px;">
         Angemeldet als: <strong id="my-name-display" style="color: #f59e0b;"></strong>
       </div>
+      <div id="conn-status-badge" class="status-online">🟢 Server verbunden</div>
 
       <div class="photo-grid">
         <div class="photo-card">
@@ -148,7 +153,10 @@
 
       <button id="btn-start-bot" class="bot-btn">Warmup gegen Bot starten</button>
 
-      <h2>Lobby-Spieler</h2>
+      <div class="section-header">
+        <h2>Lobby-Spieler</h2>
+        <button id="btn-refresh-lobby" class="btn-small-refresh">🔄 Aktualisieren</button>
+      </div>
       <ul id="player-list"></ul>
 
       <h2>1v1 Bestenliste</h2>
@@ -159,13 +167,13 @@
     </div>
   </div>
 
-  <!-- Screen 3: Herausforderung -->
+  <!-- Screen 3: Duell-Anfrage Pop-up -->
   <div id="screen-challenge" class="screen hidden" style="background: rgba(0,0,0,0.85); z-index: 20;">
     <div class="panel" style="text-align: center;">
       <div class="asi-title" style="font-size: 22px;">DUELL-ANFRAGE!</div>
-      <p id="challenge-text" style="margin: 14px 0; font-size: 14px; color: #cbd5e1;"></p>
-      <button id="btn-accept-challenge">Annehmen & Wegballern</button>
-      <button id="btn-decline-challenge" class="secondary">Kneifen (Ablehnen)</button>
+      <p id="challenge-text" style="margin: 14px 0; font-size: 15px; font-weight: 700; color: #facc15;"></p>
+      <button id="btn-accept-challenge" style="background: #22c55e; color: #000; font-size: 13px;">⚔️ ANNEHMEN & KÄMPFEN</button>
+      <button id="btn-decline-challenge" class="secondary">Ablehnen</button>
     </div>
   </div>
 
@@ -291,7 +299,6 @@
     function playCorkPopSound() {
       if (!audioCtx) return;
       const t = audioCtx.currentTime;
-
       const osc = audioCtx.createOscillator();
       const popGain = audioCtx.createGain();
       osc.type = 'sine';
@@ -411,10 +418,16 @@
     };
 
     // ==========================================
-    // 2. STATE & SOCKET MANAGEMENT
+    // 2. SOCKET & LOBBY LOGIK (MIT AUTO-RECONNECT)
     // ==========================================
-    const socket = io();
-    let myName = '';
+    const socket = io({
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+      timeout: 10000
+    });
+
+    let myName = localStorage.getItem('duel_username') || '';
     let myId = '';
     let pendingChallengerId = null;
     let selectedChar = 'marley';
@@ -496,8 +509,39 @@
     const btnTouchDash = document.getElementById('btn-touch-dash');
     const lobbyMonitor = document.getElementById('lobby-monitor');
     const lobbyMonitorContent = document.getElementById('lobby-monitor-content');
+    const connBadge = document.getElementById('conn-status-badge');
 
     const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+    // Auto-Rejoin bei Verbindungsaufbau / Reconnect
+    socket.on('connect', () => {
+      myId = socket.id;
+      if (connBadge) {
+        connBadge.className = 'status-online';
+        connBadge.innerText = '🟢 Server verbunden';
+      }
+      if (myName) {
+        socket.emit('join-lobby', myName);
+      }
+    });
+
+    socket.on('disconnect', () => {
+      if (connBadge) {
+        connBadge.className = 'status-offline';
+        connBadge.innerText = '🔴 Verbindung getrennt...';
+      }
+    });
+
+    // Wenn der Nutzer die App wieder in den Vordergrund holt
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        if (socket.connected && myName) {
+          socket.emit('join-lobby', myName);
+        } else if (socket.disconnected) {
+          socket.connect();
+        }
+      }
+    });
 
     function startAsiModeIntro(callback) {
       canAct = false;
@@ -572,25 +616,40 @@
     const savedName = localStorage.getItem('duel_username');
     if (savedName) document.getElementById('username-input').value = savedName;
 
-    socket.on('connect', () => { myId = socket.id; });
+    document.getElementById('btn-refresh-lobby').onclick = () => {
+      if (myName) socket.emit('join-lobby', myName);
+    };
 
     let currentLobbyPlayers = [];
     socket.on('lobby-update', (list) => {
       currentLobbyPlayers = list;
       const ul = document.getElementById('player-list');
       ul.innerHTML = '';
-      list.forEach(p => {
-        if (p.id === socket.id) return;
+      
+      const otherPlayers = list.filter(p => p.id !== socket.id);
+      
+      if (otherPlayers.length === 0) {
         const li = document.createElement('li');
-        li.innerHTML = `<span>${p.name} (${p.status})</span>`;
-        if (p.status === 'lobby') {
-          const btn = document.createElement('button');
-          btn.innerText = 'Duellieren';
-          btn.onclick = () => { initAudio(); socket.emit('send-challenge', p.id); };
-          li.appendChild(btn);
-        }
+        li.innerHTML = '<span style="color:#94a3b8; font-style:italic;">Kein anderer Spieler online (Oleg muss den Tab im Browser offen haben)</span>';
         ul.appendChild(li);
-      });
+      } else {
+        otherPlayers.forEach(p => {
+          const li = document.createElement('li');
+          li.innerHTML = `<span><strong>${p.name}</strong> (${p.status === 'ingame' ? 'im Kampf' : 'in Lobby'})</span>`;
+          if (p.status === 'lobby') {
+            const btn = document.createElement('button');
+            btn.innerText = '⚔️ DUELLIEREN';
+            btn.onclick = () => {
+              initAudio();
+              socket.emit('send-challenge', p.id);
+              btn.disabled = true;
+              btn.innerText = 'Angefragt...';
+            };
+            li.appendChild(btn);
+          }
+          ul.appendChild(li);
+        });
+      }
       updateLobbyMonitor();
     });
 
@@ -647,10 +706,11 @@
       });
     }
 
+    // Herausforderung empfangen
     socket.on('challenge-received', (data) => {
       initAudio();
       pendingChallengerId = data.challengerId;
-      document.getElementById('challenge-text').innerText = `${data.challengerName} fordert dich heraus!`;
+      document.getElementById('challenge-text').innerText = `${data.challengerName} fordert dich zum Duell heraus!`;
       screenChallenge.classList.remove('hidden');
     });
 
@@ -673,10 +733,11 @@
       screenGameOver.classList.add('hidden');
       screenLobby.classList.remove('hidden');
       if (document.pointerLockElement) document.exitPointerLock();
+      if (myName) socket.emit('join-lobby', myName);
     };
 
     // ==========================================
-    // 3. PROZEDURALE TEXTUREN
+    // 3. TEXTUREN
     // ==========================================
     function createGoschSignTexture() {
       const c = document.createElement('canvas');
