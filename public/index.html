@@ -6,7 +6,7 @@
   <title>Hitscan Duell 1v1</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
-    body, html { width: 100%; height: 100%; overflow: hidden; background: #0d0e12; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #fff; touch-action: none; }
+    body, html { width: 100%; height: 100%; overflow: hidden; background: #87ceeb; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #fff; touch-action: none; }
     
     .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; }
     .hidden { display: none !important; }
@@ -28,18 +28,18 @@
 
     /* In-Game HUD */
     #hud { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
-    #crosshair { position: absolute; top: 50%; left: 50%; width: 10px; height: 10px; transform: translate(-50%, -50%); border: 2px solid rgba(255,255,255,0.7); border-radius: 50%; }
-    #stats-bar { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); display: flex; gap: 20px; font-size: 18px; font-weight: 800; background: rgba(0,0,0,0.65); padding: 8px 18px; border-radius: 4px; border: 1px solid #333; white-space: nowrap; }
+    #crosshair { position: absolute; top: 50%; left: 50%; width: 10px; height: 10px; transform: translate(-50%, -50%); border: 2px solid #000; border-radius: 50%; background: rgba(255,255,255,0.8); }
+    #stats-bar { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); display: flex; gap: 20px; font-size: 18px; font-weight: 800; background: rgba(18, 20, 29, 0.85); padding: 8px 18px; border-radius: 6px; border: 1px solid #444; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
     .hud-timer { color: #f5a623; }
     .hud-score { color: #4ade80; }
     .hud-opp-score { color: #ef4444; }
-    #hitmarker { position: absolute; top: 50%; left: 50%; width: 22px; height: 22px; transform: translate(-50%, -50%); border: 2px solid #ef4444; border-radius: 50%; opacity: 0; transition: opacity 0.1s; }
+    #hitmarker { position: absolute; top: 50%; left: 50%; width: 24px; height: 24px; transform: translate(-50%, -50%); border: 3px solid #ff0055; border-radius: 50%; opacity: 0; transition: opacity 0.08s; pointer-events: none; }
 
-    /* Touch Controls für Smartphone */
+    /* Touch Controls */
     #touch-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 6; pointer-events: none; }
-    #joystick-base { position: absolute; left: 25px; bottom: 25px; width: 110px; height: 110px; background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.25); border-radius: 50%; pointer-events: auto; }
-    #joystick-knob { position: absolute; top: 50%; left: 50%; width: 44px; height: 44px; background: #f5a623; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; opacity: 0.85; }
-    #btn-touch-fire { position: absolute; right: 25px; bottom: 35px; width: 80px; height: 80px; border-radius: 50%; background: #ef4444; border: 3px solid rgba(255,255,255,0.8); color: #fff; font-size: 13px; font-weight: 800; pointer-events: auto; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+    #joystick-base { position: absolute; left: 25px; bottom: 25px; width: 110px; height: 110px; background: rgba(0,0,0,0.25); border: 2px solid rgba(255,255,255,0.6); border-radius: 50%; pointer-events: auto; backdrop-filter: blur(2px); }
+    #joystick-knob { position: absolute; top: 50%; left: 50%; width: 44px; height: 44px; background: #f5a623; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; box-shadow: 0 2px 8px rgba(0,0,0,0.4); }
+    #btn-touch-fire { position: absolute; right: 25px; bottom: 35px; width: 80px; height: 80px; border-radius: 50%; background: #ef4444; border: 3px solid #fff; color: #fff; font-size: 14px; font-weight: 900; pointer-events: auto; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
     #btn-touch-fire:active { background: #b91c1c; transform: scale(0.95); }
   </style>
 </head>
@@ -70,7 +70,7 @@
     </div>
   </div>
 
-  <!-- Screen 3: Herausforderungs-Dialog -->
+  <!-- Screen 3: Herausforderung -->
   <div id="screen-challenge" class="screen hidden" style="background: rgba(0,0,0,0.75); z-index: 20;">
     <div class="panel" style="text-align: center;">
       <h1>Herausforderung!</h1>
@@ -134,7 +134,6 @@
     const direction = new THREE.Vector3();
     const clock = new THREE.Clock();
 
-    // DOM-Referenzen
     const screenLogin = document.getElementById('screen-login');
     const screenLobby = document.getElementById('screen-lobby');
     const screenChallenge = document.getElementById('screen-challenge');
@@ -147,7 +146,7 @@
 
     const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
-    // --- Lobby-Logik ---
+    // Lobby
     document.getElementById('btn-login').addEventListener('click', () => {
       const input = document.getElementById('username-input').value.trim();
       if (!input) return;
@@ -219,11 +218,11 @@
       if (document.pointerLockElement) document.exitPointerLock();
     };
 
-    // --- Three.js & Arena Initialisierung ---
+    // Three.js Szene initialisieren
     function init3D() {
       scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x0a0c12);
-      scene.fog = new THREE.FogExp2(0x0a0c12, 0.025);
+      scene.background = new THREE.Color(0x87ceeb); // Strahlend blauer Himmel
+      scene.fog = new THREE.Fog(0x87ceeb, 45, 90);
 
       camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
@@ -232,37 +231,51 @@
       renderer.shadowMap.enabled = true;
       document.getElementById('game-container').appendChild(renderer.domElement);
 
-      const ambientLight = new THREE.AmbientLight(0xffffff, 0.45);
-      scene.add(ambientLight);
+      // Lichtgestaltung: Weiches Himmelslicht verhindert tiefschwarze Schatten
+      const hemiLight = new THREE.HemisphereLight(0xffffff, 0x94a3b8, 0.75);
+      hemiLight.position.set(0, 50, 0);
+      scene.add(hemiLight);
 
-      const dirLight = new THREE.DirectionalLight(0xffffff, 0.85);
-      dirLight.position.set(20, 40, 20);
-      dirLight.castShadow = true;
-      scene.add(dirLight);
+      const sunLight = new THREE.DirectionalLight(0xfff7ed, 0.95);
+      sunLight.position.set(20, 40, 20);
+      sunLight.castShadow = true;
+      scene.add(sunLight);
 
-      // Arena Boden
+      // Arena-Boden: Helle Sandstein-Optik mit klarem Gitter für Bewegungskontrolle
       const floorGeo = new THREE.PlaneGeometry(36, 36);
-      const floorMat = new THREE.MeshStandardMaterial({ color: 0x1a1d26, roughness: 0.8 });
+      const floorMat = new THREE.MeshStandardMaterial({ color: 0xd6cbb8, roughness: 0.7 });
       const floor = new THREE.Mesh(floorGeo, floorMat);
       floor.rotation.x = -Math.PI / 2;
       floor.receiveShadow = true;
       scene.add(floor);
 
-      const grid = new THREE.GridHelper(36, 36, 0xf5a623, 0x2d3348);
+      const grid = new THREE.GridHelper(36, 36, 0x8b5cf6, 0xa8a29e);
       grid.position.y = 0.01;
       scene.add(grid);
 
-      // Wände
-      const wallMat = new THREE.MeshStandardMaterial({ color: 0x12141c });
-      const createWall = (w, h, d, x, y, z) => {
+      // Wände mit Himmelsrichtungs-Farbcodierung für sofortige Orientierung
+      const wallMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.5 });
+      
+      const makeWall = (w, h, d, x, y, z, accentColor) => {
+        const group = new THREE.Group();
         const wall = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat);
-        wall.position.set(x, y, z);
-        scene.add(wall);
+        group.add(wall);
+
+        // Farbiger Akzentstreifen
+        const accentMat = new THREE.MeshBasicMaterial({ color: accentColor });
+        const stripW = w > d ? w : d;
+        const strip = new THREE.Mesh(new THREE.BoxGeometry(w > d ? w : 1.05, 0.6, d > w ? d : 1.05), accentMat);
+        strip.position.y = 1.0;
+        group.add(strip);
+
+        group.position.set(x, y, z);
+        scene.add(group);
       };
-      createWall(36, 4, 1, 0, 2, -18);
-      createWall(36, 4, 1, 0, 2, 18);
-      createWall(1, 4, 36, -18, 2, 0);
-      createWall(1, 4, 36, 18, 2, 0);
+
+      makeWall(36, 4.5, 1, 0, 2.25, -18, 0x2563eb); // Nordwand: Blau
+      makeWall(36, 4.5, 1, 0, 2.25, 18, 0xea580c);  // Südwand: Orange
+      makeWall(1, 4.5, 36, -18, 2.25, 0, 0x16a34a); // Westwand: Grün
+      makeWall(1, 4.5, 36, 18, 2.25, 0, 0x9333ea);  // Ostwand: Violett
 
       spawnMapProps();
       setupWurstWeapon();
@@ -273,37 +286,38 @@
       setupTouchControls();
     }
 
+    // Hindernisse
     function spawnMapProps() {
       // 1. Bierflasche
       const bottleGroup = new THREE.Group();
-      const bodyMat = new THREE.MeshStandardMaterial({ color: 0x3d2314, roughness: 0.3 });
-      const capMat = new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.8, roughness: 0.2 });
+      const bottleMat = new THREE.MeshStandardMaterial({ color: 0x451a03, roughness: 0.2 });
+      const capMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.8, roughness: 0.2 });
       
-      const bottleBody = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 3.2, 16), bodyMat);
-      bottleBody.position.y = 1.6;
-      bottleGroup.add(bottleBody);
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 3.2, 16), bottleMat);
+      body.position.y = 1.6;
+      bottleGroup.add(body);
 
-      const bottleNeck = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.7, 1.2, 16), bodyMat);
-      bottleNeck.position.y = 3.6;
-      bottleGroup.add(bottleNeck);
+      const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.7, 1.2, 16), bottleMat);
+      neck.position.y = 3.6;
+      bottleGroup.add(neck);
 
-      const bottleCap = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.2, 16), capMat);
-      bottleCap.position.y = 4.3;
-      bottleGroup.add(bottleCap);
+      const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.2, 16), capMat);
+      cap.position.y = 4.3;
+      bottleGroup.add(cap);
 
       bottleGroup.position.set(-6, 0, -4);
       scene.add(bottleGroup);
 
       // 2. Espresso Martini Glas
       const martiniGroup = new THREE.Group();
-      const glassMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.1, transparent: true, opacity: 0.85 });
-      const stemMat = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.5, roughness: 0.2 });
+      const glassMat = new THREE.MeshStandardMaterial({ color: 0x271306, roughness: 0.1, transparent: true, opacity: 0.9 });
+      const metalMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.6, roughness: 0.3 });
 
-      const base = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.1, 16), stemMat);
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.1, 16), metalMat);
       base.position.y = 0.05;
       martiniGroup.add(base);
 
-      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 2.5, 12), stemMat);
+      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 2.5, 12), metalMat);
       stem.position.y = 1.3;
       martiniGroup.add(stem);
 
@@ -312,8 +326,7 @@
       cone.rotation.x = Math.PI;
       martiniGroup.add(cone);
 
-      const beanMat = new THREE.MeshStandardMaterial({ color: 0x1a0f07 });
-      const bean = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 8), beanMat);
+      const bean = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 8), new THREE.MeshStandardMaterial({ color: 0x110804 }));
       bean.scale.set(1.5, 0.8, 1);
       bean.position.set(0, 3.7, 0);
       martiniGroup.add(bean);
@@ -323,8 +336,8 @@
 
       // 3. Pommes-Tüte
       const friesGroup = new THREE.Group();
-      const boxMat = new THREE.MeshStandardMaterial({ color: 0xb91c1c });
-      const fryMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.5 });
+      const boxMat = new THREE.MeshStandardMaterial({ color: 0xdc2626 });
+      const fryMat = new THREE.MeshStandardMaterial({ color: 0xfde047, roughness: 0.4 });
 
       const bag = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.4, 1.4), boxMat);
       bag.position.y = 1.2;
@@ -340,26 +353,27 @@
       scene.add(friesGroup);
     }
 
+    // Waffe
     let wurstGun;
     function setupWurstWeapon() {
       wurstGun = new THREE.Group();
-      const wurstMat = new THREE.MeshStandardMaterial({ color: 0x8b3a1a, roughness: 0.4 });
-      const senfMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.2 });
+      const wurstMat = new THREE.MeshStandardMaterial({ color: 0x9a3412, roughness: 0.35 });
+      const senfMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.1 });
 
-      const wurstBody = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.7, 12), wurstMat);
-      wurstBody.rotation.x = Math.PI / 2;
-      wurstGun.add(wurstBody);
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.065, 0.7, 12), wurstMat);
+      body.rotation.x = Math.PI / 2;
+      wurstGun.add(body);
 
-      const endCap1 = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), wurstMat);
-      endCap1.position.z = 0.35;
-      wurstGun.add(endCap1);
+      const cap1 = new THREE.Mesh(new THREE.SphereGeometry(0.065, 8, 8), wurstMat);
+      cap1.position.z = 0.35;
+      wurstGun.add(cap1);
 
-      const endCap2 = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), wurstMat);
-      endCap2.position.z = -0.35;
-      wurstGun.add(endCap2);
+      const cap2 = new THREE.Mesh(new THREE.SphereGeometry(0.065, 8, 8), wurstMat);
+      cap2.position.z = -0.35;
+      wurstGun.add(cap2);
 
       const senf = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.02, 0.5), senfMat);
-      senf.position.set(0, 0.06, 0);
+      senf.position.set(0, 0.07, 0);
       wurstGun.add(senf);
 
       wurstGun.position.set(0.3, -0.25, -0.5);
@@ -367,23 +381,36 @@
       scene.add(camera);
     }
 
+    // Gegner: Hoher Kontrast durch Neon-Crimson mit Eigenleuchten und Visier
     function setupOpponentMesh() {
       opponentMesh = new THREE.Group();
-      const oppMat = new THREE.MeshStandardMaterial({ color: 0xef4444 });
+      
+      const oppMat = new THREE.MeshStandardMaterial({ 
+        color: 0xff0055, 
+        emissive: 0x990022, 
+        emissiveIntensity: 0.6,
+        roughness: 0.3 
+      });
 
-      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 1.4, 12), oppMat);
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 1.4, 14), oppMat);
       body.position.y = 0.7;
       opponentMesh.add(body);
 
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.35, 12, 12), oppMat);
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.38, 14, 14), oppMat);
       head.position.y = 1.6;
       opponentMesh.add(head);
+
+      // Neongelbes Leuchtvisier für sofortiges Erfassen der Blickrichtung
+      const visorMat = new THREE.MeshBasicMaterial({ color: 0x00ffea });
+      const visor = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.12, 0.3), visorMat);
+      visor.position.set(0, 1.65, 0.28);
+      opponentMesh.add(visor);
 
       opponentMesh.position.set(0, -100, 0);
       scene.add(opponentMesh);
     }
 
-    // --- Desktop Eingabe (Tastatur / Maus) ---
+    // Steuerung PC
     function setupControls() {
       window.addEventListener('keydown', (e) => {
         if (!inGame) return;
@@ -419,14 +446,13 @@
       });
     }
 
-    // --- Mobile Touch-Steuerung (Multi-Touch) ---
+    // Steuerung Touch
     let touchMoveVector = { x: 0, z: 0 };
     let joyTouchId = null;
     let lookTouchId = null;
     let lastTouchLookX = 0, lastTouchLookY = 0;
 
     function setupTouchControls() {
-      // 1. Joystick Touch Tracking
       joystickBase.addEventListener('touchstart', (e) => {
         e.preventDefault();
         const touch = e.changedTouches[0];
@@ -434,7 +460,6 @@
         handleJoystickMove(touch);
       }, { passive: false });
 
-      // 2. Globales Touch-Moving für Joystick und Kamera-Wischen
       window.addEventListener('touchmove', (e) => {
         for (let i = 0; i < e.touches.length; i++) {
           const t = e.touches[i];
@@ -451,7 +476,6 @@
         }
       }, { passive: false });
 
-      // 3. Touch End / Reset
       const handleTouchEnd = (e) => {
         for (let i = 0; i < e.changedTouches.length; i++) {
           const t = e.changedTouches[i];
@@ -468,14 +492,11 @@
       window.addEventListener('touchend', handleTouchEnd);
       window.addEventListener('touchcancel', handleTouchEnd);
 
-      // 4. Touch-Zielen auf der rechten Bildschirmhälfte
       window.addEventListener('touchstart', (e) => {
         if (!inGame) return;
         for (let i = 0; i < e.changedTouches.length; i++) {
           const t = e.changedTouches[i];
-          // Rechte Bildschirmhälfte und nicht der Joystick
           if (t.clientX > window.innerWidth * 0.35 && lookTouchId === null) {
-            // Ignorieren falls direkt auf den Feuerknopf getippt wurde
             const btnRect = btnTouchFire.getBoundingClientRect();
             if (t.clientX >= btnRect.left && t.clientX <= btnRect.right &&
                 t.clientY >= btnRect.top && t.clientY <= btnRect.bottom) {
@@ -488,7 +509,6 @@
         }
       });
 
-      // 5. Dedizierter Feuer-Button
       btnTouchFire.addEventListener('touchstart', (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -512,12 +532,11 @@
       }
 
       joystickKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-
       touchMoveVector.x = dx / maxRadius;
       touchMoveVector.z = dy / maxRadius;
     }
 
-    // --- Hitscan Schusslogik ---
+    // Schusslogik
     const raycaster = new THREE.Raycaster();
     function fireHitscan() {
       wurstGun.position.z += 0.08;
@@ -534,7 +553,7 @@
         endPos.copy(hits[0].point);
         const marker = document.getElementById('hitmarker');
         marker.style.opacity = '1';
-        setTimeout(() => { marker.style.opacity = '0'; }, 100);
+        setTimeout(() => { marker.style.opacity = '0'; }, 90);
 
         if (isBotMode) {
           botScorePlayer++;
@@ -547,25 +566,22 @@
         raycaster.ray.at(50, endPos);
       }
 
-      renderTracer(startPos, endPos, 0xfacc15);
+      renderTracer(startPos, endPos, 0xf59e0b); // Kräftiger Tracer
       if (!isBotMode) {
         socket.emit('shot-fired', { start: startPos, end: endPos });
       }
     }
 
     function renderTracer(start, end, colorHex) {
-      const material = new THREE.LineBasicMaterial({ color: colorHex, linewidth: 2 });
+      const material = new THREE.LineBasicMaterial({ color: colorHex, linewidth: 3 });
       const geometry = new THREE.BufferGeometry().setFromPoints([start, end]);
       const line = new THREE.Line(geometry, material);
       scene.add(line);
       setTimeout(() => { scene.remove(line); }, 50);
     }
 
-    // --- Bot-Modus (Client-Side) ---
-    const botState = {
-      targetPos: new THREE.Vector3(0, 0.7, 0),
-      shootCooldown: 2.5
-    };
+    // Bot Logik
+    const botState = { targetPos: new THREE.Vector3(0, 0.7, 0), shootCooldown: 2.5 };
 
     document.getElementById('btn-start-bot').addEventListener('click', () => {
       startBotMatch();
@@ -597,9 +613,7 @@
       botTimerInterval = setInterval(() => {
         botTimeLeft--;
         document.getElementById('hud-timer').innerText = botTimeLeft;
-        if (botTimeLeft <= 0) {
-          endBotMatch();
-        }
+        if (botTimeLeft <= 0) endBotMatch();
       }, 1000);
     }
 
@@ -611,15 +625,10 @@
     }
 
     function pickNewBotTarget() {
-      botState.targetPos.set(
-        (Math.random() - 0.5) * 26,
-        0,
-        (Math.random() - 0.5) * 26
-      );
+      botState.targetPos.set((Math.random() - 0.5) * 26, 0, (Math.random() - 0.5) * 26);
     }
 
     function updateBotAI(delta) {
-      // 1. Bewegung auf Zielpunkt zu
       const dir = new THREE.Vector3().subVectors(botState.targetPos, opponentMesh.position);
       dir.y = 0;
       const dist = dir.length();
@@ -632,25 +641,21 @@
         opponentMesh.lookAt(camera.position.x, 0, camera.position.z);
       }
 
-      // 2. Bot Schuss-Zyklus
       botState.shootCooldown -= delta;
       if (botState.shootCooldown <= 0) {
         botState.shootCooldown = 2.2 + Math.random() * 1.5;
         
-        // Tracer vom Bot
         const botGunPos = opponentMesh.position.clone().add(new THREE.Vector3(0, 1.2, 0));
         const shootTarget = camera.position.clone().add(new THREE.Vector3(
           (Math.random() - 0.5) * 1.8,
           (Math.random() - 0.5) * 1.2,
           (Math.random() - 0.5) * 1.8
         ));
-        renderTracer(botGunPos, shootTarget, 0xef4444);
+        renderTracer(botGunPos, shootTarget, 0xd946ef);
 
-        // Trefferprüfung Bot gegen Spieler
         if (shootTarget.distanceTo(camera.position) < 1.0) {
           botScoreEnemy++;
           document.getElementById('hud-opp-score').innerText = botScoreEnemy;
-          // Spieler-Respawn
           camera.position.set((Math.random() - 0.5) * 16, 1.6, 14);
         }
       }
@@ -672,12 +677,12 @@
       document.getElementById('gameover-details').innerText = `Ergebnis gegen Bot: ${botScorePlayer} zu ${botScoreEnemy}`;
     }
 
-    // --- Multiplayer-Events (Socket.io) ---
+    // Multiplayer Events
     socket.on('opponent-shot', (tracer) => {
       renderTracer(
         new THREE.Vector3(tracer.start.x, tracer.start.y, tracer.start.z),
         new THREE.Vector3(tracer.end.x, tracer.end.y, tracer.end.z),
-        0xef4444
+        0xd946ef
       );
     });
 
@@ -747,13 +752,11 @@
 
     init3D();
 
-    // --- Main Render Loop ---
     function animate() {
       requestAnimationFrame(animate);
       const delta = clock.getDelta();
 
       if (inGame) {
-        // Bewegung berechnen (Keyboard oder Touch Joystick)
         velocity.x -= velocity.x * 10.0 * delta;
         velocity.z -= velocity.z * 10.0 * delta;
 
@@ -774,7 +777,6 @@
         camera.translateZ(velocity.z * delta);
         camera.position.y = 1.6;
 
-        // Begrenzung Arena
         camera.position.x = Math.max(-16.5, Math.min(16.5, camera.position.x));
         camera.position.z = Math.max(-16.5, Math.min(16.5, camera.position.z));
 
@@ -797,5 +799,4 @@
   </script>
 </body>
 </html>
-
 
