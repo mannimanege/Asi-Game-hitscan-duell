@@ -2,39 +2,50 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Hitscan Duell 1v1</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
-    body, html { width: 100%; height: 100%; overflow: hidden; background: #0d0e12; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #fff; }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+    body, html { width: 100%; height: 100%; overflow: hidden; background: #0d0e12; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #fff; touch-action: none; }
     
     .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; }
     .hidden { display: none !important; }
 
-    .panel { background: rgba(22, 25, 35, 0.95); border: 1px solid #2d3348; padding: 24px; border-radius: 8px; width: 420px; box-shadow: 0 10px 30px rgba(0,0,0,0.7); }
+    .panel { background: rgba(22, 25, 35, 0.95); border: 1px solid #2d3348; padding: 24px; border-radius: 8px; width: 90%; max-width: 440px; box-shadow: 0 10px 30px rgba(0,0,0,0.7); }
     h1 { font-size: 20px; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px; color: #f5a623; }
     h2 { font-size: 14px; margin: 16px 0 8px 0; text-transform: uppercase; color: #8a93a8; border-bottom: 1px solid #2d3348; padding-bottom: 4px; }
-    input[type="text"] { width: 100%; padding: 10px 12px; background: #12141c; border: 1px solid #3b425b; border-radius: 4px; color: #fff; font-size: 14px; outline: none; margin-bottom: 12px; }
+    input[type="text"] { width: 100%; padding: 12px; background: #12141c; border: 1px solid #3b425b; border-radius: 4px; color: #fff; font-size: 15px; outline: none; margin-bottom: 12px; }
     input[type="text"]:focus { border-color: #f5a623; }
-    button { width: 100%; padding: 10px; background: #f5a623; border: none; border-radius: 4px; color: #000; font-weight: 700; cursor: pointer; text-transform: uppercase; }
+    button { width: 100%; padding: 12px; background: #f5a623; border: none; border-radius: 4px; color: #000; font-weight: 700; cursor: pointer; text-transform: uppercase; }
     button:hover { background: #e09418; }
     button.secondary { background: #2d3348; color: #fff; margin-top: 8px; }
-    button.secondary:hover { background: #3b425b; }
+    button.bot-btn { background: #2563eb; color: #fff; margin-top: 14px; }
+    button.bot-btn:hover { background: #1d4ed8; }
 
-    ul { list-style: none; max-height: 140px; overflow-y: auto; margin-bottom: 8px; }
-    li { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; background: #12141c; margin-bottom: 4px; border-radius: 4px; font-size: 13px; }
-    li button { width: auto; padding: 4px 10px; font-size: 11px; }
+    ul { list-style: none; max-height: 120px; overflow-y: auto; margin-bottom: 8px; }
+    li { display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #12141c; margin-bottom: 4px; border-radius: 4px; font-size: 13px; }
+    li button { width: auto; padding: 6px 12px; font-size: 11px; }
 
+    /* In-Game HUD */
     #hud { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
     #crosshair { position: absolute; top: 50%; left: 50%; width: 10px; height: 10px; transform: translate(-50%, -50%); border: 2px solid rgba(255,255,255,0.7); border-radius: 50%; }
-    #stats-bar { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 40px; font-size: 24px; font-weight: 800; background: rgba(0,0,0,0.6); padding: 8px 24px; border-radius: 4px; border: 1px solid #333; }
+    #stats-bar { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); display: flex; gap: 20px; font-size: 18px; font-weight: 800; background: rgba(0,0,0,0.65); padding: 8px 18px; border-radius: 4px; border: 1px solid #333; white-space: nowrap; }
     .hud-timer { color: #f5a623; }
     .hud-score { color: #4ade80; }
     .hud-opp-score { color: #ef4444; }
-    #hitmarker { position: absolute; top: 50%; left: 50%; width: 20px; height: 20px; transform: translate(-50%, -50%); border: 2px solid #ef4444; border-radius: 50%; opacity: 0; transition: opacity 0.1s; }
+    #hitmarker { position: absolute; top: 50%; left: 50%; width: 22px; height: 22px; transform: translate(-50%, -50%); border: 2px solid #ef4444; border-radius: 50%; opacity: 0; transition: opacity 0.1s; }
+
+    /* Touch Controls für Smartphone */
+    #touch-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 6; pointer-events: none; }
+    #joystick-base { position: absolute; left: 25px; bottom: 25px; width: 110px; height: 110px; background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.25); border-radius: 50%; pointer-events: auto; }
+    #joystick-knob { position: absolute; top: 50%; left: 50%; width: 44px; height: 44px; background: #f5a623; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; opacity: 0.85; }
+    #btn-touch-fire { position: absolute; right: 25px; bottom: 35px; width: 80px; height: 80px; border-radius: 50%; background: #ef4444; border: 3px solid rgba(255,255,255,0.8); color: #fff; font-size: 13px; font-weight: 800; pointer-events: auto; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+    #btn-touch-fire:active { background: #b91c1c; transform: scale(0.95); }
   </style>
 </head>
 <body>
 
+  <!-- Screen 1: Login -->
   <div id="screen-login" class="screen">
     <div class="panel">
       <h1>Hitscan Duell 1v1</h1>
@@ -43,36 +54,42 @@
     </div>
   </div>
 
+  <!-- Screen 2: Lobby -->
   <div id="screen-lobby" class="screen hidden">
-    <div class="panel" style="width: 500px;">
+    <div class="panel">
       <h1>Lobby</h1>
       <div>Angemeldet als: <strong id="my-name-display" style="color: #f5a623;"></strong></div>
+
+      <button id="btn-start-bot" class="bot-btn">Gegen Bot spielen (Warmup)</button>
 
       <h2>Verfügbare Spieler</h2>
       <ul id="player-list"></ul>
 
-      <h2>Bestenliste</h2>
+      <h2>Bestenliste (1v1)</h2>
       <ul id="leaderboard-list"></ul>
     </div>
   </div>
 
-  <div id="screen-challenge" class="screen hidden" style="background: rgba(0,0,0,0.7);">
+  <!-- Screen 3: Herausforderungs-Dialog -->
+  <div id="screen-challenge" class="screen hidden" style="background: rgba(0,0,0,0.75); z-index: 20;">
     <div class="panel" style="text-align: center;">
       <h1>Herausforderung!</h1>
-      <p id="challenge-text" style="margin-bottom: 16px;"></p>
+      <p id="challenge-text" style="margin-bottom: 16px; font-size: 15px;"></p>
       <button id="btn-accept-challenge">Annehmen</button>
       <button id="btn-decline-challenge" class="secondary">Ablehnen</button>
     </div>
   </div>
 
-  <div id="screen-gameover" class="screen hidden" style="background: rgba(0,0,0,0.8);">
+  <!-- Screen 4: Rundenende -->
+  <div id="screen-gameover" class="screen hidden" style="background: rgba(0,0,0,0.85); z-index: 20;">
     <div class="panel" style="text-align: center;">
       <h1 id="gameover-title">Runde Beendet</h1>
-      <p id="gameover-details" style="margin-bottom: 20px; font-size: 16px;"></p>
+      <p id="gameover-details" style="margin-bottom: 20px; font-size: 15px;"></p>
       <button id="btn-back-to-lobby">Zurück zur Lobby</button>
     </div>
   </div>
 
+  <!-- In-Game HUD -->
   <div id="hud" class="hidden">
     <div id="stats-bar">
       <div>Du: <span id="hud-my-score" class="hud-score">0</span></div>
@@ -81,6 +98,14 @@
     </div>
     <div id="crosshair"></div>
     <div id="hitmarker"></div>
+  </div>
+
+  <!-- Touch Controls -->
+  <div id="touch-layer" class="hidden">
+    <div id="joystick-base">
+      <div id="joystick-knob"></div>
+    </div>
+    <div id="btn-touch-fire">FEUER</div>
   </div>
 
   <div id="game-container"></div>
@@ -95,6 +120,12 @@
     let pendingChallengerId = null;
 
     let inGame = false;
+    let isBotMode = false;
+    let botTimerInterval = null;
+    let botTimeLeft = 60;
+    let botScorePlayer = 0;
+    let botScoreEnemy = 0;
+
     let opponentId = null;
     let opponentMesh = null;
     let camera, scene, renderer;
@@ -103,12 +134,20 @@
     const direction = new THREE.Vector3();
     const clock = new THREE.Clock();
 
+    // DOM-Referenzen
     const screenLogin = document.getElementById('screen-login');
     const screenLobby = document.getElementById('screen-lobby');
     const screenChallenge = document.getElementById('screen-challenge');
     const screenGameOver = document.getElementById('screen-gameover');
     const hud = document.getElementById('hud');
+    const touchLayer = document.getElementById('touch-layer');
+    const joystickBase = document.getElementById('joystick-base');
+    const joystickKnob = document.getElementById('joystick-knob');
+    const btnTouchFire = document.getElementById('btn-touch-fire');
 
+    const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+    // --- Lobby-Logik ---
     document.getElementById('btn-login').addEventListener('click', () => {
       const input = document.getElementById('username-input').value.trim();
       if (!input) return;
@@ -160,6 +199,7 @@
 
     document.getElementById('btn-accept-challenge').onclick = () => {
       screenChallenge.classList.add('hidden');
+      if (isBotMode) stopBotMatch();
       socket.emit('accept-challenge', pendingChallengerId);
     };
 
@@ -176,9 +216,10 @@
     document.getElementById('btn-back-to-lobby').onclick = () => {
       screenGameOver.classList.add('hidden');
       screenLobby.classList.remove('hidden');
-      document.exitPointerLock();
+      if (document.pointerLockElement) document.exitPointerLock();
     };
 
+    // --- Three.js & Arena Initialisierung ---
     function init3D() {
       scene = new THREE.Scene();
       scene.background = new THREE.Color(0x0a0c12);
@@ -191,14 +232,15 @@
       renderer.shadowMap.enabled = true;
       document.getElementById('game-container').appendChild(renderer.domElement);
 
-      const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.45);
       scene.add(ambientLight);
 
-      const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+      const dirLight = new THREE.DirectionalLight(0xffffff, 0.85);
       dirLight.position.set(20, 40, 20);
       dirLight.castShadow = true;
       scene.add(dirLight);
 
+      // Arena Boden
       const floorGeo = new THREE.PlaneGeometry(36, 36);
       const floorMat = new THREE.MeshStandardMaterial({ color: 0x1a1d26, roughness: 0.8 });
       const floor = new THREE.Mesh(floorGeo, floorMat);
@@ -210,6 +252,7 @@
       grid.position.y = 0.01;
       scene.add(grid);
 
+      // Wände
       const wallMat = new THREE.MeshStandardMaterial({ color: 0x12141c });
       const createWall = (w, h, d, x, y, z) => {
         const wall = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat);
@@ -227,10 +270,11 @@
 
       window.addEventListener('resize', onWindowResize);
       setupControls();
+      setupTouchControls();
     }
 
     function spawnMapProps() {
-      // Bierflasche
+      // 1. Bierflasche
       const bottleGroup = new THREE.Group();
       const bodyMat = new THREE.MeshStandardMaterial({ color: 0x3d2314, roughness: 0.3 });
       const capMat = new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.8, roughness: 0.2 });
@@ -250,7 +294,7 @@
       bottleGroup.position.set(-6, 0, -4);
       scene.add(bottleGroup);
 
-      // Espresso Martini Glas
+      // 2. Espresso Martini Glas
       const martiniGroup = new THREE.Group();
       const glassMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.1, transparent: true, opacity: 0.85 });
       const stemMat = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.5, roughness: 0.2 });
@@ -277,7 +321,7 @@
       martiniGroup.position.set(6, 0, 4);
       scene.add(martiniGroup);
 
-      // Pommes-Tüte
+      // 3. Pommes-Tüte
       const friesGroup = new THREE.Group();
       const boxMat = new THREE.MeshStandardMaterial({ color: 0xb91c1c });
       const fryMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.5 });
@@ -339,6 +383,7 @@
       scene.add(opponentMesh);
     }
 
+    // --- Desktop Eingabe (Tastatur / Maus) ---
     function setupControls() {
       window.addEventListener('keydown', (e) => {
         if (!inGame) return;
@@ -356,7 +401,8 @@
         if (e.code === 'KeyD') moveRight = false;
       });
 
-      document.body.addEventListener('click', () => {
+      document.body.addEventListener('click', (e) => {
+        if (isTouchDevice) return;
         if (inGame && document.pointerLockElement !== document.body) {
           document.body.requestPointerLock();
         } else if (inGame && document.pointerLockElement === document.body) {
@@ -373,6 +419,105 @@
       });
     }
 
+    // --- Mobile Touch-Steuerung (Multi-Touch) ---
+    let touchMoveVector = { x: 0, z: 0 };
+    let joyTouchId = null;
+    let lookTouchId = null;
+    let lastTouchLookX = 0, lastTouchLookY = 0;
+
+    function setupTouchControls() {
+      // 1. Joystick Touch Tracking
+      joystickBase.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const touch = e.changedTouches[0];
+        joyTouchId = touch.identifier;
+        handleJoystickMove(touch);
+      }, { passive: false });
+
+      // 2. Globales Touch-Moving für Joystick und Kamera-Wischen
+      window.addEventListener('touchmove', (e) => {
+        for (let i = 0; i < e.touches.length; i++) {
+          const t = e.touches[i];
+          if (t.identifier === joyTouchId) {
+            handleJoystickMove(t);
+          } else if (t.identifier === lookTouchId) {
+            const dx = t.clientX - lastTouchLookX;
+            const dy = t.clientY - lastTouchLookY;
+            camera.rotation.y -= dx * 0.004;
+            camera.rotation.x = Math.max(-Math.PI / 2.5, Math.min(Math.PI / 2.5, camera.rotation.x - dy * 0.004));
+            lastTouchLookX = t.clientX;
+            lastTouchLookY = t.clientY;
+          }
+        }
+      }, { passive: false });
+
+      // 3. Touch End / Reset
+      const handleTouchEnd = (e) => {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          const t = e.changedTouches[i];
+          if (t.identifier === joyTouchId) {
+            joyTouchId = null;
+            touchMoveVector = { x: 0, z: 0 };
+            joystickKnob.style.transform = 'translate(-50%, -50%)';
+          }
+          if (t.identifier === lookTouchId) {
+            lookTouchId = null;
+          }
+        }
+      };
+      window.addEventListener('touchend', handleTouchEnd);
+      window.addEventListener('touchcancel', handleTouchEnd);
+
+      // 4. Touch-Zielen auf der rechten Bildschirmhälfte
+      window.addEventListener('touchstart', (e) => {
+        if (!inGame) return;
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          const t = e.changedTouches[i];
+          // Rechte Bildschirmhälfte und nicht der Joystick
+          if (t.clientX > window.innerWidth * 0.35 && lookTouchId === null) {
+            // Ignorieren falls direkt auf den Feuerknopf getippt wurde
+            const btnRect = btnTouchFire.getBoundingClientRect();
+            if (t.clientX >= btnRect.left && t.clientX <= btnRect.right &&
+                t.clientY >= btnRect.top && t.clientY <= btnRect.bottom) {
+              continue;
+            }
+            lookTouchId = t.identifier;
+            lastTouchLookX = t.clientX;
+            lastTouchLookY = t.clientY;
+          }
+        }
+      });
+
+      // 5. Dedizierter Feuer-Button
+      btnTouchFire.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (inGame) fireHitscan();
+      }, { passive: false });
+    }
+
+    function handleJoystickMove(touch) {
+      const rect = joystickBase.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+
+      let dx = touch.clientX - centerX;
+      let dy = touch.clientY - centerY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const maxRadius = rect.width / 2;
+
+      if (dist > maxRadius) {
+        dx = (dx / dist) * maxRadius;
+        dy = (dy / dist) * maxRadius;
+      }
+
+      joystickKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+
+      touchMoveVector.x = dx / maxRadius;
+      touchMoveVector.z = dy / maxRadius;
+    }
+
+    // --- Hitscan Schusslogik ---
     const raycaster = new THREE.Raycaster();
     function fireHitscan() {
       wurstGun.position.z += 0.08;
@@ -391,13 +536,21 @@
         marker.style.opacity = '1';
         setTimeout(() => { marker.style.opacity = '0'; }, 100);
 
-        socket.emit('hit-target', opponentId);
+        if (isBotMode) {
+          botScorePlayer++;
+          document.getElementById('hud-my-score').innerText = botScorePlayer;
+          respawnBot();
+        } else {
+          socket.emit('hit-target', opponentId);
+        }
       } else {
         raycaster.ray.at(50, endPos);
       }
 
       renderTracer(startPos, endPos, 0xfacc15);
-      socket.emit('shot-fired', { start: startPos, end: endPos });
+      if (!isBotMode) {
+        socket.emit('shot-fired', { start: startPos, end: endPos });
+      }
     }
 
     function renderTracer(start, end, colorHex) {
@@ -408,6 +561,118 @@
       setTimeout(() => { scene.remove(line); }, 50);
     }
 
+    // --- Bot-Modus (Client-Side) ---
+    const botState = {
+      targetPos: new THREE.Vector3(0, 0.7, 0),
+      shootCooldown: 2.5
+    };
+
+    document.getElementById('btn-start-bot').addEventListener('click', () => {
+      startBotMatch();
+    });
+
+    function startBotMatch() {
+      isBotMode = true;
+      inGame = true;
+      botScorePlayer = 0;
+      botScoreEnemy = 0;
+      botTimeLeft = 60;
+
+      screenLobby.classList.add('hidden');
+      screenGameOver.classList.add('hidden');
+      hud.classList.remove('hidden');
+      if (isTouchDevice) touchLayer.classList.remove('hidden');
+
+      camera.position.set(0, 1.6, 14);
+      camera.rotation.set(0, Math.PI, 0);
+
+      document.getElementById('hud-my-score').innerText = '0';
+      document.getElementById('hud-opp-score').innerText = '0';
+      document.getElementById('hud-timer').innerText = '60';
+
+      respawnBot();
+
+      if (!isTouchDevice) document.body.requestPointerLock();
+
+      botTimerInterval = setInterval(() => {
+        botTimeLeft--;
+        document.getElementById('hud-timer').innerText = botTimeLeft;
+        if (botTimeLeft <= 0) {
+          endBotMatch();
+        }
+      }, 1000);
+    }
+
+    function respawnBot() {
+      const rx = (Math.random() - 0.5) * 24;
+      const rz = (Math.random() - 0.5) * 12 - 4;
+      opponentMesh.position.set(rx, 0, rz);
+      pickNewBotTarget();
+    }
+
+    function pickNewBotTarget() {
+      botState.targetPos.set(
+        (Math.random() - 0.5) * 26,
+        0,
+        (Math.random() - 0.5) * 26
+      );
+    }
+
+    function updateBotAI(delta) {
+      // 1. Bewegung auf Zielpunkt zu
+      const dir = new THREE.Vector3().subVectors(botState.targetPos, opponentMesh.position);
+      dir.y = 0;
+      const dist = dir.length();
+
+      if (dist < 1.0) {
+        pickNewBotTarget();
+      } else {
+        dir.normalize();
+        opponentMesh.position.addScaledVector(dir, 5.5 * delta);
+        opponentMesh.lookAt(camera.position.x, 0, camera.position.z);
+      }
+
+      // 2. Bot Schuss-Zyklus
+      botState.shootCooldown -= delta;
+      if (botState.shootCooldown <= 0) {
+        botState.shootCooldown = 2.2 + Math.random() * 1.5;
+        
+        // Tracer vom Bot
+        const botGunPos = opponentMesh.position.clone().add(new THREE.Vector3(0, 1.2, 0));
+        const shootTarget = camera.position.clone().add(new THREE.Vector3(
+          (Math.random() - 0.5) * 1.8,
+          (Math.random() - 0.5) * 1.2,
+          (Math.random() - 0.5) * 1.8
+        ));
+        renderTracer(botGunPos, shootTarget, 0xef4444);
+
+        // Trefferprüfung Bot gegen Spieler
+        if (shootTarget.distanceTo(camera.position) < 1.0) {
+          botScoreEnemy++;
+          document.getElementById('hud-opp-score').innerText = botScoreEnemy;
+          // Spieler-Respawn
+          camera.position.set((Math.random() - 0.5) * 16, 1.6, 14);
+        }
+      }
+    }
+
+    function stopBotMatch() {
+      clearInterval(botTimerInterval);
+      isBotMode = false;
+      inGame = false;
+      opponentMesh.position.set(0, -100, 0);
+      touchLayer.classList.add('hidden');
+      hud.classList.add('hidden');
+    }
+
+    function endBotMatch() {
+      stopBotMatch();
+      screenGameOver.classList.remove('hidden');
+      document.getElementById('gameover-title').innerText = botScorePlayer >= botScoreEnemy ? 'TRAINING GEWONNEN' : 'TRAINING BEENDET';
+      document.getElementById('gameover-details').innerText = `Ergebnis gegen Bot: ${botScorePlayer} zu ${botScoreEnemy}`;
+    }
+
+    // --- Multiplayer-Events (Socket.io) ---
     socket.on('opponent-shot', (tracer) => {
       renderTracer(
         new THREE.Vector3(tracer.start.x, tracer.start.y, tracer.start.z),
@@ -417,11 +682,15 @@
     });
 
     socket.on('match-start', (data) => {
+      if (isBotMode) stopBotMatch();
+
       screenLobby.classList.add('hidden');
       screenGameOver.classList.add('hidden');
       hud.classList.remove('hidden');
+      if (isTouchDevice) touchLayer.classList.remove('hidden');
 
       inGame = true;
+      isBotMode = false;
       opponentId = data.opponentId;
 
       camera.position.set(data.spawn.x, data.spawn.y, data.spawn.z);
@@ -431,16 +700,18 @@
       document.getElementById('hud-opp-score').innerText = '0';
       document.getElementById('hud-timer').innerText = '60';
 
-      document.body.requestPointerLock();
+      if (!isTouchDevice) document.body.requestPointerLock();
     });
 
     socket.on('timer-tick', (timeLeft) => {
-      document.getElementById('hud-timer').innerText = timeLeft;
+      if (!isBotMode) document.getElementById('hud-timer').innerText = timeLeft;
     });
 
     socket.on('score-update', (data) => {
-      document.getElementById('hud-my-score').innerText = data.myScore;
-      document.getElementById('hud-opp-score').innerText = data.oppScore;
+      if (!isBotMode) {
+        document.getElementById('hud-my-score').innerText = data.myScore;
+        document.getElementById('hud-opp-score').innerText = data.oppScore;
+      }
     });
 
     socket.on('respawn', (pos) => {
@@ -449,7 +720,7 @@
     });
 
     socket.on('opponent-moved', (data) => {
-      if (opponentMesh) {
+      if (!isBotMode && opponentMesh) {
         opponentMesh.position.set(data.x, data.y - 0.9, data.z);
         opponentMesh.rotation.y = data.rotY;
       }
@@ -458,7 +729,8 @@
     socket.on('game-over', (res) => {
       inGame = false;
       hud.classList.add('hidden');
-      document.exitPointerLock();
+      touchLayer.classList.add('hidden');
+      if (document.pointerLockElement) document.exitPointerLock();
 
       screenGameOver.classList.remove('hidden');
       document.getElementById('gameover-title').innerText = res.winner === myName ? 'SIEG!' : (res.winner === 'Unentschieden' ? 'UNENTSCHIEDEN' : 'NIEDERLAGE');
@@ -475,35 +747,47 @@
 
     init3D();
 
+    // --- Main Render Loop ---
     function animate() {
       requestAnimationFrame(animate);
       const delta = clock.getDelta();
 
       if (inGame) {
+        // Bewegung berechnen (Keyboard oder Touch Joystick)
         velocity.x -= velocity.x * 10.0 * delta;
         velocity.z -= velocity.z * 10.0 * delta;
 
-        direction.z = Number(moveForward) - Number(moveBackward);
-        direction.x = Number(moveRight) - Number(moveLeft);
+        if (isTouchDevice && (touchMoveVector.x !== 0 || touchMoveVector.z !== 0)) {
+          direction.z = -touchMoveVector.z;
+          direction.x = touchMoveVector.x;
+        } else {
+          direction.z = Number(moveForward) - Number(moveBackward);
+          direction.x = Number(moveRight) - Number(moveLeft);
+        }
         direction.normalize();
 
         const speed = 40.0;
-        if (moveForward || moveBackward) velocity.z -= direction.z * speed * delta;
-        if (moveLeft || moveRight) velocity.x -= direction.x * speed * delta;
+        if (direction.z !== 0) velocity.z -= direction.z * speed * delta;
+        if (direction.x !== 0) velocity.x -= direction.x * speed * delta;
 
         camera.translateX(-velocity.x * delta);
         camera.translateZ(velocity.z * delta);
         camera.position.y = 1.6;
 
+        // Begrenzung Arena
         camera.position.x = Math.max(-16.5, Math.min(16.5, camera.position.x));
         camera.position.z = Math.max(-16.5, Math.min(16.5, camera.position.z));
 
-        socket.emit('player-update', {
-          x: camera.position.x,
-          y: camera.position.y,
-          z: camera.position.z,
-          rotY: camera.rotation.y
-        });
+        if (isBotMode) {
+          updateBotAI(delta);
+        } else {
+          socket.emit('player-update', {
+            x: camera.position.x,
+            y: camera.position.y,
+            z: camera.position.z,
+            rotY: camera.rotation.y
+          });
+        }
       }
 
       renderer.render(scene, camera);
@@ -513,4 +797,5 @@
   </script>
 </body>
 </html>
+
 
