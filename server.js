@@ -12,9 +12,32 @@ const io = new Server(server, {
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Speicherstrukturen
-const players = {}; // socket.id -> { id, name, status: 'lobby'|'ingame', gameId: null }
-const games = {};   // gameId -> { id, p1, p2, scores, timer, interval }
-const leaderboard = {}; // name -> { wins: 0, kills: 0 }
+const players = {}; 
+const games = {};   
+const leaderboard = {}; 
+
+// Telegram-Konfiguration
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+let lastNotificationTime = 0;
+
+async function sendTelegramLobbyAlert(playerName) {
+  if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
+
+  // Spam-Sperre: Maximal eine Benachrichtigung alle 60 Sekunden
+  const now = Date.now();
+  if (now - lastNotificationTime < 60000) return;
+  lastNotificationTime = now;
+
+  const text = encodeURIComponent(`*${playerName}* wartet in der Lobby!`);
+  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${text}&parse_mode=Markdown`;
+
+  try {
+    await fetch(url);
+  } catch (err) {
+    console.error('Telegram-Benachrichtigung fehlgeschlagen:', err);
+  }
+}
 
 function getLobbyList() {
   return Object.values(players).map(p => ({
@@ -47,6 +70,9 @@ io.on('connection', (socket) => {
 
     io.emit('lobby-update', getLobbyList());
     socket.emit('leaderboard-update', getLeaderboardList());
+
+    // Telegram-Gruppe informieren
+    sendTelegramLobbyAlert(cleanName);
   });
 
   socket.on('send-challenge', (targetId) => {
@@ -157,14 +183,14 @@ io.on('connection', (socket) => {
     io.to(targetId).emit('respawn', { x: (Math.random() - 0.5) * 6, y: 1.6, z: spawnZ, rotY: spawnRot });
   });
 
-  socket.on('shot-fired', (tracer) => {
+  socket.on('shot-fired', (data) => {
     const player = players[socket.id];
     if (!player || !player.gameId) return;
     const game = games[player.gameId];
     if (!game) return;
 
     const opponentId = game.p1 === socket.id ? game.p2 : game.p1;
-    io.to(opponentId).emit('opponent-shot', tracer);
+    io.to(opponentId).emit('opponent-shot', data);
   });
 
   socket.on('disconnect', () => {
@@ -229,4 +255,3 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Server laeuft auf Port ${PORT}`);
 });
-
