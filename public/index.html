@@ -3,23 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Hitscan Duell 1v1</title>
+  <title>ASI-MODE: Hitscan Duell 1v1</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
-    body, html { width: 100%; height: 100%; overflow: hidden; background: #1e293b; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #fff; touch-action: none; }
+    body, html { width: 100%; height: 100%; overflow: hidden; background: #0b0f19; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #fff; touch-action: none; }
     
-    .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; }
+    .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; padding: 12px; }
     .hidden { display: none !important; }
 
-    .panel { background: rgba(15, 23, 42, 0.95); border: 2px solid #334155; padding: 20px; border-radius: 12px; width: 92%; max-width: 440px; box-shadow: 0 15px 35px rgba(0,0,0,0.8); max-height: 90vh; overflow-y: auto; backdrop-filter: blur(8px); }
-    h1 { font-size: 20px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: #f59e0b; text-align: center; }
+    /* Stilvolles Luxus-Panel */
+    .panel { background: rgba(15, 23, 42, 0.96); border: 2px solid #f59e0b; padding: 18px; border-radius: 14px; width: 100%; max-width: 450px; box-shadow: 0 15px 40px rgba(0,0,0,0.9), 0 0 25px rgba(245, 158, 11, 0.2); max-height: 94vh; overflow-y: auto; backdrop-filter: blur(10px); }
+    
+    /* ASI-MODE Header */
+    .asi-title { font-size: 26px; font-weight: 950; text-transform: uppercase; letter-spacing: 3px; color: #facc15; text-align: center; text-shadow: 0 0 20px rgba(245, 158, 11, 0.8), 0 3px 6px #000; margin-bottom: 2px; }
+    .asi-subtitle { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: #94a3b8; text-align: center; margin-bottom: 12px; }
+    
+    /* Story & Lore Box */
+    .lore-box { background: rgba(2, 6, 23, 0.8); border-left: 3px solid #f59e0b; padding: 10px 12px; border-radius: 4px; font-size: 11px; line-height: 1.45; color: #cbd5e1; margin-bottom: 14px; }
+    .lore-box strong { color: #facc15; }
+
+    /* Bild-Präsentation */
+    .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+    .photo-card { background: #020617; border: 1.5px solid #334155; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 4px 12px rgba(0,0,0,0.6); }
+    .photo-card img { width: 100%; height: 110px; object-fit: cover; object-position: center top; display: block; }
+    .photo-caption { font-size: 9px; font-weight: 800; color: #f59e0b; padding: 5px; text-align: center; background: rgba(15, 23, 42, 0.95); letter-spacing: 0.5px; }
+
     h2 { font-size: 11px; margin: 12px 0 6px 0; text-transform: uppercase; color: #94a3b8; border-bottom: 1px solid #334155; padding-bottom: 4px; letter-spacing: 1px; }
-    input[type="text"] { width: 100%; padding: 12px; background: #0b0f19; border: 1.5px solid #475569; border-radius: 6px; color: #fff; font-size: 15px; outline: none; margin-bottom: 8px; }
+    input[type="text"] { width: 100%; padding: 12px; background: #020617; border: 1.5px solid #475569; border-radius: 6px; color: #fff; font-size: 15px; outline: none; margin-bottom: 10px; }
     input[type="text"]:focus { border-color: #f59e0b; }
-    button { width: 100%; padding: 11px; background: #f59e0b; border: none; border-radius: 6px; color: #000; font-weight: 800; cursor: pointer; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; }
+    button { width: 100%; padding: 12px; background: #f59e0b; border: none; border-radius: 6px; color: #000; font-weight: 900; cursor: pointer; text-transform: uppercase; font-size: 12px; letter-spacing: 0.8px; }
     button:hover { background: #d97706; }
     button.secondary { background: #334155; color: #fff; margin-top: 6px; }
-    button.bot-btn { background: #2563eb; color: #fff; margin-top: 10px; }
+    button.bot-btn { background: #2563eb; color: #fff; margin-top: 10px; font-size: 13px; }
     button.bot-btn:hover { background: #1d4ed8; }
 
     .char-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-bottom: 8px; }
@@ -27,63 +42,26 @@
     .char-btn.active { border-color: #f59e0b; background: #451a03; color: #fbbf24; }
 
     ul { list-style: none; max-height: 80px; overflow-y: auto; margin-bottom: 6px; }
-    li { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; background: #0b0f19; margin-bottom: 4px; border-radius: 6px; font-size: 11px; }
+    li { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; background: #020617; margin-bottom: 4px; border-radius: 6px; font-size: 11px; }
     li button { width: auto; padding: 4px 8px; font-size: 10px; }
 
-    /* HUD Layout */
+    /* In-Game HUD */
     #hud { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
-    
-    .hud-top-bar {
-      position: absolute;
-      top: 8px;
-      left: 8px;
-      right: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-    }
-
+    .hud-top-bar { position: absolute; top: 8px; left: 8px; right: 8px; display: flex; justify-content: space-between; align-items: flex-start; }
     #minimap-container { width: 78px; height: 78px; background: rgba(11, 15, 25, 0.85); border: 2px solid rgba(255,255,255,0.25); border-radius: 50%; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.6); flex-shrink: 0; }
     #minimap { width: 100%; height: 100%; }
 
-    .scoreboard {
-      display: flex;
-      align-items: center;
-      background: rgba(11, 15, 25, 0.9);
-      border: 1.5px solid rgba(255, 255, 255, 0.2);
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.6);
-      flex-shrink: 0;
-    }
+    .scoreboard { display: flex; align-items: center; background: rgba(11, 15, 25, 0.9); border: 1.5px solid rgba(255, 255, 255, 0.2); border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.6); flex-shrink: 0; }
     .score-box { padding: 4px 12px; font-size: 14px; font-weight: 900; }
     .score-box.blue { background: rgba(37, 99, 235, 0.85); color: #fff; }
     .score-box.red { background: rgba(220, 38, 38, 0.85); color: #fff; }
-    .timer-center {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 3px 12px;
-      background: #020617;
-      min-width: 60px;
-    }
+    .timer-center { display: flex; flex-direction: column; align-items: center; padding: 3px 12px; background: #020617; min-width: 60px; }
     .timer-sub { font-size: 8px; font-weight: 700; color: #94a3b8; letter-spacing: 1px; }
     .timer-sec { font-size: 18px; font-weight: 900; color: #f59e0b; font-family: monospace; }
     .timer-sec.danger { color: #ef4444; animation: blink 0.5s infinite alternate; }
     @keyframes blink { from { opacity: 1; } to { opacity: 0.3; } }
 
-    #lobby-monitor {
-      background: rgba(11, 15, 25, 0.85);
-      border: 1.5px solid rgba(255, 255, 255, 0.2);
-      border-radius: 8px;
-      padding: 5px 8px;
-      font-size: 10px;
-      min-width: 105px;
-      max-width: 140px;
-      pointer-events: auto;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-      flex-shrink: 0;
-    }
+    #lobby-monitor { background: rgba(11, 15, 25, 0.85); border: 1.5px solid rgba(255, 255, 255, 0.2); border-radius: 8px; padding: 5px 8px; font-size: 10px; min-width: 105px; max-width: 140px; pointer-events: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.5); flex-shrink: 0; }
     #lobby-monitor strong { color: #f59e0b; }
     .monitor-player { display: flex; justify-content: space-between; align-items: center; margin-top: 3px; gap: 4px; }
     .monitor-player button { padding: 2px 5px; font-size: 8px; width: auto; }
@@ -91,27 +69,8 @@
     #crosshair { position: absolute; top: 50%; left: 50%; width: 6px; height: 6px; transform: translate(-50%, -50%); border: 2px solid #000; border-radius: 50%; background: #22c55e; }
     #hitmarker { position: absolute; top: 50%; left: 50%; width: 24px; height: 24px; transform: translate(-50%, -50%); border: 3px solid #22c55e; border-radius: 50%; opacity: 0; transition: opacity 0.08s; pointer-events: none; }
 
-    #asimode-overlay {
-      position: absolute;
-      top: 35%;
-      left: 50%;
-      transform: translate(-50%, -50%) scale(0.6);
-      font-size: 64px;
-      font-weight: 950;
-      color: #facc15;
-      text-shadow: 0 0 25px #f59e0b, 0 0 50px #dc2626, 0 6px 12px rgba(0,0,0,0.9);
-      letter-spacing: 4px;
-      text-transform: uppercase;
-      pointer-events: none;
-      z-index: 25;
-      opacity: 0;
-      transition: all 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-    #asimode-overlay.active {
-      transform: translate(-50%, -50%) scale(1.15);
-      opacity: 1;
-    }
-
+    #asimode-overlay { position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%) scale(0.6); font-size: 64px; font-weight: 950; color: #facc15; text-shadow: 0 0 25px #f59e0b, 0 0 50px #dc2626, 0 6px 12px rgba(0,0,0,0.9); letter-spacing: 4px; text-transform: uppercase; pointer-events: none; z-index: 25; opacity: 0; transition: all 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    #asimode-overlay.active { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
     #countdown-overlay { position: absolute; top: 38%; left: 50%; transform: translate(-50%, -50%); font-size: 72px; font-weight: 900; color: #f59e0b; text-shadow: 0 4px 20px rgba(0,0,0,0.9), 0 0 30px #f59e0b; pointer-events: none; z-index: 15; letter-spacing: 2px; }
     #death-overlay { position: absolute; top: 22%; left: 50%; transform: translate(-50%, -50%); font-size: 32px; font-weight: 950; color: #ef4444; text-shadow: 0 4px 20px #dc2626, 0 2px 10px rgba(0,0,0,0.9); pointer-events: none; z-index: 15; letter-spacing: 3px; text-transform: uppercase; text-align: center; }
 
@@ -122,30 +81,8 @@
     #joystick-base { position: absolute; left: 20px; bottom: 20px; width: 110px; height: 110px; background: rgba(15, 23, 42, 0.4); border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; pointer-events: auto; backdrop-filter: blur(2px); }
     #joystick-knob { position: absolute; top: 50%; left: 50%; width: 44px; height: 44px; background: #f59e0b; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; box-shadow: 0 2px 10px rgba(0,0,0,0.6); }
     
-    .touch-right-cluster {
-      position: absolute;
-      right: 16px;
-      bottom: 16px;
-      display: grid;
-      grid-template-areas:
-        ".     jump"
-        "dash  fire";
-      gap: 10px;
-      align-items: center;
-      justify-items: center;
-      pointer-events: auto;
-    }
-    .touch-action-btn {
-      border-radius: 50%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-weight: 900;
-      color: #fff;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-      pointer-events: auto;
-      backdrop-filter: blur(4px);
-    }
+    .touch-right-cluster { position: absolute; right: 16px; bottom: 16px; display: grid; grid-template-areas: ". jump" "dash fire"; gap: 10px; align-items: center; justify-items: center; pointer-events: auto; }
+    .touch-action-btn { border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: 900; color: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.5); pointer-events: auto; backdrop-filter: blur(4px); }
     .touch-action-btn:active { transform: scale(0.92); }
     .jump-btn { grid-area: jump; width: 56px; height: 56px; background: rgba(37, 99, 235, 0.75); border: 2px solid #93c5fd; font-size: 10px; }
     .dash-btn { grid-area: dash; width: 56px; height: 56px; background: rgba(51, 65, 85, 0.75); border: 2px solid #cbd5e1; font-size: 10px; }
@@ -154,18 +91,51 @@
 </head>
 <body>
 
+  <!-- Screen 1: Login -->
   <div id="screen-login" class="screen">
     <div class="panel">
-      <h1>Hitscan Duell 1v1</h1>
-      <input type="text" id="username-input" placeholder="Spielername..." maxlength="14">
-      <button id="btn-login">Lobby Betreten</button>
+      <div class="asi-title">ASI-MODE</div>
+      <div class="asi-subtitle">Sylt vs. Saint-Tropez Hitscan Arena</div>
+
+      <div class="photo-grid">
+        <div class="photo-card">
+          <img src="/Screenshot_2026-09-20-19-40-07-632_com.google.android.apps.photos.jpg" alt="Die Crew">
+          <div class="photo-caption">DIE CREW</div>
+        </div>
+        <div class="photo-card">
+          <img src="/Screenshot_2026-09-20-19-40-30-966_com.google.android.apps.photos.jpg" alt="Sylt Talk">
+          <div class="photo-caption">SYLT ROYALE</div>
+        </div>
+      </div>
+
+      <div class="lore-box">
+        <strong>Worum geht's hier?</strong><br>
+        Schieß mit brennenden Fluppen 34 m/s schnelle Champagnerflaschen auf deine Gegner. Nutze <strong>DASH</strong> zum Ausweichen, geh bei <strong>Gosch Sylt</strong> in Deckung und schick deinen Rivalen im pinken Samtsarg samt loderndem Riesen-Joint direkt ins Fegefeuer.
+      </div>
+
+      <input type="text" id="username-input" placeholder="Dein Spielername..." maxlength="14">
+      <button id="btn-login">In die Lobby eintreten</button>
     </div>
   </div>
 
+  <!-- Screen 2: Lobby -->
   <div id="screen-lobby" class="screen hidden">
     <div class="panel">
-      <h1>Lobby</h1>
-      <div style="text-align:center; margin-bottom: 6px;">Spieler: <strong id="my-name-display" style="color: #f59e0b;"></strong></div>
+      <div class="asi-title">ASI-MODE</div>
+      <div style="text-align:center; font-size: 12px; color: #94a3b8; margin-bottom: 10px;">
+        Angemeldet als: <strong id="my-name-display" style="color: #f59e0b;"></strong>
+      </div>
+
+      <div class="photo-grid">
+        <div class="photo-card">
+          <img src="/Screenshot_2026-09-20-19-40-07-632_com.google.android.apps.photos.jpg" alt="Die Crew">
+          <div class="photo-caption">DAS SYNDIKAT</div>
+        </div>
+        <div class="photo-card">
+          <img src="/Screenshot_2026-09-20-19-40-30-966_com.google.android.apps.photos.jpg" alt="Sylt Talk">
+          <div class="photo-caption">"HAT ER SYLT GESAGT?"</div>
+        </div>
+      </div>
 
       <h2>Kämpfer wählen</h2>
       <div class="char-grid">
@@ -189,23 +159,26 @@
     </div>
   </div>
 
+  <!-- Screen 3: Herausforderung -->
   <div id="screen-challenge" class="screen hidden" style="background: rgba(0,0,0,0.85); z-index: 20;">
     <div class="panel" style="text-align: center;">
-      <h1>Herausforderung!</h1>
-      <p id="challenge-text" style="margin-bottom: 14px; font-size: 14px;"></p>
-      <button id="btn-accept-challenge">Annehmen</button>
-      <button id="btn-decline-challenge" class="secondary">Ablehnen</button>
+      <div class="asi-title" style="font-size: 22px;">DUELL-ANFRAGE!</div>
+      <p id="challenge-text" style="margin: 14px 0; font-size: 14px; color: #cbd5e1;"></p>
+      <button id="btn-accept-challenge">Annehmen & Wegballern</button>
+      <button id="btn-decline-challenge" class="secondary">Kneifen (Ablehnen)</button>
     </div>
   </div>
 
+  <!-- Screen 4: Game Over -->
   <div id="screen-gameover" class="screen hidden" style="background: rgba(0,0,0,0.88); z-index: 20;">
     <div class="panel" style="text-align: center;">
-      <h1 id="gameover-title">Runde Beendet</h1>
-      <p id="gameover-details" style="margin-bottom: 18px; font-size: 14px;"></p>
+      <h1 id="gameover-title">RUNDE BEENDET</h1>
+      <p id="gameover-details" style="margin-bottom: 18px; font-size: 14px; color: #cbd5e1;"></p>
       <button id="btn-back-to-lobby">Zurück zur Lobby</button>
     </div>
   </div>
 
+  <!-- In-Game HUD -->
   <div id="hud" class="hidden">
     <div class="hud-top-bar">
       <div id="minimap-container">
@@ -235,6 +208,7 @@
     <div id="hitmarker"></div>
   </div>
 
+  <!-- Touch Controls -->
   <div id="touch-layer" class="hidden">
     <div id="joystick-base"><div id="joystick-knob"></div></div>
     
@@ -702,7 +676,7 @@
     };
 
     // ==========================================
-    // 3. TEXTUREN
+    // 3. PROZEDURALE TEXTUREN
     // ==========================================
     function createGoschSignTexture() {
       const c = document.createElement('canvas');
@@ -1496,7 +1470,6 @@
       deathCamStart.copy(camera.position);
       if (viewmodelGroup) viewmodelGroup.visible = false;
 
-      // Sarg am Todesort platzieren
       coffinGroup.position.set(camera.position.x, 0, camera.position.z);
       coffinGroup.rotation.y = camera.rotation.y;
       coffinGroup.visible = true;
@@ -1522,7 +1495,6 @@
     function updateDeathSequence(delta) {
       deathTimer += delta;
 
-      // Anti-Clipping-Kamera: Vektor IMMER zur Arena-Mitte (0,0) ausrichten
       const coffinPos = coffinGroup.position;
       const toCenter = new THREE.Vector2(-coffinPos.x, -coffinPos.z);
       const distToCenter = toCenter.length();
@@ -1532,19 +1504,16 @@
         toCenter.set(0, 1);
       }
 
-      // Kamera steht 3.2m versetzt in Richtung Map-Zentrum und schaut nach außen auf den Sarg
       let targetCamX = coffinPos.x + toCenter.x * 3.2;
       let targetCamZ = coffinPos.z + toCenter.y * 3.2;
       let targetCamY = 4.4;
 
-      // Hard Clamp: Garantiert mindestens 3m Abstand zur 18m-Außenwand
       targetCamX = Math.max(-15.0, Math.min(15.0, targetCamX));
       targetCamZ = Math.max(-15.0, Math.min(15.0, targetCamZ));
 
       const camTarget = new THREE.Vector3(targetCamX, targetCamY, targetCamZ);
       const coffinFocus = new THREE.Vector3(coffinPos.x, 0.4, coffinPos.z);
 
-      // Sichtlinien-Check gegen Hindernisse (Raycast)
       const losDir = new THREE.Vector3().subVectors(camTarget, coffinFocus);
       const losDist = losDir.length();
       losDir.normalize();
@@ -1552,7 +1521,6 @@
       const losRay = new THREE.Raycaster(coffinFocus, losDir, 0.2, losDist);
       const occluders = losRay.intersectObjects(obstacleMeshes, true);
 
-      // Falls ein Objekt die Sicht versperrt: Sofortige steile Draufsicht
       if (occluders.length > 0 && occluders[0].distance < losDist - 0.2) {
         camTarget.set(coffinPos.x + toCenter.x * 0.5, 5.2, coffinPos.z + toCenter.y * 0.5);
       }
@@ -1560,7 +1528,6 @@
       camera.position.lerp(camTarget, delta * 3.0);
       camera.lookAt(coffinFocus.x, coffinFocus.y, coffinFocus.z);
 
-      // Phase 1: Joint fliegt akkurat in den Mund des Charakters
       if (deathTimer < 1.6) {
         lidHasSlammed = false;
         const progress = deathTimer / 1.6;
@@ -1578,9 +1545,7 @@
           scene.add(puff);
           particles.push({ sprite: puff, vel: new THREE.Vector3(0, 0.8, 0), rotVel: 0, life: 0.5, maxLife: 0.6 });
         }
-      } 
-      // Phase 2: Deckel schlägt mit Wucht zu
-      else if (deathTimer >= 1.6 && deathTimer < 2.3) {
+      } else if (deathTimer >= 1.6 && deathTimer < 2.3) {
         airborneJoint.visible = false;
         const lidProgress = (deathTimer - 1.6) / 0.7;
         coffinLid.rotation.z = THREE.MathUtils.lerp(-Math.PI * 0.45, 0, lidProgress * lidProgress);
@@ -1590,9 +1555,7 @@
           coffinLid.rotation.z = 0;
           playSargSlamSound();
         }
-      } 
-      // Phase 3: Fegefeuer
-      else if (deathTimer >= 2.3) {
+      } else if (deathTimer >= 2.3) {
         coffinLid.rotation.z = 0;
         const sinkDelta = delta * 1.8;
         coffinGroup.position.y -= sinkDelta;
@@ -1766,7 +1729,7 @@
     }
 
     // ==========================================
-    // 7. PROJEKTILE (34 M/S GESCHWINDIGKEIT)
+    // 7. PROJEKTILE (34 M/S)
     // ==========================================
     function createChampagneBottleMesh() {
       const group = new THREE.Group();
