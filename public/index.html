@@ -30,7 +30,7 @@
     li { display: flex; justify-content: space-between; align-items: center; padding: 5px 8px; background: #0f172a; margin-bottom: 4px; border-radius: 4px; font-size: 11px; }
     li button { width: auto; padding: 3px 8px; font-size: 10px; }
 
-    /* In-Game HUD */
+    /* HUD */
     #hud { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
     #crosshair { position: absolute; top: 50%; left: 50%; width: 8px; height: 8px; transform: translate(-50%, -50%); border: 2px solid #000; border-radius: 50%; background: #22c55e; }
     #stats-bar { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); display: flex; gap: 16px; font-size: 16px; font-weight: 800; background: rgba(15, 23, 42, 0.85); padding: 6px 16px; border-radius: 6px; border: 1px solid #334155; white-space: nowrap; }
@@ -47,22 +47,65 @@
     .monitor-player { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; gap: 6px; }
     .monitor-player button { padding: 2px 6px; font-size: 9px; width: auto; }
 
-    .hud-controls-bar { position: absolute; bottom: 12px; left: 12px; display: flex; gap: 8px; pointer-events: auto; }
-    .hud-pill { background: rgba(15, 23, 42, 0.85); border: 1px solid #475569; color: #fff; padding: 6px 10px; border-radius: 4px; font-size: 10px; font-weight: 700; cursor: pointer; }
+    #audio-toggle { position: absolute; bottom: 12px; left: 12px; background: rgba(15, 23, 42, 0.85); border: 1px solid #475569; color: #fff; padding: 6px 10px; border-radius: 4px; font-size: 10px; font-weight: 700; cursor: pointer; pointer-events: auto; }
 
-    /* Touch Controls */
+    /* Touch Steuerung */
     #touch-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 6; pointer-events: none; }
-    #joystick-base { position: absolute; left: 24px; bottom: 24px; width: 100px; height: 100px; background: rgba(0,0,0,0.35); border: 2px solid rgba(255,255,255,0.4); border-radius: 50%; pointer-events: auto; }
-    #joystick-knob { position: absolute; top: 50%; left: 50%; width: 40px; height: 40px; background: #f59e0b; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; }
+    #joystick-base { position: absolute; left: 24px; bottom: 24px; width: 110px; height: 110px; background: rgba(0,0,0,0.35); border: 2px solid rgba(255,255,255,0.4); border-radius: 50%; pointer-events: auto; }
+    #joystick-knob { position: absolute; top: 50%; left: 50%; width: 44px; height: 44px; background: #f59e0b; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; }
     
-    /* Mobility Buttons auf der linken Seite beim Daumen */
-    .touch-left-skills { position: absolute; left: 24px; bottom: 136px; display: flex; gap: 10px; pointer-events: auto; }
-    .touch-circle-btn { width: 48px; height: 48px; border-radius: 50%; background: #334155; border: 2px solid #94a3b8; color: #fff; font-size: 9px; font-weight: 800; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-    .touch-circle-btn:active { background: #475569; transform: scale(0.95); }
-
-    /* Rechter optionaler manueller Feuerbutton */
-    #btn-touch-fire { position: absolute; right: 24px; bottom: 24px; width: 68px; height: 68px; border-radius: 50%; background: rgba(220, 38, 38, 0.85); border: 2px solid #fff; color: #fff; font-size: 11px; font-weight: 900; pointer-events: auto; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
-    #btn-touch-fire:active { background: #991b1b; transform: scale(0.95); }
+    /* Ergonomisches Aktions-Cluster rechts */
+    .touch-right-cluster {
+      position: absolute;
+      right: 18px;
+      bottom: 18px;
+      display: grid;
+      grid-template-areas:
+        ".     jump"
+        "dash  fire";
+      gap: 12px;
+      align-items: center;
+      justify-items: center;
+      pointer-events: auto;
+    }
+    .touch-action-btn {
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: 800;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      pointer-events: auto;
+    }
+    .touch-action-btn:active {
+      transform: scale(0.92);
+    }
+    .jump-btn {
+      grid-area: jump;
+      width: 54px;
+      height: 54px;
+      background: #2563eb;
+      border: 2px solid #93c5fd;
+      font-size: 10px;
+    }
+    .dash-btn {
+      grid-area: dash;
+      width: 54px;
+      height: 54px;
+      background: #475569;
+      border: 2px solid #cbd5e1;
+      font-size: 10px;
+    }
+    .fire-btn {
+      grid-area: fire;
+      width: 76px;
+      height: 76px;
+      background: #dc2626;
+      border: 3px solid #fff;
+      font-size: 13px;
+      font-weight: 900;
+    }
   </style>
 </head>
 <body>
@@ -140,25 +183,21 @@
       <div id="lobby-monitor-content">Keine Spieler da</div>
     </div>
 
-    <div class="hud-controls-bar">
-      <button id="audio-toggle" class="hud-pill">Musik: AN</button>
-      <button id="autofire-toggle" class="hud-pill" style="color: #4ade80;">Auto-Feuer: AN</button>
-    </div>
+    <button id="audio-toggle">Musik: AN</button>
 
     <div id="crosshair"></div>
     <div id="hitmarker"></div>
   </div>
 
-  <!-- Touch Controls -->
+  <!-- Touch Steuerung -->
   <div id="touch-layer" class="hidden">
     <div id="joystick-base"><div id="joystick-knob"></div></div>
     
-    <div class="touch-left-skills">
-      <div id="btn-touch-jump" class="touch-circle-btn">SPRUNG</div>
-      <div id="btn-touch-dash" class="touch-circle-btn">DASH</div>
+    <div class="touch-right-cluster">
+      <div id="btn-touch-jump" class="touch-action-btn jump-btn">SPRUNG</div>
+      <div id="btn-touch-dash" class="touch-action-btn dash-btn">DASH</div>
+      <div id="btn-touch-fire" class="touch-action-btn fire-btn">FEUER</div>
     </div>
-
-    <div id="btn-touch-fire">FEUER</div>
   </div>
 
   <div id="game-container"></div>
@@ -287,14 +326,6 @@
       document.getElementById('audio-toggle').innerText = isMusicMuted ? 'Musik: AUS' : 'Musik: AN';
     };
 
-    let autoFireEnabled = true;
-    document.getElementById('autofire-toggle').onclick = () => {
-      autoFireEnabled = !autoFireEnabled;
-      const btn = document.getElementById('autofire-toggle');
-      btn.innerText = autoFireEnabled ? 'Auto-Feuer: AN' : 'Auto-Feuer: AUS';
-      btn.style.color = autoFireEnabled ? '#4ade80' : '#94a3b8';
-    };
-
     // ==========================================
     // 2. STATE & SOCKET MANAGEMENT
     // ==========================================
@@ -322,7 +353,6 @@
 
     let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
     const velocity = new THREE.Vector3();
-    const direction = new THREE.Vector3();
     let velocityY = 0;
     let isGrounded = true;
     const GRAVITY = 26.0;
@@ -335,24 +365,20 @@
     const DASH_SPEED = 65.0;
 
     let shootCooldown = 0;
-    const FIRE_INTERVAL = 0.35; // Maximale Kadenz
+    const FIRE_INTERVAL = 0.28;
 
-    // Minimap
     const minimapCanvas = document.getElementById('minimap');
     const minimapCtx = minimapCanvas.getContext('2d');
     const arenaBounds = 36;
 
-    // Wolken & Vögel
     const clouds = [];
     const birds = [];
     const particles = [];
     let leafTexture = null;
 
-    // Kollisionsstrukturen
-    const obstacleColliders = []; // { minX, maxX, minZ, maxZ } für Spieler- und Bot-Movement
-    const obstacleMeshes = [];    // Three.js Meshes für Hitscan-Sichtlinien-Prüfung
+    const obstacleColliders = [];
+    const obstacleMeshes = [];
 
-    // DOM-Referenzen
     const screenLogin = document.getElementById('screen-login');
     const screenLobby = document.getElementById('screen-lobby');
     const screenChallenge = document.getElementById('screen-challenge');
@@ -369,7 +395,6 @@
 
     const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
-    // Charakterauswahl
     document.querySelectorAll('.char-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.char-btn').forEach(b => b.classList.remove('active'));
@@ -378,7 +403,6 @@
       });
     });
 
-    // Login
     document.getElementById('btn-login').addEventListener('click', () => {
       initAudio();
       const input = document.getElementById('username-input').value.trim();
@@ -499,7 +523,7 @@
     };
 
     // ==========================================
-    // 3. TEXTUREN & MESH GENERIERUNG
+    // 3. TEXTUREN
     // ==========================================
     function createCrateTexture() {
       const c = document.createElement('canvas');
@@ -586,7 +610,7 @@
     }
 
     // ==========================================
-    // 4. SZENE & HINDERNIS-REGISTRIERUNG
+    // 4. SZENE & HINDERNISSE
     // ==========================================
     function init3D() {
       scene = new THREE.Scene();
@@ -613,14 +637,14 @@
       sunMesh.position.set(40, 55, 30);
       scene.add(sunMesh);
 
-      // Arena Boden
+      // Boden
       const floorMat = new THREE.MeshStandardMaterial({ map: createSandstoneTexture(), roughness: 0.8 });
       const floor = new THREE.Mesh(new THREE.PlaneGeometry(36, 36), floorMat);
       floor.rotation.x = -Math.PI / 2;
       floor.receiveShadow = true;
       scene.add(floor);
 
-      // Arena Wände (auch als Hindernis-Collider registriert)
+      // Wände
       const wallMat = new THREE.MeshStandardMaterial({ map: createWallPlasterTexture(), roughness: 0.7 });
       const makeWall = (w, h, d, x, y, z, color) => {
         const group = new THREE.Group();
@@ -661,14 +685,8 @@
       scene.add(box);
 
       obstacleMeshes.push(box);
-      // Wenn Kiste am Boden steht, blockiert sie Spielerbewegung
       if (y < 1.0) {
-        obstacleColliders.push({
-          minX: x - size / 2,
-          maxX: x + size / 2,
-          minZ: z - size / 2,
-          maxZ: z + size / 2
-        });
+        obstacleColliders.push({ minX: x - size / 2, maxX: x + size / 2, minZ: z - size / 2, maxZ: z + size / 2 });
       }
     }
 
@@ -679,16 +697,10 @@
       scene.add(block);
 
       obstacleMeshes.push(block);
-      obstacleColliders.push({
-        minX: x - w / 2,
-        maxX: x + w / 2,
-        minZ: z - d / 2,
-        maxZ: z + d / 2
-      });
+      obstacleColliders.push({ minX: x - w / 2, maxX: x + w / 2, minZ: z - d / 2, maxZ: z + d / 2 });
     }
 
     function spawnCSMapLayout() {
-      // Taktische Kistenstapel
       addCrate(-4, 0, -8, 2.0);
       addCrate(-4, 2.0, -8, 1.6);
       addCrate(7, 0, -6, 1.8);
@@ -697,7 +709,6 @@
       addCrate(-8, 0, 8, 1.8);
       addCrate(4, 0, 9, 2.0);
 
-      // Betonbarrikaden
       addConcreteWall(0, -3, 6, 1.2);
       addConcreteWall(-6, 2, 1.2, 5);
 
@@ -705,7 +716,6 @@
     }
 
     function spawnFoodProps() {
-      // Bierflasche
       const bottleGroup = new THREE.Group();
       const bottleMat = new THREE.MeshStandardMaterial({ color: 0x451a03, roughness: 0.2 });
       const b1 = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 3.2, 16), bottleMat);
@@ -723,7 +733,6 @@
       obstacleMeshes.push(b1);
       obstacleColliders.push({ minX: -10.8, maxX: -9.2, minZ: -10.8, maxZ: -9.2 });
 
-      // Martini Glas
       const martiniGroup = new THREE.Group();
       const stemMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.6 });
       const base = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.1, 16), stemMat);
@@ -742,7 +751,6 @@
       obstacleMeshes.push(cone);
       obstacleColliders.push({ minX: 9.8, maxX: 12.2, minZ: 5.8, maxZ: 8.2 });
 
-      // Pommes-Tüte
       const friesGroup = new THREE.Group();
       const bag = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.4, 1.4), new THREE.MeshStandardMaterial({ color: 0xdc2626 }));
       bag.position.y = 1.2;
@@ -760,7 +768,6 @@
       obstacleColliders.push({ minX: -1.2, maxX: 1.2, minZ: -0.8, maxZ: 0.8 });
     }
 
-    // Präzise AABB-Kollisionsprüfung
     function isPositionColliding(x, z, radius = 0.45) {
       for (let i = 0; i < obstacleColliders.length; i++) {
         const b = obstacleColliders[i];
@@ -833,7 +840,6 @@
       minimapCtx.lineWidth = 2;
       minimapCtx.strokeRect(2, 2, 92, 92);
 
-      // Hindernisse
       minimapCtx.fillStyle = '#64748b';
       obstacleColliders.forEach(c => {
         const x1 = toMap(c.minX);
@@ -843,7 +849,6 @@
         minimapCtx.fillRect(x1, y1, Math.max(x2 - x1, 2), Math.max(y2 - y1, 2));
       });
 
-      // Gegner
       if (opponentRoot && opponentRoot.position.y > -50) {
         minimapCtx.fillStyle = '#ef4444';
         minimapCtx.beginPath();
@@ -851,7 +856,6 @@
         minimapCtx.fill();
       }
 
-      // Spieler mit Blickrichtung
       const px = toMap(camera.position.x);
       const py = toMap(camera.position.z);
       const rot = camera.rotation.y;
@@ -1057,7 +1061,7 @@
     }
 
     // ==========================================
-    // 7. STEUERUNG (ERGONOMIE-OPTIMIERT)
+    // 7. STEUERUNG (RECHTER DAUMEN CLUSTER)
     // ==========================================
     function triggerJump() {
       if (isGrounded) {
@@ -1120,7 +1124,7 @@
     let lastLookX = 0, lastLookY = 0;
 
     function setupTouchControls() {
-      // Joystick (Bewegen)
+      // Joystick links
       joystickBase.addEventListener('touchstart', (e) => {
         initAudio();
         e.preventDefault();
@@ -1129,20 +1133,20 @@
         handleJoyMove(t);
       }, { passive: false });
 
-      // Skills auf der linken Seite beim Daumen
+      // Buttons rechts: Direkte Event-Verarbeitung ohne Zieldrift
       btnTouchJump.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); triggerJump(); }, { passive: false });
       btnTouchDash.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); triggerDash(); }, { passive: false });
       btnTouchFire.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); fireHitscan(); }, { passive: false });
 
-      // Rechte Bildschirmhälfte: Reines Zielen
+      // Touch-Blickfeld auf der rechten Hälfte
       window.addEventListener('touchstart', (e) => {
         initAudio();
         if (!inGame) return;
         for (let i = 0; i < e.changedTouches.length; i++) {
           const t = e.changedTouches[i];
           if (t.clientX > window.innerWidth * 0.35 && lookTouchId === null) {
-            const fRect = btnTouchFire.getBoundingClientRect();
-            if (t.clientX >= fRect.left && t.clientX <= fRect.right && t.clientY >= fRect.top && t.clientY <= fRect.bottom) {
+            const el = document.elementFromPoint(t.clientX, t.clientY);
+            if (el && el.closest('.touch-action-btn, #joystick-base, button, .panel')) {
               continue;
             }
             lookTouchId = t.identifier;
@@ -1198,7 +1202,7 @@
     }
 
     // ==========================================
-    // 8. HITSCAN & DECKUNGS-KOLLISION
+    // 8. MANUELLER HITSCAN
     // ==========================================
     const raycaster = new THREE.Raycaster();
 
@@ -1211,10 +1215,7 @@
       setTimeout(() => { cigWeapon.position.z -= 0.05; }, 50);
 
       raycaster.setFromCamera({ x: 0, y: 0 }, camera);
-
-      // Schussprüfung gegen Gegner UND Hindernisse
-      const shootTargets = [...obstacleMeshes, opponentHitbox];
-      const hits = raycaster.intersectObjects(shootTargets, true);
+      const hits = raycaster.intersectObjects([...obstacleMeshes, opponentHitbox], true);
 
       const startPos = new THREE.Vector3();
       cigWeapon.getWorldPosition(startPos);
@@ -1224,7 +1225,6 @@
         const firstHit = hits[0];
         endPos.copy(firstHit.point);
 
-        // Treffer nur, wenn kein Hindernis im Weg steht
         if (firstHit.object === opponentHitbox) {
           const marker = document.getElementById('hitmarker');
           marker.style.opacity = '1';
@@ -1240,7 +1240,6 @@
             socket.emit('hit-target', opponentId);
           }
         } else {
-          // Schuss traf Kiste, Wand oder Prop (Deckung wirkt!)
           spawnHitImpact(firstHit.point);
         }
       } else {
@@ -1250,18 +1249,6 @@
       renderTracer(startPos, endPos, 0xff5500);
       if (!isBotMode) {
         socket.emit('shot-fired', { start: startPos, end: endPos, hitPoint: hits.length > 0 && hits[0].object === opponentHitbox ? hits[0].point : null });
-      }
-    }
-
-    // Auto-Feuer Raycast Ticker (Prüft Sichtlinie)
-    function checkAutoFire() {
-      if (!autoFireEnabled || shootCooldown > 0 || !inGame || opponentRoot.position.y < -50) return;
-
-      raycaster.setFromCamera({ x: 0, y: 0 }, camera);
-      const hits = raycaster.intersectObjects([...obstacleMeshes, opponentHitbox], true);
-
-      if (hits.length > 0 && hits[0].object === opponentHitbox) {
-        fireHitscan();
       }
     }
 
@@ -1284,7 +1271,7 @@
     }
 
     // ==========================================
-    // 9. BOT LOGIK MIT DECKUNGS-PRÜFUNG
+    // 9. BOT LOGIK
     // ==========================================
     const botState = { targetPos: new THREE.Vector3(0, 0, 0), shootCooldown: 2.2 };
     const botChars = ['marley', 'bread', 'horse', 'dolphin', 'grill'];
@@ -1353,7 +1340,6 @@
         const nextBotX = opponentRoot.position.x + dir.x * 5.5 * delta;
         const nextBotZ = opponentRoot.position.z + dir.z * 5.5 * delta;
 
-        // Bot Kollisionsprüfung
         if (!isPositionColliding(nextBotX, opponentRoot.position.z, 0.5)) {
           opponentRoot.position.x = nextBotX;
         } else {
@@ -1376,11 +1362,9 @@
         const distToPlayer = dirToPlayer.length();
         dirToPlayer.normalize();
 
-        // Bot-Sichtlinienprüfung gegen Hindernisse
         const botRay = new THREE.Raycaster(botGunPos, dirToPlayer, 0, 40);
         const hits = botRay.intersectObjects(obstacleMeshes, true);
 
-        // Schuss bricht ab, wenn Deckung im Weg steht
         if (hits.length > 0 && hits[0].distance < distToPlayer) {
           renderTracer(botGunPos, hits[0].point, 0xff4400);
           spawnHitImpact(hits[0].point);
@@ -1501,7 +1485,7 @@
     init3D();
 
     // ==========================================
-    // 11. MAIN LOOP & PHYSIK-COLLISION
+    // 11. MAIN LOOP & VERTIKALE HARD-CLAMP PHYSIK
     // ==========================================
     function animate() {
       requestAnimationFrame(animate);
@@ -1519,29 +1503,47 @@
           btnTouchDash.style.opacity = dashCooldown <= 0 ? '1' : '0.4';
         }
 
-        // Vertikalbewegung
-        if (!isGrounded) {
+        // Vertikale Gravitation & Sprungphysik
+        if (!isGrounded || velocityY !== 0) {
           velocityY -= GRAVITY * delta;
           camera.position.y += velocityY * delta;
-          if (camera.position.y <= 1.6) {
-            camera.position.y = 1.6;
-            velocityY = 0;
-            isGrounded = true;
-          }
         }
 
-        // Horizontaler Richtungsvektor
+        // Hard-Floor-Clamp: Verhindert Durchbrechen des Bodens
+        if (camera.position.y <= 1.6) {
+          camera.position.y = 1.6;
+          velocityY = 0;
+          isGrounded = true;
+        } else {
+          isGrounded = false;
+        }
+
+        // Horizontale Richtungsvektoren basierend auf dem horizontalen Drehwinkel (Yaw)
+        const yaw = camera.rotation.y;
+        const fX = -Math.sin(yaw);
+        const fZ = -Math.cos(yaw);
+        const rX = Math.cos(yaw);
+        const rZ = -Math.sin(yaw);
+
+        let inputX = 0;
+        let inputZ = 0;
+        if (isTouchDevice && (touchMoveVector.x !== 0 || touchMoveVector.z !== 0)) {
+          inputZ = -touchMoveVector.z;
+          inputX = touchMoveVector.x;
+        } else {
+          inputZ = Number(moveForward) - Number(moveBackward);
+          inputX = Number(moveRight) - Number(moveLeft);
+        }
+
+        const moveDir = new THREE.Vector3(
+          fX * inputZ + rX * inputX,
+          0,
+          fZ * inputZ + rZ * inputX
+        );
+        if (moveDir.lengthSq() > 0.0001) moveDir.normalize();
+
         velocity.x -= velocity.x * 10.0 * delta;
         velocity.z -= velocity.z * 10.0 * delta;
-
-        if (isTouchDevice && (touchMoveVector.x !== 0 || touchMoveVector.z !== 0)) {
-          direction.z = -touchMoveVector.z;
-          direction.x = touchMoveVector.x;
-        } else {
-          direction.z = Number(moveForward) - Number(moveBackward);
-          direction.x = Number(moveRight) - Number(moveLeft);
-        }
-        direction.normalize();
 
         let currentSpeed = 38.0;
         if (isDashing) {
@@ -1550,27 +1552,25 @@
           if (dashTimer <= 0) isDashing = false;
         }
 
-        if (direction.z !== 0) velocity.z -= direction.z * currentSpeed * delta;
-        if (direction.x !== 0) velocity.x -= direction.x * currentSpeed * delta;
+        if (moveDir.lengthSq() > 0.0001) {
+          velocity.x += moveDir.x * currentSpeed * 10.0 * delta;
+          velocity.z += moveDir.z * currentSpeed * 10.0 * delta;
+        }
 
-        // Verschiebung mit getrennter Achsen-Kollisionsprüfung (Wall-Sliding)
-        const oldX = camera.position.x;
-        const oldZ = camera.position.z;
-
-        camera.translateX(-velocity.x * delta);
-        if (isPositionColliding(camera.position.x, oldZ, 0.45)) {
-          camera.position.x = oldX;
+        // X- und Z-Achsenverschiebung mit AABB-Kollisionsprüfung
+        const nextX = camera.position.x + velocity.x * delta;
+        if (!isPositionColliding(nextX, camera.position.z, 0.45) && Math.abs(nextX) <= 16.5) {
+          camera.position.x = nextX;
+        } else {
           velocity.x = 0;
         }
 
-        camera.translateZ(velocity.z * delta);
-        if (isPositionColliding(camera.position.x, camera.position.z, 0.45)) {
-          camera.position.z = oldZ;
+        const nextZ = camera.position.z + velocity.z * delta;
+        if (!isPositionColliding(camera.position.x, nextZ, 0.45) && Math.abs(nextZ) <= 16.5) {
+          camera.position.z = nextZ;
+        } else {
           velocity.z = 0;
         }
-
-        // Auto-Feuerprüfung pro Frame
-        checkAutoFire();
 
         if (isBotMode) {
           updateBotAI(delta);
