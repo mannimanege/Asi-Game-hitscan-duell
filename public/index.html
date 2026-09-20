@@ -92,6 +92,8 @@
     #hitmarker { position: absolute; top: 50%; left: 50%; width: 24px; height: 24px; transform: translate(-50%, -50%); border: 3px solid #22c55e; border-radius: 50%; opacity: 0; transition: opacity 0.08s; pointer-events: none; }
 
     #countdown-overlay { position: absolute; top: 38%; left: 50%; transform: translate(-50%, -50%); font-size: 72px; font-weight: 900; color: #f59e0b; text-shadow: 0 4px 20px rgba(0,0,0,0.9), 0 0 30px #f59e0b; pointer-events: none; z-index: 15; letter-spacing: 2px; }
+    #death-overlay { position: absolute; top: 25%; left: 50%; transform: translate(-50%, -50%); font-size: 32px; font-weight: 900; color: #ef4444; text-shadow: 0 4px 15px rgba(0,0,0,0.9); pointer-events: none; z-index: 15; letter-spacing: 1.5px; text-transform: uppercase; }
+
     #audio-toggle { position: absolute; bottom: 12px; left: 12px; background: rgba(11, 15, 25, 0.8); border: 1px solid rgba(255,255,255,0.25); color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; cursor: pointer; pointer-events: auto; }
 
     /* Touch Controls */
@@ -205,6 +207,7 @@
     </div>
 
     <div id="countdown-overlay" class="hidden">3</div>
+    <div id="death-overlay" class="hidden">WEGGEBEAMT</div>
     <button id="audio-toggle">Musik: AN</button>
     <div id="crosshair"></div>
     <div id="hitmarker"></div>
@@ -341,7 +344,7 @@
       const bSize = audioCtx.sampleRate * 0.12;
       const buf = audioCtx.createBuffer(1, bSize, audioCtx.sampleRate);
       const d = buf.getChannelData(0);
-      for (let i = 0; i < bSize; i++) d[i] = Math.random() * 2 - 1;
+      for (let i = 0; i < bSize; i++) data[i] = Math.random() * 2 - 1;
       const noise = audioCtx.createBufferSource();
       noise.buffer = buf;
       const gain = audioCtx.createGain();
@@ -396,6 +399,14 @@
     let botScorePlayer = 0;
     let botScoreEnemy = 0;
 
+    // Todes-Sequenz State
+    let isDying = false;
+    let deathTimer = 0;
+    const DEATH_DURATION = 3.0;
+    let deathCamStart = new THREE.Vector3();
+    let deathCorpseGroup = null;
+    let pendingRespawnPos = null;
+
     let opponentId = null;
     let opponentRoot = null;
     let opponentHitbox = null;
@@ -420,7 +431,7 @@
     const BASE_MOVE_SPEED = 18.0;
 
     let shootCooldown = 0;
-    const FIRE_INTERVAL = 0.32;
+    const FIRE_INTERVAL = 0.35;
 
     const minimapCanvas = document.getElementById('minimap');
     const minimapCtx = minimapCanvas.getContext('2d');
@@ -441,6 +452,7 @@
     const screenGameOver = document.getElementById('screen-gameover');
     const hud = document.getElementById('hud');
     const countdownEl = document.getElementById('countdown-overlay');
+    const deathOverlayEl = document.getElementById('death-overlay');
     const timerSecEl = document.getElementById('hud-timer');
     const touchLayer = document.getElementById('touch-layer');
     const joystickBase = document.getElementById('joystick-base');
@@ -614,7 +626,7 @@
     };
 
     // ==========================================
-    // 3. TEXTUREN & GOSCH LOGO
+    // 3. TEXTUREN
     // ==========================================
     function createGoschSignTexture() {
       const c = document.createElement('canvas');
@@ -626,10 +638,85 @@
       ctx.lineWidth = 8;
       ctx.strokeRect(6, 6, 500, 116);
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 54px sans-serif';
+      ctx.font = 'bold 58px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('GOSCH SYLT', 256, 64);
+      return new THREE.CanvasTexture(c);
+    }
+
+    function createMenuBoardTexture() {
+      const c = document.createElement('canvas');
+      c.width = 320; c.height = 420;
+      const ctx = c.getContext('2d');
+      // Schwarze Schiefertafel mit Holzrahmen
+      ctx.fillStyle = '#451a03';
+      ctx.fillRect(0, 0, 320, 420);
+      ctx.fillStyle = '#18181b';
+      ctx.fillRect(10, 10, 300, 400);
+
+      ctx.fillStyle = '#f59e0b';
+      ctx.font = 'bold 20px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('GOSCH LUXUS-KARTE', 160, 42);
+
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(30, 54); ctx.lineTo(290, 54);
+      ctx.stroke();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '13px monospace';
+      ctx.textAlign = 'left';
+
+      const menu = [
+        ['Beluga Kaviar (50g)', '280 €'],
+        ['Kaisergranat vom Grill', '110 €'],
+        ['1/2 Hummer auf Eis', '89 €'],
+        ['Sylter Austern (6 Stk)', '54 €'],
+        ['Kaviar-Brioche Deluxe', '75 €'],
+        ['Trüffel-Fries Gosch', '38 €'],
+        ['Dom Pérignon Vintage', '490 €'],
+        ['Champagner Magnum', '750 €']
+      ];
+
+      menu.forEach((item, idx) => {
+        const y = 88 + idx * 38;
+        ctx.fillStyle = '#e4e4e7';
+        ctx.fillText(item[0], 22, y);
+        ctx.fillStyle = '#facc15';
+        ctx.textAlign = 'right';
+        ctx.fillText(item[1], 298, y);
+        ctx.textAlign = 'left';
+      });
+
+      return new THREE.CanvasTexture(c);
+    }
+
+    function createSignpostArrowTexture(text, isPointingRight = true) {
+      const c = document.createElement('canvas');
+      c.width = 256; c.height = 64;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#fef3c7';
+      ctx.fillRect(0, 0, 256, 64);
+      ctx.strokeStyle = '#78350f';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(2, 2, 252, 60);
+
+      ctx.fillStyle = '#78350f';
+      ctx.font = 'bold 22px sans-serif';
+      ctx.textBaseline = 'middle';
+      if (isPointingRight) {
+        ctx.textAlign = 'left';
+        ctx.fillText(text, 14, 32);
+        ctx.textAlign = 'right';
+        ctx.fillText('➤', 242, 32);
+      } else {
+        ctx.textAlign = 'left';
+        ctx.fillText('◀', 14, 32);
+        ctx.fillText(text, 44, 32);
+      }
       return new THREE.CanvasTexture(c);
     }
 
@@ -717,7 +804,7 @@
     }
 
     // ==========================================
-    // 4. SZENE, GOSCH SYLT & OBJEKTE
+    // 4. SZENE & MAP-OBJEKTE
     // ==========================================
     function init3D() {
       scene = new THREE.Scene();
@@ -768,15 +855,14 @@
       makeWall(1, 5.5, 36, -18, 2.75, 0);
       makeWall(1, 5.5, 36, 18, 2.75, 0);
 
-      // 1. Gosch Sylt Restaurant platzieren
       spawnGoschSyltRestaurant();
-
-      // 2. Props & Arena
+      spawnDirectionalSignpost();
       spawnLowPolyArena();
       spawnSkyDetails();
 
       setupFirstPersonArms();
       setupOpponentActor();
+      setupDeathCorpseModel();
       leafTexture = createMarijuanaLeafTexture();
 
       window.addEventListener('resize', onWindowResize);
@@ -784,11 +870,10 @@
       setupTouchControls();
     }
 
-    // Gosch Sylt Restaurant mit Hummer & Kaviar
+    // 1. Gosch Sylt Restaurant mit sichtbarem Schild & Speisekarte
     function spawnGoschSyltRestaurant() {
       const gGroup = new THREE.Group();
 
-      // Hauptgebäude (Weißes Holz & Reetdach)
       const wallMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.8 });
       const reetMat = new THREE.MeshStandardMaterial({ color: 0x854d0e, roughness: 0.9 });
       const blueTrimMat = new THREE.MeshStandardMaterial({ color: 0x0284c7 });
@@ -799,104 +884,149 @@
       building.receiveShadow = true;
       gGroup.add(building);
 
-      // Reetdach
-      const roof = new THREE.Mesh(new THREE.ConeGeometry(5.2, 2.4, 4), reetMat);
-      roof.position.set(0, 4.4, 0);
+      // Reetdach: Höher und nach hinten gesetzt, damit es das Schild keinesfalls verdeckt
+      const roof = new THREE.Mesh(new THREE.ConeGeometry(5.2, 2.2, 4), reetMat);
+      roof.position.set(0, 4.3, -0.4);
       roof.rotation.y = Math.PI / 4;
       roof.castShadow = true;
       gGroup.add(roof);
 
       // Blau-weißes Vordach
-      const canopy = new THREE.Mesh(new THREE.BoxGeometry(7.2, 0.2, 1.6), blueTrimMat);
-      canopy.position.set(0, 2.8, 3.2);
-      canopy.rotation.x = 0.15;
+      const canopy = new THREE.Mesh(new THREE.BoxGeometry(7.2, 0.16, 1.4), blueTrimMat);
+      canopy.position.set(0, 2.4, 3.0);
       canopy.castShadow = true;
       gGroup.add(canopy);
 
-      // Großes Gosch Sylt Schild
-      const signMat = new THREE.MeshStandardMaterial({ map: createGoschSignTexture(), roughness: 0.4 });
-      const sign = new THREE.Mesh(new THREE.BoxGeometry(4.2, 1.0, 0.15), signMat);
-      sign.position.set(0, 3.3, 3.4);
+      // GOSCH SYLT Schild: Frei stehend auf Trägern vor dem Vordach montiert
+      const signMat = new THREE.MeshStandardMaterial({ map: createGoschSignTexture(), roughness: 0.35 });
+      const sign = new THREE.Mesh(new THREE.BoxGeometry(4.4, 1.05, 0.12), signMat);
+      sign.position.set(0, 3.2, 3.1);
       gGroup.add(sign);
 
-      // Außentheke / Holztisch
-      const tableMat = new THREE.MeshStandardMaterial({ color: 0x92400e, roughness: 0.7 });
-      const table = new THREE.Mesh(new THREE.BoxGeometry(3.6, 1.0, 1.4), tableMat);
+      // Trägerpfosten für das Schild
+      const postMat = new THREE.MeshStandardMaterial({ color: 0x475569 });
+      const sp1 = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.8), postMat);
+      sp1.position.set(-1.8, 2.8, 3.0);
+      const sp2 = sp1.clone();
+      sp2.position.x = 1.8;
+      gGroup.add(sp1); gGroup.add(sp2);
+
+      // Kreidetafel mit Luxus-Speisekarte rechts neben dem Tresen
+      const menuBoard = new THREE.Mesh(new THREE.BoxGeometry(1.6, 2.1, 0.08), new THREE.MeshStandardMaterial({ map: createMenuBoardTexture() }));
+      menuBoard.position.set(2.6, 1.6, 2.55);
+      gGroup.add(menuBoard);
+
+      // Rettungsring an der linken Außenwand
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.4, 0.12, 8, 16), new THREE.MeshStandardMaterial({ color: 0xef4444 }));
+      ring.position.set(-3.52, 1.8, 0);
+      ring.rotation.y = Math.PI / 2;
+      gGroup.add(ring);
+
+      // Holztisch / Tresen
+      const table = new THREE.Mesh(new THREE.BoxGeometry(3.6, 1.0, 1.4), new THREE.MeshStandardMaterial({ color: 0x92400e, roughness: 0.7 }));
       table.position.set(0, 0.5, 3.2);
       table.castShadow = true;
       table.receiveShadow = true;
       gGroup.add(table);
 
-      // Teller / Holzbrett
+      // Sektkühler mit Eis & Flasche auf dem Tresen
+      const cooler = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.16, 0.3, 12), new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.9 }));
+      cooler.position.set(0, 1.15, 3.2);
+      const coldChamp = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.45, 8), new THREE.MeshStandardMaterial({ color: 0x064e3b }));
+      coldChamp.position.set(0, 1.35, 3.2);
+      coldChamp.rotation.z = 0.2;
+      gGroup.add(cooler); gGroup.add(coldChamp);
+
+      // Hummer
       const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.05, 16), new THREE.MeshStandardMaterial({ color: 0xf1f5f9 }));
-      plate.position.set(-0.8, 1.03, 3.2);
+      plate.position.set(-0.9, 1.03, 3.2);
       gGroup.add(plate);
 
-      // === HUMMER (Lobster) ===
       const lobsterGroup = new THREE.Group();
       const redMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.3 });
-      const darkRedMat = new THREE.MeshStandardMaterial({ color: 0x991b1b, roughness: 0.3 });
-
-      // Körper
       const lBody = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 8), redMat);
       lBody.scale.set(1, 0.7, 1.8);
       lobsterGroup.add(lBody);
 
-      // Scheren
-      const clawGeo = new THREE.SphereGeometry(0.09, 8, 8);
-      const c1 = new THREE.Mesh(clawGeo, darkRedMat);
-      c1.scale.set(1.4, 0.5, 2.0);
-      c1.position.set(0.18, 0, 0.28);
-      c1.rotation.y = 0.35;
-      const c2 = c1.clone();
-      c2.position.x = -0.18;
-      c2.rotation.y = -0.35;
+      const c1 = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), new THREE.MeshStandardMaterial({ color: 0x991b1b }));
+      c1.scale.set(1.4, 0.5, 2.0); c1.position.set(0.18, 0, 0.28); c1.rotation.y = 0.35;
+      const c2 = c1.clone(); c2.position.x = -0.18; c2.rotation.y = -0.35;
       lobsterGroup.add(c1); lobsterGroup.add(c2);
 
-      // Schwanzfächer
-      const tail = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.04, 0.2), redMat);
-      tail.position.set(0, -0.02, -0.28);
-      lobsterGroup.add(tail);
-
-      lobsterGroup.position.set(-0.8, 1.1, 3.2);
+      lobsterGroup.position.set(-0.9, 1.1, 3.2);
       gGroup.add(lobsterGroup);
 
-      // === KAVIAR (Caviar) ===
-      const caviarGroup = new THREE.Group();
-      // Eisbett
+      // Kaviar
       const ice = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 0.08, 14), new THREE.MeshStandardMaterial({ color: 0xe0f2fe, roughness: 0.1, transparent: true, opacity: 0.85 }));
-      ice.position.set(0.8, 1.05, 3.2);
+      ice.position.set(0.9, 1.05, 3.2);
       gGroup.add(ice);
 
-      // Kaviar-Dose (Gold / Marineblau)
       const tin = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 0.08, 16), new THREE.MeshStandardMaterial({ color: 0x1e3a8a, metalness: 0.8 }));
-      tin.position.set(0.8, 1.12, 3.2);
+      tin.position.set(0.9, 1.12, 3.2);
       gGroup.add(tin);
 
-      // Schwarze Kaviar-Perlen
       const caviarMat = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.15 });
       for (let i = 0; i < 18; i++) {
         const pearl = new THREE.Mesh(new THREE.SphereGeometry(0.045, 6, 6), caviarMat);
         const ang = Math.random() * Math.PI * 2;
         const dist = Math.random() * 0.16;
-        pearl.position.set(0.8 + Math.cos(ang) * dist, 1.17 + Math.random() * 0.02, 3.2 + Math.sin(ang) * dist);
+        pearl.position.set(0.9 + Math.cos(ang) * dist, 1.17 + Math.random() * 0.02, 3.2 + Math.sin(ang) * dist);
         gGroup.add(pearl);
       }
 
-      // Zitronenscheibe
-      const lemon = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.02, 8), new THREE.MeshStandardMaterial({ color: 0xfacc15 }));
-      lemon.rotation.x = Math.PI / 3;
-      lemon.position.set(1.05, 1.14, 3.35);
-      gGroup.add(lemon);
-
-      // Platzierung Nordwest-Ecke
-      gGroup.position.set(-11, 0, -11);
+      gGroup.position.set(-10.5, 0, -10.5);
       gGroup.rotation.y = Math.PI / 4;
       scene.add(gGroup);
 
       obstacleMeshes.push(building);
       obstacleMeshes.push(table);
-      obstacleColliders.push({ minX: -15.5, maxX: -6.5, minZ: -15.5, maxZ: -6.5 });
+      obstacleColliders.push({ minX: -15.5, maxX: -6.0, minZ: -15.5, maxZ: -6.0 });
+    }
+
+    // 2. Wegweiser mit Pfeilen: Winterhude, Eppendorf, Dulsberg, Norderstedt, Kasseburg, Dove-Elbe
+    function spawnDirectionalSignpost() {
+      const postGroup = new THREE.Group();
+      const woodMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.85 });
+
+      // Zentraler Holzstamm
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 4.2, 10), woodMat);
+      pole.position.y = 2.1;
+      pole.castShadow = true;
+      postGroup.add(pole);
+
+      // Geschnitzte Schilder mit Winkeln in die jeweiligen Richtungen
+      const signs = [
+        { text: 'Norderstedt 18km', y: 3.6, rot: 0 },
+        { text: 'Winterhude 8km',   y: 3.2, rot: Math.PI * 0.35 },
+        { text: 'Eppendorf 9km',    y: 2.8, rot: Math.PI * 0.7 },
+        { text: 'Kasseburg 32km',   y: 2.4, rot: Math.PI * 1.05 },
+        { text: 'Dulsberg 11km',    y: 2.0, rot: Math.PI * 1.4 },
+        { text: 'Dove-Elbe 16km',   y: 1.6, rot: Math.PI * 1.75 }
+      ];
+
+      signs.forEach(s => {
+        const signMesh = new THREE.Mesh(
+          new THREE.BoxGeometry(1.6, 0.35, 0.05),
+          new THREE.MeshStandardMaterial({ map: createSignpostArrowTexture(s.text, true) })
+        );
+        signMesh.position.set(0, s.y, 0);
+        signMesh.rotation.y = s.rot;
+        signMesh.translateX(0.7);
+        signMesh.castShadow = true;
+        postGroup.add(signMesh);
+      });
+
+      // Steiniger Sockel
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.8, 0.3, 8), new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.9 }));
+      base.position.y = 0.15;
+      postGroup.add(base);
+
+      // Auf dem Platz zwischen Gosch und Zentrum platziert
+      postGroup.position.set(-5, 0, -4);
+      scene.add(postGroup);
+
+      obstacleMeshes.push(pole);
+      obstacleColliders.push({ minX: -5.6, maxX: -4.4, minZ: -4.6, maxZ: -3.4 });
     }
 
     function addHayBale(x, y, z, rotY = 0) {
@@ -963,12 +1093,10 @@
 
       addTractor(4.5, 8.5, -Math.PI / 4);
 
-      // Original Food-Props
       spawnFoodProps();
     }
 
     function spawnFoodProps() {
-      // Bierflasche
       const bottleGroup = new THREE.Group();
       const bottleMat = new THREE.MeshStandardMaterial({ color: 0x451a03, roughness: 0.2 });
       const b1 = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 3.2, 16), bottleMat);
@@ -987,7 +1115,6 @@
       obstacleMeshes.push(b1);
       obstacleColliders.push({ minX: 9.2, maxX: 10.8, minZ: -10.8, maxZ: -9.2 });
 
-      // Martini Glas
       const martiniGroup = new THREE.Group();
       const stemMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.6 });
       const base = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.1, 16), stemMat);
@@ -1007,7 +1134,6 @@
       obstacleMeshes.push(cone);
       obstacleColliders.push({ minX: 9.8, maxX: 12.2, minZ: 2.8, maxZ: 5.2 });
 
-      // Pommes
       const friesGroup = new THREE.Group();
       const bag = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.4, 1.4), new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.4 }));
       bag.position.y = 1.2;
@@ -1132,7 +1258,7 @@
     }
 
     // ==========================================
-    // 6. FIRST-PERSON VIEWMODEL
+    // 6. VIEWMODEL & TODES-CORPSE MIT JOINT
     // ==========================================
     let viewmodelGroup;
     let cigWeapon;
@@ -1207,6 +1333,119 @@
           if (sp.life <= 0) sp.mesh.visible = false;
         }
       });
+    }
+
+    // Todes-Körper (Liegend am Boden mit fettem Joint im Mund)
+    let deadJointTipWorldPos = new THREE.Vector3();
+    function setupDeathCorpseModel() {
+      deathCorpseGroup = new THREE.Group();
+
+      // Körper flach auf dem Rücken
+      const bodyMat = new THREE.MeshStandardMaterial({ color: 0x15803d });
+      const body = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.35, 1.2), bodyMat);
+      body.position.set(0, 0.18, 0);
+      deathCorpseGroup.add(body);
+
+      // Beine ausgestreckt
+      const legMat = new THREE.MeshStandardMaterial({ color: 0x1e293b });
+      const l1 = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.25, 0.9), legMat);
+      l1.position.set(-0.2, 0.14, 0.95);
+      const l2 = l1.clone();
+      l2.position.x = 0.2;
+      deathCorpseGroup.add(l1); deathCorpseGroup.add(l2);
+
+      // Kopf liegt am Boden
+      const headMat = new THREE.MeshStandardMaterial({ color: 0xd49b73 });
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.26, 12, 12), headMat);
+      head.position.set(0, 0.24, -0.75);
+      deathCorpseGroup.add(head);
+
+      // Fetter Joint im Mund (Konisch geformt)
+      const jointMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.8 });
+      const joint = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.03, 0.55, 10), jointMat);
+      joint.rotation.x = -Math.PI / 3;
+      joint.position.set(0, 0.42, -0.92);
+      deathCorpseGroup.add(joint);
+
+      // Glühende Joint-Spitze
+      const emberMat = new THREE.MeshBasicMaterial({ color: 0xff2200 });
+      const ember = new THREE.Mesh(new THREE.SphereGeometry(0.065, 8, 8), emberMat);
+      ember.position.set(0, 0.65, -1.06);
+      deathCorpseGroup.add(ember);
+
+      deathCorpseGroup.visible = false;
+      scene.add(deathCorpseGroup);
+    }
+
+    function triggerDeathSequence(respawnPos) {
+      if (isDying) return;
+      isDying = true;
+      canAct = false;
+      deathTimer = 0;
+      pendingRespawnPos = respawnPos;
+
+      deathCamStart.copy(camera.position);
+
+      // Ego-Arme ausblenden
+      if (viewmodelGroup) viewmodelGroup.visible = false;
+
+      // Leiche am Todesort flach auf den Boden legen
+      deathCorpseGroup.position.set(camera.position.x, 0, camera.position.z);
+      deathCorpseGroup.rotation.y = camera.rotation.y;
+      deathCorpseGroup.visible = true;
+
+      deathOverlayEl.classList.remove('hidden');
+      spawnLeafExplosion(camera.position);
+    }
+
+    function updateDeathSequence(delta) {
+      deathTimer += delta;
+      const progress = Math.min(deathTimer / DEATH_DURATION, 1.0);
+
+      // Weiche Kamerafahrt nach hinten-oben (Third-Person Vogelperspektive)
+      const targetCamPos = new THREE.Vector3(
+        deathCorpseGroup.position.x + Math.sin(deathCorpseGroup.rotation.y) * 3.8,
+        3.2,
+        deathCorpseGroup.position.z + Math.cos(deathCorpseGroup.rotation.y) * 3.8
+      );
+
+      camera.position.lerpVectors(deathCamStart, targetCamPos, progress);
+      camera.lookAt(deathCorpseGroup.position.x, 0.4, deathCorpseGroup.position.z);
+
+      // Dichter Rauch steigt kontinuierlich aus dem Joint auf
+      if (Math.random() < 0.7) {
+        const puff = new THREE.Mesh(
+          new THREE.SphereGeometry(0.08 + Math.random() * 0.08, 6, 6),
+          new THREE.MeshBasicMaterial({ color: 0xe2e8f0, transparent: true, opacity: 0.7 })
+        );
+        puff.position.set(
+          deathCorpseGroup.position.x,
+          0.65,
+          deathCorpseGroup.position.z
+        ).add(new THREE.Vector3(0, 0.2, -0.6).applyAxisAngle(new THREE.Vector3(0, 1, 0), deathCorpseGroup.rotation.y));
+        scene.add(puff);
+
+        particles.push({
+          sprite: puff,
+          vel: new THREE.Vector3((Math.random() - 0.5) * 0.6, Math.random() * 1.8 + 1.2, (Math.random() - 0.5) * 0.6),
+          rotVel: 0,
+          life: 0.9,
+          maxLife: 1.1
+        });
+      }
+
+      // Todessequenz beendet: Respawn am Startpunkt
+      if (deathTimer >= DEATH_DURATION) {
+        isDying = false;
+        deathCorpseGroup.visible = false;
+        deathOverlayEl.classList.add('hidden');
+        if (viewmodelGroup) viewmodelGroup.visible = true;
+        canAct = true;
+
+        if (pendingRespawnPos) {
+          respawnPlayer(pendingRespawnPos.x, pendingRespawnPos.z);
+        }
+      }
     }
 
     function setupOpponentActor() {
@@ -1339,7 +1578,7 @@
     }
 
     // ==========================================
-    // 7. ECHTES CHAMPAGNER-PROJEKTIL (KEIN LASER)
+    // 7. CHAMPAGNER-PROJEKTILE (AUSWEICHBAR)
     // ==========================================
     function createChampagneBottleMesh() {
       const group = new THREE.Group();
@@ -1369,7 +1608,7 @@
       return group;
     }
 
-    function spawnChampagneRocket(start, target, isHit, hitPoint) {
+    function spawnChampagneRocket(start, target, isOwner = true, intendedHit = false) {
       playCorkPopSound();
 
       const bottle = createChampagneBottleMesh();
@@ -1390,12 +1629,12 @@
       const totalDist = flightDir.length();
       flightDir.normalize();
 
-      const speed = 52.0;
-      const corkSpeed = speed + 22.0;
-      const corkVelocity = flightDir.clone().multiplyScalar(corkSpeed).add(new THREE.Vector3(
-        (Math.random() - 0.5) * 6,
-        Math.random() * 7 + 3,
-        (Math.random() - 0.5) * 6
+      // Moderate Geschwindigkeit für echte Ausweich-Chancen (Dodging)
+      const speed = 24.0;
+      const corkVelocity = flightDir.clone().multiplyScalar(speed + 16.0).add(new THREE.Vector3(
+        (Math.random() - 0.5) * 4,
+        Math.random() * 5 + 2,
+        (Math.random() - 0.5) * 4
       ));
 
       champagneRockets.push({
@@ -1409,24 +1648,22 @@
         distTraveled: 0,
         totalDist,
         target,
-        isHit,
-        hitPoint,
+        isOwner,
+        intendedHit,
         spawnFoamTimer: 0
       });
     }
 
-    // Champagner-Tropfen & Schaum während des Flugs
     function spawnChampagneSprayPuff(pos, baseDir) {
-      // 1. Weißer Schaum
       const foamMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85 });
       const puff = new THREE.Mesh(new THREE.SphereGeometry(0.08 + Math.random() * 0.06, 6, 6), foamMat);
       puff.position.copy(pos);
       scene.add(puff);
 
-      const sprayVel = baseDir.clone().multiplyScalar(-7 - Math.random() * 8).add(new THREE.Vector3(
-        (Math.random() - 0.5) * 3.5,
+      const sprayVel = baseDir.clone().multiplyScalar(-6 - Math.random() * 6).add(new THREE.Vector3(
+        (Math.random() - 0.5) * 3,
         Math.random() * 3 + 1,
-        (Math.random() - 0.5) * 3.5
+        (Math.random() - 0.5) * 3
       ));
 
       particles.push({
@@ -1437,7 +1674,6 @@
         maxLife: 0.5
       });
 
-      // 2. Goldene Flüssigkeitstropfen
       if (Math.random() < 0.6) {
         const dropMat = new THREE.MeshBasicMaterial({ color: 0xfef08a, transparent: true, opacity: 0.9 });
         const drop = new THREE.Mesh(new THREE.SphereGeometry(0.04, 4, 4), dropMat);
@@ -1454,7 +1690,6 @@
       }
     }
 
-    // Splash-Animation beim Einschlag
     function spawnChampagneSplash(point) {
       for (let i = 0; i < 24; i++) {
         const isFoam = Math.random() < 0.6;
@@ -1464,9 +1699,9 @@
         scene.add(drop);
 
         const vel = new THREE.Vector3(
-          (Math.random() - 0.5) * 12,
-          Math.random() * 8 + 3,
-          (Math.random() - 0.5) * 12
+          (Math.random() - 0.5) * 10,
+          Math.random() * 7 + 2,
+          (Math.random() - 0.5) * 10
         );
 
         particles.push({
@@ -1500,23 +1735,58 @@
         r.distTraveled += step;
         r.currentPos.addScaledVector(r.flightDir, step);
         r.bottle.position.copy(r.currentPos);
-        r.bottle.rotateZ(delta * 22);
+        r.bottle.rotateZ(delta * 18);
 
-        // Kontinuierlich Champagner herausspritzen
         r.spawnFoamTimer += delta;
-        if (r.spawnFoamTimer >= 0.012) {
+        if (r.spawnFoamTimer >= 0.015) {
           r.spawnFoamTimer = 0;
           const neckPos = r.currentPos.clone().add(r.flightDir.clone().multiplyScalar(0.42));
           spawnChampagneSprayPuff(neckPos, r.flightDir);
         }
 
+        // Flasche erreicht ihr Ziel
         if (r.distTraveled >= r.totalDist) {
           spawnChampagneSplash(r.target);
 
-          if (r.isHit && r.hitPoint) {
-            spawnLeafExplosion(new THREE.Vector3(r.hitPoint.x, r.hitPoint.y, r.hitPoint.z));
+          if (r.isOwner) {
+            // Eigener Schuss schlägt ein: Trefferprüfung
+            if (r.intendedHit && opponentRoot) {
+              const oppDist = opponentRoot.position.distanceTo(new THREE.Vector3(r.target.x, 0, r.target.z));
+              if (oppDist < 1.6) {
+                // Gegner stand noch am Ort
+                spawnLeafExplosion(r.target);
+                if (isBotMode) {
+                  botScorePlayer++;
+                  document.getElementById('hud-my-score').innerText = botScorePlayer;
+                  respawnBot();
+                } else {
+                  socket.emit('hit-target', opponentId);
+                }
+              } else {
+                // Gegner ist ausgewichen!
+                spawnHitImpact(r.target);
+              }
+            } else {
+              spawnHitImpact(r.target);
+            }
           } else {
-            spawnHitImpact(r.target);
+            // Schuss des Gegners oder Bots schlägt am Spielerziel ein
+            if (r.intendedHit && !isDying) {
+              const myDist = camera.position.distanceTo(new THREE.Vector3(r.target.x, 1.6, r.target.z));
+              if (myDist < 1.5) {
+                // Spieler hat nicht rechtzeitig gedasht/gesprungen -> Treffer!
+                if (isBotMode) {
+                  botScoreEnemy++;
+                  document.getElementById('hud-opp-score').innerText = botScoreEnemy;
+                  triggerDeathSequence(new THREE.Vector3((Math.random() - 0.5) * 16, 1.6, 14));
+                }
+              } else {
+                // Spieler ist dem Schuss erfolgreich ausgewichen!
+                spawnHitImpact(r.target);
+              }
+            } else {
+              spawnHitImpact(r.target);
+            }
           }
 
           scene.remove(r.bottle);
@@ -1575,7 +1845,7 @@
     // 8. STEUERUNG
     // ==========================================
     function triggerJump() {
-      if (!canAct) return;
+      if (!canAct || isDying) return;
       if (isGrounded) {
         velocityY = JUMP_FORCE;
         isGrounded = false;
@@ -1584,7 +1854,7 @@
     }
 
     function triggerDash() {
-      if (!canAct) return;
+      if (!canAct || isDying) return;
       if (dashCooldown <= 0) {
         isDashing = true;
         dashTimer = DASH_DURATION;
@@ -1596,7 +1866,7 @@
     function setupControls() {
       window.addEventListener('keydown', (e) => {
         initAudio();
-        if (!inGame) return;
+        if (!inGame || isDying) return;
         if (e.code === 'KeyW') moveForward = true;
         if (e.code === 'KeyS') moveBackward = true;
         if (e.code === 'KeyA') moveLeft = true;
@@ -1614,7 +1884,7 @@
       });
 
       document.body.addEventListener('click', () => {
-        if (isTouchDevice) return;
+        if (isTouchDevice || isDying) return;
         if (inGame && document.pointerLockElement !== document.body) {
           document.body.requestPointerLock();
         } else if (inGame && document.pointerLockElement === document.body) {
@@ -1623,7 +1893,7 @@
       });
 
       window.addEventListener('mousemove', (e) => {
-        if (document.pointerLockElement === document.body && inGame) {
+        if (document.pointerLockElement === document.body && inGame && !isDying) {
           camera.rotation.y -= e.movementX * 0.0022;
           const pitch = e.movementY * 0.0022;
           camera.rotation.x = Math.max(-Math.PI / 2.5, Math.min(Math.PI / 2.5, camera.rotation.x - pitch));
@@ -1639,6 +1909,7 @@
     function setupTouchControls() {
       joystickBase.addEventListener('touchstart', (e) => {
         initAudio();
+        if (isDying) return;
         e.preventDefault();
         const t = e.changedTouches[0];
         joyTouchId = t.identifier;
@@ -1651,7 +1922,7 @@
 
       window.addEventListener('touchstart', (e) => {
         initAudio();
-        if (!inGame) return;
+        if (!inGame || isDying) return;
         for (let i = 0; i < e.changedTouches.length; i++) {
           const t = e.changedTouches[i];
           if (t.clientX > window.innerWidth * 0.35 && lookTouchId === null) {
@@ -1671,7 +1942,7 @@
           const t = e.touches[i];
           if (t.identifier === joyTouchId) {
             handleJoyMove(t);
-          } else if (t.identifier === lookTouchId) {
+          } else if (t.identifier === lookTouchId && !isDying) {
             const dx = t.clientX - lastLookX;
             const dy = t.clientY - lastLookY;
             camera.rotation.y -= dx * 0.004;
@@ -1712,12 +1983,12 @@
     }
 
     // ==========================================
-    // 9. SCHUSSLOGIK & CHAMPAGNER-LAUNCH
+    // 9. SCHUSSLOGIK
     // ==========================================
     const raycaster = new THREE.Raycaster();
 
     function fireHitscan() {
-      if (!canAct) return;
+      if (!canAct || isDying) return;
       if (shootCooldown > 0) return;
       shootCooldown = FIRE_INTERVAL;
 
@@ -1736,38 +2007,30 @@
       const startPos = new THREE.Vector3();
       cigWeapon.getWorldPosition(startPos);
       const endPos = new THREE.Vector3();
-      let didHitOpponent = false;
+      let willHitOpponent = false;
 
       if (hits.length > 0) {
         const firstHit = hits[0];
         endPos.copy(firstHit.point);
 
         if (firstHit.object === opponentHitbox) {
-          didHitOpponent = true;
+          willHitOpponent = true;
           const marker = document.getElementById('hitmarker');
           marker.style.opacity = '1';
           setTimeout(() => { marker.style.opacity = '0'; }, 90);
-
-          if (isBotMode) {
-            botScorePlayer++;
-            document.getElementById('hud-my-score').innerText = botScorePlayer;
-            respawnBot();
-          } else {
-            socket.emit('hit-target', opponentId);
-          }
         }
       } else {
         raycaster.ray.at(50, endPos);
       }
 
-      // 100% Champagnerflasche, 0% Laser
-      spawnChampagneRocket(startPos, endPos, didHitOpponent, didHitOpponent ? endPos : null);
+      // Eigene Champagner-Rakete starten
+      spawnChampagneRocket(startPos, endPos, true, willHitOpponent);
 
       if (!isBotMode) {
         socket.emit('shot-fired', {
           start: startPos,
           end: endPos,
-          hitPoint: didHitOpponent ? endPos : null
+          intendedHit: willHitOpponent
         });
       }
     }
@@ -1869,8 +2132,8 @@
       }
 
       botState.shootCooldown -= delta;
-      if (botState.shootCooldown <= 0) {
-        botState.shootCooldown = 2.0 + Math.random() * 1.5;
+      if (botState.shootCooldown <= 0 && !isDying) {
+        botState.shootCooldown = 2.4 + Math.random() * 1.5;
         const botGunPos = opponentRoot.position.clone().add(new THREE.Vector3(0, 1.2, 0));
         const dirToPlayer = new THREE.Vector3().subVectors(camera.position, botGunPos);
         const distToPlayer = dirToPlayer.length();
@@ -1880,24 +2143,18 @@
         const hits = botRay.intersectObjects(obstacleMeshes, true);
 
         if (hits.length > 0 && hits[0].distance < distToPlayer) {
-          spawnChampagneRocket(botGunPos, hits[0].point, false, null);
+          spawnChampagneRocket(botGunPos, hits[0].point, false, false);
           return;
         }
 
         const target = camera.position.clone().add(new THREE.Vector3(
-          (Math.random() - 0.5) * 1.4,
-          (Math.random() - 0.5) * 0.8,
-          (Math.random() - 0.5) * 1.4
+          (Math.random() - 0.5) * 1.0,
+          (Math.random() - 0.5) * 0.6,
+          (Math.random() - 0.5) * 1.0
         ));
 
-        const hitPlayer = target.distanceTo(camera.position) < 1.1;
-        spawnChampagneRocket(botGunPos, target, hitPlayer, hitPlayer ? camera.position : null);
-
-        if (hitPlayer) {
-          botScoreEnemy++;
-          document.getElementById('hud-opp-score').innerText = botScoreEnemy;
-          respawnPlayer((Math.random() - 0.5) * 16, 14);
-        }
+        // Bot feuert sichtbare, ausweichbare Flasche
+        spawnChampagneRocket(botGunPos, target, false, true);
       }
     }
 
@@ -1906,7 +2163,10 @@
       isBotMode = false;
       inGame = false;
       canAct = false;
+      isDying = false;
+      if (deathCorpseGroup) deathCorpseGroup.visible = false;
       countdownEl.classList.add('hidden');
+      deathOverlayEl.classList.add('hidden');
       opponentRoot.position.set(0, -100, 0);
       touchLayer.classList.add('hidden');
       hud.classList.add('hidden');
@@ -1928,8 +2188,8 @@
       spawnChampagneRocket(
         new THREE.Vector3(data.start.x, data.start.y, data.start.z),
         new THREE.Vector3(data.end.x, data.end.y, data.end.z),
-        !!data.hitPoint,
-        data.hitPoint ? new THREE.Vector3(data.hitPoint.x, data.hitPoint.y, data.hitPoint.z) : null
+        false,
+        data.intendedHit
       );
     });
 
@@ -1967,8 +2227,9 @@
       }
     });
 
+    // Bei gegnerischem Treffer: 3rd-Person Todesanimation starten
     socket.on('respawn', (pos) => {
-      respawnPlayer(pos.x, pos.z);
+      triggerDeathSequence(pos);
     });
 
     socket.on('opponent-moved', (data) => {
@@ -1982,7 +2243,10 @@
     socket.on('game-over', (res) => {
       inGame = false;
       canAct = false;
+      isDying = false;
       countdownEl.classList.add('hidden');
+      deathOverlayEl.classList.add('hidden');
+      if (deathCorpseGroup) deathCorpseGroup.visible = false;
       hud.classList.add('hidden');
       touchLayer.classList.add('hidden');
       if (document.pointerLockElement) document.exitPointerLock();
@@ -2014,111 +2278,115 @@
       updateParticles(delta);
 
       if (inGame) {
-        if (shootCooldown > 0) shootCooldown -= delta;
-
-        if (dashCooldown > 0) {
-          dashCooldown -= delta;
-          btnTouchDash.style.opacity = dashCooldown <= 0 ? '1' : '0.4';
-        }
-
-        if (!isGrounded || velocityY !== 0) {
-          velocityY -= GRAVITY * delta;
-          camera.position.y += velocityY * delta;
-        }
-
-        if (camera.position.y <= 1.6) {
-          camera.position.y = 1.6;
-          velocityY = 0;
-          isGrounded = true;
+        if (isDying) {
+          updateDeathSequence(delta);
         } else {
-          isGrounded = false;
-        }
+          if (shootCooldown > 0) shootCooldown -= delta;
 
-        let isMoving = false;
+          if (dashCooldown > 0) {
+            dashCooldown -= delta;
+            btnTouchDash.style.opacity = dashCooldown <= 0 ? '1' : '0.4';
+          }
 
-        if (canAct) {
-          const yaw = camera.rotation.y;
-          const fX = -Math.sin(yaw);
-          const fZ = -Math.cos(yaw);
-          const rX = Math.cos(yaw);
-          const rZ = -Math.sin(yaw);
+          if (!isGrounded || velocityY !== 0) {
+            velocityY -= GRAVITY * delta;
+            camera.position.y += velocityY * delta;
+          }
 
-          let inputX = 0;
-          let inputZ = 0;
-          if (isTouchDevice && (touchMoveVector.x !== 0 || touchMoveVector.z !== 0)) {
-            inputZ = -touchMoveVector.z;
-            inputX = touchMoveVector.x;
+          if (camera.position.y <= 1.6) {
+            camera.position.y = 1.6;
+            velocityY = 0;
+            isGrounded = true;
           } else {
-            inputZ = Number(moveForward) - Number(moveBackward);
-            inputX = Number(moveRight) - Number(moveLeft);
+            isGrounded = false;
           }
 
-          const moveDir = new THREE.Vector3(
-            fX * inputZ + rX * inputX,
-            0,
-            fZ * inputZ + rZ * inputX
-          );
-          if (moveDir.lengthSq() > 0.0001) {
-            moveDir.normalize();
-            isMoving = true;
-          }
+          let isMoving = false;
 
-          velocity.x -= velocity.x * 12.0 * delta;
-          velocity.z -= velocity.z * 12.0 * delta;
+          if (canAct) {
+            const yaw = camera.rotation.y;
+            const fX = -Math.sin(yaw);
+            const fZ = -Math.cos(yaw);
+            const rX = Math.cos(yaw);
+            const rZ = -Math.sin(yaw);
 
-          let currentSpeed = BASE_MOVE_SPEED;
-          if (isDashing) {
-            dashTimer -= delta;
-            currentSpeed = DASH_SPEED;
-            if (dashTimer <= 0) isDashing = false;
-          }
+            let inputX = 0;
+            let inputZ = 0;
+            if (isTouchDevice && (touchMoveVector.x !== 0 || touchMoveVector.z !== 0)) {
+              inputZ = -touchMoveVector.z;
+              inputX = touchMoveVector.x;
+            } else {
+              inputZ = Number(moveForward) - Number(moveBackward);
+              inputX = Number(moveRight) - Number(moveLeft);
+            }
 
-          if (moveDir.lengthSq() > 0.0001) {
-            velocity.x += moveDir.x * currentSpeed * 12.0 * delta;
-            velocity.z += moveDir.z * currentSpeed * 12.0 * delta;
-          }
+            const moveDir = new THREE.Vector3(
+              fX * inputZ + rX * inputX,
+              0,
+              fZ * inputZ + rZ * inputX
+            );
+            if (moveDir.lengthSq() > 0.0001) {
+              moveDir.normalize();
+              isMoving = true;
+            }
 
-          const nextX = camera.position.x + velocity.x * delta;
-          if (!isPositionColliding(nextX, camera.position.z, 0.45) && Math.abs(nextX) <= 16.5) {
-            camera.position.x = nextX;
+            velocity.x -= velocity.x * 12.0 * delta;
+            velocity.z -= velocity.z * 12.0 * delta;
+
+            let currentSpeed = BASE_MOVE_SPEED;
+            if (isDashing) {
+              dashTimer -= delta;
+              currentSpeed = DASH_SPEED;
+              if (dashTimer <= 0) isDashing = false;
+            }
+
+            if (moveDir.lengthSq() > 0.0001) {
+              velocity.x += moveDir.x * currentSpeed * 12.0 * delta;
+              velocity.z += moveDir.z * currentSpeed * 12.0 * delta;
+            }
+
+            const nextX = camera.position.x + velocity.x * delta;
+            if (!isPositionColliding(nextX, camera.position.z, 0.45) && Math.abs(nextX) <= 16.5) {
+              camera.position.x = nextX;
+            } else {
+              velocity.x = 0;
+            }
+
+            const nextZ = camera.position.z + velocity.z * delta;
+            if (!isPositionColliding(camera.position.x, nextZ, 0.45) && Math.abs(nextZ) <= 16.5) {
+              camera.position.z = nextZ;
+            } else {
+              velocity.z = 0;
+            }
           } else {
-            velocity.x = 0;
+            velocity.set(0, 0, 0);
           }
 
-          const nextZ = camera.position.z + velocity.z * delta;
-          if (!isPositionColliding(camera.position.x, nextZ, 0.45) && Math.abs(nextZ) <= 16.5) {
-            camera.position.z = nextZ;
+          if (viewmodelGroup) {
+            if (isMoving && isGrounded) {
+              walkBobTimer += delta * 12;
+              viewmodelGroup.position.y = Math.sin(walkBobTimer) * 0.012;
+              viewmodelGroup.position.x = Math.cos(walkBobTimer * 0.5) * 0.01;
+            } else {
+              viewmodelGroup.position.y = THREE.MathUtils.lerp(viewmodelGroup.position.y, 0, delta * 8);
+              viewmodelGroup.position.x = THREE.MathUtils.lerp(viewmodelGroup.position.x, 0, delta * 8);
+            }
+          }
+
+          if (isBotMode) {
+            updateBotAI(delta);
           } else {
-            velocity.z = 0;
+            socket.emit('player-update', {
+              x: camera.position.x,
+              y: camera.position.y,
+              z: camera.position.z,
+              rotY: camera.rotation.y,
+              char: selectedChar
+            });
           }
-        } else {
-          velocity.set(0, 0, 0);
-        }
 
-        if (viewmodelGroup) {
-          if (isMoving && isGrounded) {
-            walkBobTimer += delta * 12;
-            viewmodelGroup.position.y = Math.sin(walkBobTimer) * 0.012;
-            viewmodelGroup.position.x = Math.cos(walkBobTimer * 0.5) * 0.01;
-          } else {
-            viewmodelGroup.position.y = THREE.MathUtils.lerp(viewmodelGroup.position.y, 0, delta * 8);
-            viewmodelGroup.position.x = THREE.MathUtils.lerp(viewmodelGroup.position.x, 0, delta * 8);
-          }
+          renderMinimap();
         }
-
-        if (isBotMode) {
-          updateBotAI(delta);
-        } else {
-          socket.emit('player-update', {
-            x: camera.position.x,
-            y: camera.position.y,
-            z: camera.position.z,
-            rotY: camera.rotation.y,
-            char: selectedChar
-          });
-        }
-
-        renderMinimap();
       }
 
       renderer.render(scene, camera);
